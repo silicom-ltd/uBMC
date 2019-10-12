@@ -21,7 +21,7 @@ prod_change:
 	@make prod_set
 
 config_save:$(prodfile)
-	scripts/__is_save_config.sh buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config
+	@scripts/__is_save_config.sh buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config
 
 config_diff:$(prodfile)
 	diff -uNr buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config buildroot/.config
@@ -29,7 +29,7 @@ config_diff:$(prodfile)
 all:$(prodfile)
 	@echo "Building $(shell cat buildroot/output/.product)."
 	@echo "Building image $(shell cat buildroot/output/.product_cfg)"
-	make -C buildroot
+	@make -C buildroot
 
 # the below Makefile target is to prevent the % rule to match Makefile, and then to regenerate Makefile
 # by calling buildroot makefiles
