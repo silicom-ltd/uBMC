@@ -1,7 +1,7 @@
 #!/bin/bash
 #set -x
 set -e
-echo "Select product to build. Default is ubmc:"
+echo "Select product to build. Press enter to select [ubmc]:"
 read prodname
 if [ -z "${prodname}" ]; then
     prodname=ubmc
@@ -52,7 +52,7 @@ for fname in ${config_flist}; do
 	config_list="${config_list} $(basename $fname .config)"
 done
 
-echo "Please Select a config as default config. If .config doesn't exist, it will be copied"
+echo "Please Select a config as default config. If buildroot/.config doesn't exist, it will be created."
 
 while true; do
 	echo "Available options:"
@@ -75,7 +75,7 @@ done
 CFG_FILE=buildroot/product/configs/${cfgname}.config
 if [ ! -f buildroot/.config ]; then
 	echo "Copying ${CFG_FILE} to buildroot/.config"
-	cp  buildroot/.config
+	cp  $CFG_FILE buildroot/.config
 else
 	echo "NOT Copying ${CFG_FILE} to buildroot/.config"
 fi

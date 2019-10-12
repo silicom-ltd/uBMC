@@ -6,10 +6,10 @@
 prodfile = buildroot/output/.product buildroot/output/.product_cfg
 
 prod_set:
-	scripts/__is_prepare_prod.sh
+	@scripts/__is_prepare_prod.sh
 
 $(prodfile):
-	make prod_set
+	@make prod_set
 
 prod_clean:
 	rm -rf buildroot/output/.product
@@ -17,8 +17,8 @@ prod_clean:
 	rm -rf buildroot/product
 
 prod_change:
-	make prod_clean
-	make prod_set
+	@make prod_clean
+	@make prod_set
 
 config_save:$(prodfile)
 	scripts/__is_save_config.sh buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config
