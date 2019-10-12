@@ -1,0 +1,156 @@
+--- openssh-6.7p1-orig/auth-pam.c	2015-09-24 16:10:03.519612538 +0800
++++ openssh-6.7p1-silicom/auth-pam.c	2015-09-24 15:40:31.000000000 +0800
+@@ -483,6 +483,32 @@
+ 		sshpam_password_change_required(0);
+ 	}
+ 
++	/*
++	 * Set our SSH_PAM_USER.  This is to expose the final,
++	 * authenticated username to the rest of sshd.
++	 *
++	 * We always set SSH_PAM_USER, but will only end up using it if
++	 * there's not a valid local account.  This goes along with our
++	 * "faked" pw data scheme for supporting template (mapped) users.
++	 *
++	 * Note that in the case of template (mapped) users,
++	 * SSH_PAM_USER will have the same value that the TMS PAM
++	 * modules will set in AUTH_USER, which we no longer use here.
++	 *
++	 */
++	sshpam_err = pam_get_item(sshpam_handle, PAM_USER, (const void **)&pam_user);
++	if (sshpam_err == PAM_SUCCESS)
++	{
++		char ubuf[1024];
++		ubuf[0] = '\0';
++		snprintf(ubuf, sizeof(ubuf), "SSH_PAM_USER=%s", pam_user);
++		sshpam_err = pam_putenv(sshpam_handle, ubuf);
++		if (sshpam_err != PAM_SUCCESS)
++			goto auth_fail;
++	}
++	else
++		goto auth_fail;
++
+ 	buffer_put_cstring(&buffer, "OK");
+ 
+ #ifndef UNSUPPORTED_POSIX_THREADS_HACK
+@@ -786,17 +812,68 @@
+ 				**prompts = NULL;
+ 			}
+ 			if (type == PAM_SUCCESS) {
++				/*
++				 *  julian.zhu: make it move on even if invalid user
++				 */
++				/*
+ 				if (!sshpam_authctxt->valid ||
+ 				    (sshpam_authctxt->pw->pw_uid == 0 &&
+ 				    options.permit_root_login != PERMIT_YES))
+ 					fatal("Internal error: PAM auth "
+ 					    "succeeded when it should have "
+ 					    "failed");
++				*/
+ 				import_environments(&buffer);
+ 				*num = 0;
+ 				**echo_on = 0;
+ 				ctxt->pam_done = 1;
+ 				free(msg);
++				/*
++				 * If we faked the pw data, now we have to
++				 * get it right.  The PAM module (in another
++				 * process in the privsep case) has
++				 * authenticated us.  However, we may have
++				 * ended up with a different authenticated
++				 * user name than the user name we started
++				 * with.  To deal with this, we query the
++				 * PAM environment variable SSH_PAM_USER, which
++				 * we unconditionally set to what PAM_USER had.
++				 * Then we'll update the authctxt's concept
++				 * of the user name, and lookup the other
++				 * fields to fill in the pw information.
++				 */
++				if (!sshpam_authctxt->valid)
++				{
++					const char *auth_user = NULL;
++					debug("Doing SSH_PAM_USER fixup");
++					auth_user = pam_getenv(sshpam_handle, "SSH_PAM_USER");
++					if (!auth_user)
++					{
++						logit("No SSH_PAM_USER found!");
++						return(-1);
++					}
++					debug2("auth_user = %s", auth_user);
++					if (pam_set_item(sshpam_handle, PAM_USER, auth_user) != PAM_SUCCESS)
++					{
++						error("PAM: failed to set PAM_USER: %s", pam_strerror(sshpam_handle, sshpam_err));
++						return(-1);
++					}
++					/* Verify that the user is valid */
++					if ((sshpam_authctxt->pw = getpwnamallow(auth_user)) != NULL)
++					{
++						sshpam_authctxt->valid = 1;
++						sshpam_authctxt->user = xstrdup(auth_user);
++					}
++					else
++					{
++						logit("No local user %s found", auth_user);
++						return(-1);
++					}
++				}
++				if (pam_putenv(sshpam_handle, "SSH_PAM_USER") != PAM_SUCCESS)
++				{
++					error("PAM: pam_putenv: %s", pam_strerror(sshpam_handle, sshpam_err));
++				}
+ 				return (0);
+ 			}
+ 			error("PAM: %s for %s%.100s from %.100s", msg,
+@@ -862,6 +939,10 @@
+ 		return (-1);
+ 	}
+ 	buffer_init(&buffer);
++	/*
++	 * julian.zhu: send passwd even if invalid user
++	 */
++	/*
+ 	if (sshpam_authctxt->valid &&
+ 	    (sshpam_authctxt->pw->pw_uid != 0 ||
+ 	    options.permit_root_login == PERMIT_YES))
+@@ -871,6 +952,8 @@
+ 		buffer_put_cstring(&buffer, fake);
+ 		free(fake);
+ 	}
++	*/
++	buffer_put_cstring(&buffer, *resp);
+ 	if (ssh_msg_send(ctxt->pam_psock, PAM_AUTHTOK, &buffer) == -1) {
+ 		buffer_free(&buffer);
+ 		return (-1);
+@@ -1242,9 +1325,14 @@
+ 	 * by PermitRootLogin, use an invalid password to prevent leaking
+ 	 * information via timing (eg if the PAM config has a delay on fail).
+ 	 */
++	/*
++	 * julian.zhu: send passwd even if invalid user
++	 */
++	/*
+ 	if (!authctxt->valid || (authctxt->pw->pw_uid == 0 &&
+ 	    options.permit_root_login != PERMIT_YES))
+ 		sshpam_password = fake = fake_password(password);
++	*/
+ 
+ 	sshpam_err = pam_set_item(sshpam_handle, PAM_CONV,
+ 	    (const void *)&passwd_conv);
+--- openssh-6.7p1-orig/auth2-chall.c	2014-07-18 12:11:25.000000000 +0800
++++ openssh-6.7p1-silicom/auth2-chall.c	2015-09-24 15:38:44.000000000 +0800
+@@ -321,7 +321,14 @@
+ 	switch (res) {
+ 	case 0:
+ 		/* Success! */
++		/*
++		 * julian.zhu: make ctxt valid if success
++		 */
++		/*
+ 		authenticated = authctxt->valid ? 1 : 0;
++		*/
++		authctxt->valid = 1;
++		authenticated = 1;
+ 		break;
+ 	case 1:
+ 		/* Authentication needs further interaction */

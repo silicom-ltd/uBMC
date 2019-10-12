@@ -1,0 +1,10 @@
+/config/system/mgmt/interface-list/eth0,
+/config/system/mgmt/interface-list/eth0/desc,In-Band
+/config/system/mgmt/interface-list/eth0/ipv4-origin,dhcp
+/config/system/mgmt/interface-list/eth0/ipv4-enabled,true
+/config/system/mgmt/interface-list/eth0/state,true
+/config/system/mgmt/interface-list/eth1,
+/config/system/mgmt/interface-list/eth1/desc,Out-Of-Band
+/config/system/mgmt/interface-list/eth1/ipv4-origin,dhcp
+/config/system/mgmt/interface-list/eth1/ipv4-enabled,true
+/config/system/mgmt/interface-list/eth1/state,true

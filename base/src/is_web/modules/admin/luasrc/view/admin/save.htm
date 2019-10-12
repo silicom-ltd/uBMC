@@ -1,0 +1,59 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2012 Jo-Philipp Wich <xm@subsignal.org>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+-%>
+
+<%+header%>
+<%
+    local params = ""
+    for i, v in pairs(luci.dispatcher.context.requestpath) do
+        params = params .. v .. "/"
+    end
+%>
+<form method="post" action="<%=luci.dispatcher.build_url(params)%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Save Configuration%></a></h2>
+		<div class="cbi-map-descr">
+			<% if result then %>
+				<% if result ~= "OK" then %>
+				<span style='color: red'>
+				<%: Operation failed, error: %><%=result%>
+				</span>
+				<% else %>
+				<span style='color: green'>
+				<%: Save successfully! %>
+				</span>
+				<% end %>
+				<br />
+			<% end %>
+			<% if not saved then %>
+				<span style='color: red'>
+				<%: System error, please try it later.%>
+				</span>
+			<% elseif saved ~= "true" then %>
+				<span style='color: red'>
+				<%: There are some unsaved changes in current configuration, and they will be lost after system reboots.%>
+				<br />
+				<%:Please click the save button to save current configuration to disk.%>
+				</span>
+			<% else %>
+				<%:There is no unsaved change in current configuration.%>
+			<% end %>
+			<br />
+		</div>
+		<div class="cbi-value-field">
+			<input id="focus_save" type="submit" value="<%:Save%>" class="cbi-button cbi-button-apply" name="save"/>
+			<label class="cbi-value-description"></label>
+		</div>
+	</div>
+</form>
+
+<%+footer%>

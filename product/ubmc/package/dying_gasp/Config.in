@@ -1,0 +1,5 @@
+config BR2_PACKAGE_DYING_GASP
+	bool "dying gasp"
+	help
+	  Silicom Dying Gasp Application
+

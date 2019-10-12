@@ -1,0 +1,7 @@
+config BR2_PACKAGE_UBMC_NETCONF
+	bool "ubmc_netconf"
+	select BR2_PACKAGE_NETOPEER
+	select BR2_PACKAGE_SILC_MGMTD
+	help
+	  uBMC NETCONF module
+

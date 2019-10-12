@@ -1,0 +1,6 @@
+config BR2_PACKAGE_PYTHON_PYANG
+	bool "python-pyang"
+	help
+	  An extensible YANG (RFC 6020) validator. Provides a framwork for plugins that can convert YANG modules to other formats.
+
+	  https://pypi.python.org/pypi/pyang

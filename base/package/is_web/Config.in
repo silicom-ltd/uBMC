@@ -1,0 +1,5 @@
+config BR2_PACKAGE_IS_WEB
+	bool "is_web"
+	select BR2_PACKAGE_SILC_WEB
+	help
+	  Silicom IS Web Interface.

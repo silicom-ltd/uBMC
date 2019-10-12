@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Start/stop is_prod_special
+#
+
+set +e
+#set -x
+
+product=$(cat /etc/product.txt)
+product_sub=$(cat /etc/product_sub.txt 2>/dev/null)
+
+#write vendor and device name to a file
+/usr/sbin/is_upgrade.sh -o 2>/dev/null > /etc/product/vendor
+/usr/sbin/is_upgrade.sh -N 2>/dev/null > /etc/product/devname
+
+
+
+case "$1" in
+  start)
+        #turn off sysrq
+        echo "0" > /proc/sys/kernel/sysrq
+        chmod 4755 /usr/sbin/is_upgrade.sh
+        chmod 4755 /usr/sbin/is_upgrade
+
+        /etc/prod_init/init_special
+        ;;
+  stop)
+        ;;
+  restart|reload)
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Start/stop is_flash_mount
+#
+
+set +e
+#set -x
+
+
+case "$1" in
+  start)
+  	is_mount_flash.sh
+        ;;
+  stop)
+        ;;
+  restart|reload)
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

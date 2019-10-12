@@ -1,0 +1,93 @@
+--- netopeer-master-orig/server/configure	2017-06-29 21:06:01.000000000 +0800
++++ netopeer-master-silicom/server/configure	2018-03-23 09:57:21.959763499 +0800
+@@ -3116,12 +3116,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_CURSES=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module curses" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ 
+@@ -3142,12 +3136,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_LIBXML2=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module libxml2" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ 
+@@ -3168,12 +3156,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_SUBPROCESS=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module subprocess" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ 
+@@ -3194,12 +3176,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_RE=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module re" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ 
+@@ -3220,12 +3196,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_STRING=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module string" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ 
+@@ -3246,12 +3216,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_ARGPARSE=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module argparse" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ 
+@@ -3272,12 +3236,6 @@
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 		eval HAVE_PYMOD_XML=no
+-		#
+-		if test -n "fatal"
+-		then
+-			as_fn_error $? "failed to find required module xml" "$LINENO" 5
+-			exit 1
+-		fi
+ 	fi
+ 
+ BUILDREQS="$BUILDREQS python"

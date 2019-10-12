@@ -1,0 +1,5 @@
+ext2load mmc ${mmcdev}:3 0x88000000 /dt.dtb
+ext2load mmc ${mmcdev}:3 0x82000000 /zImage
+ext2load mmc ${mmcdev}:3 0x88080000 /rootfs.cpio.uboot
+setenv bootargs console=ttyS0,115200n8 root=/dev/ram0 rw quiet loglevel=2
+bootz 0x82000000 0x88080000 0x88000000

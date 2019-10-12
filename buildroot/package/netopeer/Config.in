@@ -1,0 +1,9 @@
+config BR2_PACKAGE_NETOPEER
+	bool "netopeer"
+	select BR2_PACKAGE_LIBNETCONF
+	select BR2_PACKAGE_PYTHON_CURSES
+	help
+	  The Netopeer NETCONF server follows the integrated architecture described at
+	  [https://rawgit.com/CESNET/libnetconf/master/doc/doxygen/html/da/db3/server.html].
+
+

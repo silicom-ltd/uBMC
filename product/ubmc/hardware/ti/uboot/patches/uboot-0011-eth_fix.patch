@@ -1,0 +1,277 @@
+diff -uNr uboot-custom-orig/drivers/net/cpsw.c uboot-custom-silicom/drivers/net/cpsw.c
+--- uboot-custom-orig/drivers/net/cpsw.c	2017-09-27 06:20:58.000000000 +0800
++++ uboot-custom-silicom/drivers/net/cpsw.c	2018-08-05 10:23:44.337906745 +0800
+@@ -797,6 +797,101 @@
+ 	return 0;
+ }
+ 
++#ifndef NO_SILC_MOD
++//the uboot driver is not distinguishing between tx and rx_fill when submiting a new desc.
++//It is ok for sending to port1(eth0), but not ok for sending to port2(eth1)
++//add a tx submit function to send to the port designated by g_cpsw_default_eth_port
++//the port can be configured by CONFIG_UBMC_UBOOT_ETH_INDX in uboot
++
++//the below macros are copied from kernel cpsw driver davinci_cpdma.c
++//==================================================
++#define CPDMA_DESC_TO_PORT_EN   BIT(20)
++#define CPDMA_TO_PORT_SHIFT     16
++
++
++#define tx_chan_num(chan)       (chan)
++#define rx_chan_num(chan)       ((chan) + CPDMA_MAX_CHANNELS)
++#define is_rx_chan(chan)        ((chan)->chan_num >= CPDMA_MAX_CHANNELS)
++#define is_tx_chan(chan)        (!is_rx_chan(chan))
++#define __chan_linear(chan_num) ((chan_num) & (CPDMA_MAX_CHANNELS - 1))
++#define chan_linear(chan)       __chan_linear((chan)->chan_num)
++
++/* The following make access to common cpdma_ctlr params more readable */
++#define dmaregs         params.dmaregs
++#define num_chan        params.num_chan
++
++/* various accessors */
++#define dma_reg_read(ctlr, ofs)         readl((ctlr)->dmaregs + (ofs))
++//#define chan_read(chan, fld)            readl((chan)->fld)
++//#define desc_read(desc, fld)            readl(&(desc)->fld)
++#define dma_reg_write(ctlr, ofs, v)     writel(v, (ctlr)->dmaregs + (ofs))
++//#define chan_write(chan, fld, v)        writel(v, (chan)->fld)
++//#define desc_write(desc, fld, v)        writel((u32)(v), &(desc)->fld)
++
++#define cpdma_desc_to_port(chan, mode, directed)                        \
++        do {                                                            \
++                if (((directed == 1) || (directed == 2)))               \
++                        mode |= (CPDMA_DESC_TO_PORT_EN |                \
++                                 (directed << CPDMA_TO_PORT_SHIFT));    \
++        } while (0)
++//==========================copy from davinci_cpdma.c end
++
++#if defined(CONFIG_UBMC_UBOOT_ETH_INDX)
++static int g_cpsw_default_eth_port = CONFIG_UBMC_UBOOT_ETH_INDX;
++#else
++static int g_cpsw_default_eth_port = 2;
++#endif
++
++//this is a duplicate of cpdma_submit
++static int cpdma_submit_tx(struct cpsw_priv *priv, struct cpdma_chan *chan,
++			void *buffer, int len)
++{
++	struct cpdma_desc *desc, *prev;
++	u32 mode;
++
++//	printf("%s chan %p %u bytes\n", __func__, chan->hdp, len);
++	desc = cpdma_desc_alloc(priv);
++	if (!desc)
++		return -ENOMEM;
++
++	if (len < PKT_MIN)
++		len = PKT_MIN;
++
++	mode = CPDMA_DESC_OWNER | CPDMA_DESC_SOP | CPDMA_DESC_EOP;
++	cpdma_desc_to_port(chan, mode, g_cpsw_default_eth_port);
++
++	desc_write(desc, hw_next,   0);
++	desc_write(desc, hw_buffer, buffer);
++	desc_write(desc, hw_len,    len);
++	desc_write(desc, hw_mode,   mode | len);
++	desc_write(desc, sw_buffer, buffer);
++	desc_write(desc, sw_len,    len);
++
++
++	if (!chan->head) {
++		/* simple case - first packet enqueued */
++		chan->head = desc;
++		chan->tail = desc;
++		chan_write(chan, hdp, desc);
++		goto done;
++	}
++
++	/* not the first packet - enqueue at the tail */
++	prev = chan->tail;
++	desc_write(prev, hw_next, desc);
++	chan->tail = desc;
++
++	/* next check if EOQ has been triggered already */
++	if (desc_read(prev, hw_mode) & CPDMA_DESC_EOQ)
++		chan_write(chan, hdp, desc);
++
++done:
++	if (chan->rxfree)
++		chan_write(chan, rxfree, 1);
++	return 0;
++}
++#endif
++
+ static int _cpsw_init(struct cpsw_priv *priv, u8 *enetaddr)
+ {
+ 	struct cpsw_slave	*slave;
+@@ -942,7 +1037,11 @@
+ 		return -ETIMEDOUT;
+ 	}
+ 
++#ifdef NO_SILC_MOD
+ 	return cpdma_submit(priv, &priv->tx_chan, packet, length);
++#else
++	return cpdma_submit_tx(priv, &priv->tx_chan, packet, length);
++#endif
+ }
+ 
+ static int _cpsw_recv(struct cpsw_priv *priv, uchar **pkt)
+@@ -1020,15 +1119,26 @@
+ 
+ 	int idx = 0;
+ 
++	cpsw_slave_setup(slave, idx, priv);
++
++#ifndef CONFIG_TARGET_UBMC335X
+ 	for_each_slave(slave, priv) {
+ 		cpsw_slave_setup(slave, idx, priv);
+ 		idx = idx + 1;
+ 	}
+ 
++	//our vecpe ubmc doens't need phy
++	//but our ubmc_eval need phy
+ 	cpsw_mdio_init(priv->dev->name, data->mdio_base, data->mdio_div);
+ 	priv->bus = miiphy_get_dev_by_name(priv->dev->name);
++#ifdef NO_SILC_UBMC
+ 	for_active_slave(slave, priv)
+ 		cpsw_phy_init(priv, slave);
++#else
++	for_each_slave(slave, priv)
++		cpsw_phy_init(priv, slave);
++#endif
++#endif
+ 
+ 	return 0;
+ }
+diff -uNr uboot-custom-orig/drivers/net/phy/phy.c uboot-custom-silicom/drivers/net/phy/phy.c
+--- uboot-custom-orig/drivers/net/phy/phy.c	2017-09-27 06:20:58.000000000 +0800
++++ uboot-custom-silicom/drivers/net/phy/phy.c	2018-08-05 00:53:14.518391564 +0800
+@@ -378,11 +378,129 @@
+ 	return 0;
+ }
+ 
++#define MII_KSZPHY_CLK_CONTROL_PAD_SKEW         0x104
++#define MII_KSZPHY_RX_DATA_PAD_SKEW             0x105
++#define MII_KSZPHY_TX_DATA_PAD_SKEW             0x106
++#define MII_KSZPHY_CLOCK_PAD_SKEW             0x108
++
++/* Write/read to/from extended registers */
++#define MII_KSZPHY_EXTREG                       0x0b
++#define KSZPHY_EXTREG_WRITE                     0x8000
++
++#define MII_KSZPHY_EXTREG_WRITE                 0x0c
++#define MII_KSZPHY_EXTREG_READ                  0x0d
++
++static int kszphy_extended_write(struct phy_device *phydev, u32 regnum, u16 val)
++{
++        phy_write(phydev, 0, MII_KSZPHY_EXTREG, KSZPHY_EXTREG_WRITE | regnum);
++        return phy_write(phydev, 0, MII_KSZPHY_EXTREG_WRITE, val);
++}
++
++#define MII_MMD_CTRL	0x0d /* MMD Access Control Register */
++#define MII_MMD_DATA	0x0e /* MMD Access Data Register */
++
++/* MMD Access Control register fields */
++#define MII_MMD_CTRL_DEVAD_MASK	0x1f /* Mask MMD DEVAD*/
++#define MII_MMD_CTRL_ADDR	0x0000 /* Address */
++#define MII_MMD_CTRL_NOINCR	0x4000 /* no post increment */
++#define MII_MMD_CTRL_INCR_RDWT	0x8000 /* post increment on reads & writes */
++#define MII_MMD_CTRL_INCR_ON_WT	0xC000 /* post increment on writes only */
++
++
++#define MDIO_MMD_2			2
++#define RGMII_CONTROL_PAD_SKEW	0x4
++#define RGMII_RX_DATA_PAD_SKEW	0x5
++#define RGMII_TX_DATA_PAD_SKEW	0x6
++#define RGMII_CLOCK_PAD_SKEW	0x8
++/**
++ * phy_read_mmd_indirect - reads data from the MMD registers
++ * @phydev: The PHY device bus
++ * @prtad: MMD Address
++ * @devad: MMD DEVAD
++ * @addr: PHY address on the MII bus
++ *
++ * Description: it reads data from the MMD registers (clause 22 to access to
++ * clause 45) of the specified phy address.
++ * To read these registers we have:
++ * 1) Write reg 13 // DEVAD
++ * 2) Write reg 14 // MMD Address
++ * 3) Write reg 13 // MMD Data Command for MMD DEVAD
++ * 3) Read  reg 14 // Read MMD data
++ */
++int phy_read_mmd_indirect(struct phy_device *phydev, int prtad,
++			  int devad, int addr)
++{
++	int value = -1;
++
++	/* Write the desired MMD Devad */
++	phy_write(phydev, addr, MII_MMD_CTRL, devad);
++
++	/* Write the desired MMD register address */
++	phy_write(phydev, addr, MII_MMD_DATA, prtad);
++
++	/* Select the Function : DATA with no post increment */
++	phy_write(phydev, addr, MII_MMD_CTRL, (devad | MII_MMD_CTRL_NOINCR));
++
++	/* Read the content of the MMD's selected register */
++	value = phy_read(phydev, addr, MII_MMD_DATA);
++	return value;
++}
++
++/**
++ * phy_write_mmd_indirect - writes data to the MMD registers
++ * @phydev: The PHY device
++ * @prtad_mmd_reg: MMD Address
++ * @devad_mmd: MMD DEVAD
++ * @addr: PHY address on the MII bus
++ * @data: data to write in the MMD register
++ *
++ * Description: Write data from the MMD registers of the specified
++ * phy address.
++ * To write these registers we have:
++ * 1) Write reg 13 // DEVAD
++ * 2) Write reg 14 // MMD Address
++ * 3) Write reg 13 // MMD Data Command for MMD DEVAD
++ * 3) Write reg 14 // Write MMD data
++ */
++void phy_write_mmd_indirect(struct phy_device *phydev, int prtad_mmd_reg,
++			    int devad_mmd, u32 data)
++{
++	u32 devad = 0;
++	/* Write the desired MMD Devad */
++	phy_write(phydev, devad, MII_MMD_CTRL, devad_mmd);
++
++	/* Write the desired MMD register address */
++	phy_write(phydev, devad, MII_MMD_DATA, prtad_mmd_reg);
++
++	/* Select the Function : DATA with no post increment */
++	phy_write(phydev, devad, MII_MMD_CTRL, (devad_mmd | MII_MMD_CTRL_NOINCR));
++
++	/* Write the data into MMD's selected register */
++	phy_write(phydev, devad, MII_MMD_DATA, data);
++}
++
+ int genphy_config(struct phy_device *phydev)
+ {
+ 	int val;
+ 	u32 features;
++#if 0
++#ifndef NO_SILC_MOD
++#if 0
++	printf("%s enabling microchip ksz phy pad skew\n", __func__);
++	kszphy_extended_write(phydev, MII_KSZPHY_CLK_CONTROL_PAD_SKEW, 0x0070);
++	kszphy_extended_write(phydev, MII_KSZPHY_RX_DATA_PAD_SKEW, 0x7777);
++	kszphy_extended_write(phydev, MII_KSZPHY_TX_DATA_PAD_SKEW, 0x0000);
++	kszphy_extended_write(phydev, MII_KSZPHY_CLOCK_PAD_SKEW, 0x03F6);
++#else
++	printf("%s setting pad skew\n", __func__);
++	phy_write_mmd_indirect(phydev, RGMII_CONTROL_PAD_SKEW, MDIO_MMD_2, 0x0070);
++	phy_write_mmd_indirect(phydev, RGMII_RX_DATA_PAD_SKEW, MDIO_MMD_2, 0x7777);
++	phy_write_mmd_indirect(phydev, RGMII_TX_DATA_PAD_SKEW, MDIO_MMD_2, 0x0000);
++	phy_write_mmd_indirect(phydev, RGMII_CLOCK_PAD_SKEW, MDIO_MMD_2, 0x03F6);
+ 
++#endif
++#endif
++#endif
+ 	features = (SUPPORTED_TP | SUPPORTED_MII
+ 			| SUPPORTED_AUI | SUPPORTED_FIBRE |
+ 			SUPPORTED_BNC);

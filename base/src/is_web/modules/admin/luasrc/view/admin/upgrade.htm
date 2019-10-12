@@ -1,0 +1,191 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2009 Jo-Philipp Wich <xm@subsignal.org>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+
+<%+header%>
+
+<h2><a id="content" name="content"><%:Upgrade / Switch%></a></h2>
+
+<% if step == 1 then %>
+	<p>
+		<%:Current software info %>:
+		<div><textarea readonly="true" style="height:200px; width:600px;"><%=current_info.output%></textarea></div>
+		<br/>
+	</p>
+
+	<% if upg_flag == 1 then %>
+	<fieldset class="cbi-section">
+		<legend>Switch</legend>
+		<div class="cbi-section-node">
+
+	<p>
+		<span>
+			<%:Switch the backup software to current software, and reboot the system.%>
+			<br>
+			<%:If the switched system can not boot up after reboot, please do a manual reset, then the system will revert the switch.%>
+		</span>
+	</p>
+	<form method="post" action="<%=controller%>/admin/system/switch" enctype="multipart/form-data">
+		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Switch%>" onclick="return confirm('Do you want switch current and backup software?');"/>
+		<span style="color:red;"><%:Warning: The backup software might not work with current configuration!%></span>
+	</form>
+
+		</div>
+		<br>
+	</fieldset>
+
+	<fieldset class="cbi-section">
+		<legend>Upgrade</legend>
+		<div class="cbi-section-node">
+
+	<p>
+		<span><%:Upload a software image file to upgrade the device. %></span>
+		<% if verify_result.err_code and verify_result.err_code ~= 0 then %>
+		<br/>
+		<span style='color: red'>
+			<%:Verify uploaded image error:%>
+			<br/>
+			<%=verify_result.output%>
+			<br/>
+			<%:Please upload a right image.%>
+		<span>
+		<% end %>
+	</p>
+	<form method="post" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+		<%:Image File:%>
+		<input type="hidden" name="step" value="2" />
+		<input type="file" size="100" name="image" />
+		<br/><br/><br/>
+		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Upload image%>" />
+	</form>
+
+		</div>
+		<br>
+	</fieldset>
+
+	<% elseif  upg_flag == 2 then %>
+
+	<p>
+	<%:System software upgrade has finished, please reboot the system for the upgrade to take effect.%>
+	</p>
+	<form method="post" action="<%=controller%>/admin/system/reboot" enctype="multipart/form-data">
+		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Reboot%>" />
+	</form>
+
+	<% else %>
+
+		<div class="error">
+			<%_ Sorry, the image uploaded is either corrupted or not designed for this platform.<br/>
+				Please contact support. %>
+		</div>
+
+	<% end %>
+
+<% elseif step == 2 then %>
+	<p>
+		<%_ The flash image was uploaded and verified, please check version to ensure it is the right image. <br />
+			Uploaded software version %>:
+			<div><textarea readonly="true" style="height:200px; width:600px;"><%=verify_result.output%></textarea></div>
+			<br />
+			<%:Click "Proceed" to start the system software upgrade process, it might take several minutes to finish.%>
+			<br />
+		<%
+			local key_mod = {"uboot", "dtb", "fman", "rcw"}
+			for k,v in pairs(key_mod) do
+				if verify_result.output:find(v) then
+		%>
+			<span style='color: red'>
+			<%_ WARNING!! <br />
+				THE UPLOADED IMAGE CONTAINS NEW BOOT FIRMWARE, BOOT FIRMWARE CAN NOT BE DOWNGRADED AFTERWARDS. <br />
+				PLEASE TAKE EXTRA CATUTION AND DO NOT POWEROFF THE DEVICE DURING UPGRADE! %>
+			</span>
+		<%
+					break
+				end
+			end
+		%>
+	</p>
+	<div class="cbi-page-actions right">
+		<form style="display:inline">
+			<input type="hidden" name="step" value="3" />
+<% if verify_result.output:find("MANUFACTURE") then %>
+			<input type="hidden" name="manufacture" value="1" />
+<% end %>
+			<input class="cbi-button cbi-button-apply" type="submit" name="proceed" value="<%:Proceed%>" />
+		</form>
+		<form style="display:inline">
+			<input type="hidden" name="step" value="1" />
+			<input class="cbi-button cbi-button-reset" type="submit" name="cancel" value="<%:Cancel%>" />
+		</form>
+	</div>
+
+<% elseif step == 3 then %>
+
+	<p>
+	<%:Upgrade Progress%>:
+	<br />
+	</p>
+
+	<div style="text-align: left; width: 790px;"><span id="status">Not starting</span>:<span id="percent">0</span>%</div>
+	<div style="padding: 2px; width: 800px; border: 1px solid #888;">
+		<div id="progress" style="background-color:blue; width: 0px;">&nbsp;</div>
+	</div>
+
+	<div id="retry_button" style="display:none">
+		<div><span style='color: red'><%:Upgrade failed, please try it again.%></span></div>
+		<form style="display:inline">
+			<input type="hidden" name="step" value="1" />
+			<input class="cbi-button cbi-button-reset" type="submit" value="<%:Retry%>" />
+		</form>
+	</div>
+
+	<div id="reboot_button" style="display:none">
+	    <%:System software upgrade has finished, please reboot the system for the upgrade to take effect.%>
+		<form method="post" action="<%=controller%>/admin/system/reboot" enctype="multipart/form-data">
+			<input class="cbi-button cbi-button-apply" type="submit" value="<%:Reboot%>" />
+		</form>
+	</div>
+
+	<script type="text/javascript">
+		var current = 0;
+		var apply_xhr = new XHR();
+		function refresh(data) {
+			document.getElementById('status').innerHTML = data.status;
+			document.getElementById('percent').innerHTML = data.progress;
+			document.getElementById('progress').style.width = data.progress + '%';
+			if (parseInt(data.progress) == 100)
+				document.getElementById('reboot_button').style.display = 'block';
+			else if (data.status.indexOf("Error") == 0)
+				document.getElementById('retry_button').style.display = 'block';
+		}
+
+		function percent() {
+			apply_xhr.get("<%=controller%>/admin/system/upgrade", "step=4", function(x, data) {
+				if (data[0].hasOwnProperty('status')) {
+					refresh(data[0]);
+					if (parseInt(data[0].progress) < 100 && data[0].status.indexOf("Error") != 0)
+						setTimeout(function(){percent();}, 1000);
+				} else {
+					setTimeout(function(){percent();}, 1000);
+				}
+			});
+		}
+
+		percent();
+		setTimeout(function(){percent();}, 1000);
+	</script>
+
+<% end %>
+<%+footer%>
+

@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+# Start/stop is_netconf
+#
+
+set +e
+#set -x
+
+product=$(cat /etc/product.txt)
+vendor=$(cat /etc/product/vendor)
+
+if [ "${product}" != "UBMC" ] || [ "${vendor}" != "ATT" ]; then
+	exit 0
+fi
+
+vrf_cfg=/tmp/phonehome.vrf
+vrf_cmd=""
+if [ -e ${vrf_cfg} ]; then
+	vrf=$(cat ${vrf_cfg})
+	if [ "" != "${vrf}" ]; then
+		vrf_cmd="ip vrf exec ${vrf}"
+	fi
+fi
+
+start()
+{
+	echo -n "Starting phonehome: "
+	${vrf_cmd} /usr/sbin/ubmc_phonehome.sh start &
+	echo "OK"
+}
+
+stop()
+{
+	echo -n "Stopping phonehome: "
+	killall -q ubmc_phonehome.sh
+	echo "OK"
+}
+
+restart()
+{
+	stop
+	start
+}
+
+case "$1" in
+  start)
+		start
+        ;;
+  stop)
+		stop
+        ;;
+  restart|reload)
+		restart
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

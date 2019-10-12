@@ -1,0 +1,56 @@
+--- linux-custom-orig/drivers/hwmon/ads7828.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/ads7828.c	2018-07-16 13:51:24.687533165 +0800
+@@ -45,6 +45,22 @@
+ #define ADS7828_EXT_VREF_MV_MIN	50	/* External vref min value 0.05V */
+ #define ADS7828_EXT_VREF_MV_MAX	5250	/* External vref max value 5.25V */
+ 
++/*
++ * the real scale ratio is 0.4462
++ *kernel cannot deal with float,so first scale 10 000 
++ *and then divide 10 000
++ */
++#define ADS7830_INDEX_0_SCALE_RATIO 4462 
++
++/*
++ * the real scale ratio is 0.6666
++ *kernel cannot deal with float,so first scale 10 000 
++ *and then divide 10 000
++ */
++#define ADS7830_INDEX_1_SCALE_RATIO 6666
++
++#define ADS7830_SCALE_SIZE 10000
++
+ /* List of supported devices */
+ enum ads7828_chips { ads7828, ads7830 };
+ 
+@@ -70,13 +86,28 @@
+ 	u8 cmd = ads7828_cmd_byte(data->cmd_byte, attr->index);
+ 	unsigned int regval;
+ 	int err;
++    ssize_t n;
+ 
+ 	err = regmap_read(data->regmap, cmd, &regval);
+ 	if (err < 0)
+ 		return err;
+ 
+-	return sprintf(buf, "%d\n",
+-		       DIV_ROUND_CLOSEST(regval * data->lsb_resol, 1000));
++    switch(attr->index){
++        case 0:
++             n = sprintf(buf, "%d\n",
++                   DIV_ROUND_CLOSEST(regval * data->lsb_resol, 1000) * ADS7830_SCALE_SIZE * 10 / ADS7830_INDEX_0_SCALE_RATIO);
++            break;
++        case 1:
++             n = sprintf(buf, "%d\n",
++                   DIV_ROUND_CLOSEST(regval * data->lsb_resol, 1000) * ADS7830_SCALE_SIZE * 10 / ADS7830_INDEX_1_SCALE_RATIO);
++            break;
++        default:
++             n = sprintf(buf, "%d\n",
++                   DIV_ROUND_CLOSEST(regval * data->lsb_resol, 1000) * 10);
++            break;
++    }
++    
++    return n;
+ }
+ 
+ static SENSOR_DEVICE_ATTR(in0_input, S_IRUGO, ads7828_show_in, NULL, 0);

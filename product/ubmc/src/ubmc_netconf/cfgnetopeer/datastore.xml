@@ -1,0 +1,5 @@
+<?xml version="1.0" ?><datastores xmlns="urn:cesnet:tmc:datastores:file">
+  <running lock=""/>
+  <startup lock=""><netopeer xmlns="urn:cesnet:tmc:netopeer:1.0"><modules><module><name>ubmc</name><enabled>true</enabled></module></modules></netopeer></startup>
+  <candidate lock="" modified="false"/>
+</datastores>

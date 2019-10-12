@@ -1,0 +1,2 @@
+board/silicom/ubmc_eval
+arch/arm/dts/ubmc_eval.dts

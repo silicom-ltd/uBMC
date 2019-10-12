@@ -1,0 +1,131 @@
+diff -uNr busybox-1.23.1/init/init.c busybox-1.23.1-update-inittab/init/init.c
+--- busybox-1.23.1/init/init.c	2015-01-27 16:49:43.000000000 +0800
++++ busybox-1.23.1-update-inittab/init/init.c	2016-03-10 09:55:15.317599993 +0800
+@@ -642,6 +642,7 @@
+ 		a->command, a->action_type, a->terminal);
+ }
+ 
++
+ /* NOTE that if CONFIG_FEATURE_USE_INITTAB is NOT defined,
+  * then parse_inittab() simply adds in some default
+  * actions (i.e., runs INIT_SCRIPT and then starts a pair
+@@ -958,6 +959,104 @@
+ }
+ #endif
+ 
++#if ENABLE_FEATURE_USE_INITTAB
++#define ENABLE_SILICOM_UPDATE_INITTAB 1
++#if ENABLE_SILICOM_UPDATE_INITTAB
++static int get_console_info(char* speed, char* type)
++{
++	FILE *fp = NULL;
++	char buff[512];
++	char *cur, *start, *end;
++
++	fp = fopen_for_read("/proc/cmdline");
++	if(!fp)
++		return -1;
++	if(fgets(buff, 512, fp))
++	{
++//		message(L_CONSOLE | L_LOG, "Get buff %s", buff);
++		cur = strstr(buff, "ttyS0,");
++		if(cur)
++		{
++			start = cur + strlen("ttyS0,");
++			end = strstr(start, "n8");
++			if(end)
++			{
++				*end = 0;
++				strcpy(speed, start);
++				start = end + strlen("n8");
++				end = strstr(start, " ");
++				if(end)
++				{
++					*end = 0;
++					strcpy(type, start);
++					fclose(fp);
++					return 0;
++				}
++			}
++		}
++	}
++	fclose(fp);
++	return -1;
++}
++
++static int update_inittab(void)
++{
++	FILE *fp = NULL;
++	FILE *fp_bak = NULL;
++	char buff[512];
++	char speed[20];
++	char termtype[20];
++	int changed = 0;
++
++	if(get_console_info(speed, termtype) != 0)
++	{
++		message(L_CONSOLE | L_LOG, "Can not get terminal info from /proc/cmdline");
++		return -1;
++	}
++//	message(L_CONSOLE | L_LOG, "Get tty info speed %s type %s", speed, termtype);
++	sprintf(buff, "TERM=%s", termtype);
++	putenv((char*)buff);
++
++	fp = fopen_for_read("/etc/inittab");
++	if(!fp)
++	{
++		message(L_CONSOLE | L_LOG, "Can not open /etc/inittab");
++		return -1;
++	}
++	fp_bak = fopen_for_write("/etc/inittab.bak");
++	if(!fp_bak)
++	{
++		fclose(fp);
++		message(L_CONSOLE | L_LOG, "Can not open /etc/inittab.bak");
++		return -1;
++	}
++	while(fgets(buff, 512, fp))
++	{
++		if (strncmp(buff, "ttyS0::", 7) == 0 &&
++				(!strstr(buff, speed) || !strstr(buff, termtype)))
++		{
++			fprintf(fp_bak, "ttyS0::respawn:/sbin/getty -L ttyS0 %s %s # GENERIC_SERIAL\n", speed, termtype);
++//			message(L_CONSOLE | L_LOG, "Change tty speed %s type %s\n", speed, termtype);
++			changed = 1;
++		}
++		else
++			fprintf(fp_bak, "%s", buff);
++	}
++	fclose(fp);
++	fclose(fp_bak);
++	if(changed)
++	{
++		return rename("/etc/inittab.bak", "/etc/inittab");
++	}
++	else
++	{
++		remove("/etc/inittab.bak");
++		return -1;
++	}
++}
++#endif
++#endif
++
+ static int check_delayed_sigs(void)
+ {
+ 	int sigs_seen = 0;
+@@ -1190,6 +1289,14 @@
+ 	/* Next run anything to be run only once */
+ 	run_actions(ONCE);
+ 
++#if ENABLE_SILICOM_UPDATE_INITTAB
++	if(update_inittab() == 0)
++	{
++		message(L_CONSOLE | L_LOG, "Update inittab from /config/inittab!");
++		reload_inittab();
++	}
++#endif
++
+ 	/* Now run the looping stuff for the rest of forever.
+ 	 */
+ 	while (1) {

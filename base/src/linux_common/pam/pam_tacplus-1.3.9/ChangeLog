@@ -1,0 +1,217 @@
+1.3.9
+* Close file descriptor leak
+* Add client_connect_source_address
+
+1.3.8
+* A lot of cleanups and improvements by Walter de Jong <walter@heiho.net>
+* Fixed build instruction in spec file and INSTALL
+* Active_server can not be a pointer, data lost after authentication.
+* Added port option per server, thanks to Luc Ducazu <lducazu@gmail.com>
+* Fixed missing FIONREAD for solaris
+* Rearranged header file include for libtac.h, fixes AIX compile problems
+* Renamed rem_addr, rem_addr_len to r_addr and r_addr_len
+
+1.3.7
+* Tac_encryption fully handled by libtac no need to enable it manually
+* Fixed connection handling in _pam_account,
+  thanks to James Allwright <jamesallwright@yahoo.co.uk>
+* Handle attributes which contains no value,
+  thanks to James Allwright <jamesallwright@yahoo.co.uk>
+* Global variables tac_login and tac_secret not static anymore,
+  pointed out by James Allwright <jamesallwright@yahoo.co.uk>
+* version.c: libtac version 1.8.1
+* pam_tacplus.c: moved debug message after active_server validation, avoiding
+  null pointer exception
+* attrib.c: explicity setting *attr to NULL after free(),
+  thanks to Anthony Low <anthonyl@xkl.com>
+
+1.3.6
+* Added libpam-runtime support for debian
+* Added use_first_pass and try_first_pass option, thanks to Luc Ducazu <lducazu@gmail.com>
+* Changed e-mail adres to jeroen@jeroennijhof.nl
+* Improved accounting, added cmd attribute for command logging
+* Added tac_acct_flag2str()
+* Renamed tac_account_read, tac_account_send to tac_acct_read and tac_acct_send
+* pam_tacplus.spec.in: fixed static library path and pam_tacplus.so location
+* Debian packaging improvements
+
+1.3.5
+* This version will be dedicated to Darren Besler, thank you for your major 
+  contribution!
+
+* libtac version is now 1.7.1
+* magic.c: magic_inited is only used for linux
+* Finally got rid of all goto illness!
+* Changed tabsize to 4
+* Fixed missing xalloc.h in authen_s.c
+* Get PAM_RHOST from PAM stack and use it as rem_addr
+* Added _pam_get_rhost() and _pam_get_user()
+
+* The following is done by Darren Besler:
+- add ability to set more elements of tacacs+ packet from parameters or globals
+- cleanup messaging to be consistent with function and presentation format
+- cleanup how strings are handled and returned
+- acct and author read require areply.msg to be freed by caller now
+- cast return values
+- added port # to formatted IP address
+- add timeout on read capability
+- cleanup method messages are returned to caller, including adding a 0 byte
+  0 byte added for safety reasons
+- caller must free areply.msg now.
+- add rem_addr as an argument
+- include rem_addr in packet
+- include ability to set priv_lvl in packet
+- add ability to set authen_service from global variable aot fixed value
+
+Bugs fixed by Darren Besler:
+- cleanup various memory leaks, lost memory, and dangling pointers
+- attrib.c: wasn't preserving '*' separator in attrib.c
+- author_r.c:
+- free attributes for replace status. Was always adding.
+- uncasted char* for length was producing negative length to bcopy for arg len > 127
+- possible null dereference when no separator
+- cont_s.c
+- was creating a new session id, should be using session id from authen start.
+- magic.c
+- magic was returning 0 on first call. Wasn't being initialized properly.
+
+Other changes by Darren Besler:
+* libtac/include/cdefs.h
+- add #ifndef guards
+
+* libtac/include/libtac.h
+- rename #ifndef guard to match filename
+- add extern "C" for C++
+- alter define for TACDEBUG
+- add define for TACSYSLOG
+- alter macro for TACDEBUG to be able to be used at runtime via tac_debug_enable
+- add declarations from tacplus.h not related to protocol
+- add defines for return status codes for library functions
+- add declarations for new additional global variables
+tac_priv_lvl
+tac_authen_method
+tac_authen_service
+tac_debug_enable
+tac_readtimeout_enable
+- revise declarations for functions to that have altered parameters lists, or return value
+
+* libtac/include/tacplus.h
+- move library specific declarations to libtac.h, leaving declarations
+here to be used for protocol specific details
+- add additional declarations for more complete coverage of tacacs+ protocol (v1.78) 
+
+1.3.4
+* removed encrypt option just check if there is a secret (key).
+* removed first_hit option because you can get the same behaviour by using only one server.
+* added multiple secret support,
+  you can now specify different secrets (keys) for different servers.
+* connect.c: improved connection error handling by using getpeername() to check if connection
+  is still valid. This was needed since we are using non-blocking sockets.
+* properly handle multiple servers when authenticating, patch from Gregg Nemas, thanks!
+
+1.3.3
+* pam_tacplus.h: changed bitflags to hex, thanks Jason!
+* Added gitignore for build stuff
+* connect.c: removed ifdef for sys/socket.h, it will be included anyway for other platforms,
+  thanks to Obata Akio for pointing that out.
+* connect.c: improved connection error handling, patch from Martin Volf, thanks!
+
+1.3.2
+* Added autotool configuration files, thanks to Benoit Donneaux <benoit.donneaux@gmail.com>.
+* Added pam_tacplus.spec file, thanks to Benoit Donneaux <benoit.donneaux@gmail.com>.
+* Added license information to all files and the license itself.
+* All AV pairs are now available to the PAM environment. So you can use pam_exec.so or whatever
+  to do something with these. Only available for PAM account.
+* Rewritten attribute loop in function pam_sm_acct_mgmt() for debug and future use
+  of AV pairs.
+* Fixed attribute buffer in author_r.c, this bug cause program stuck when you get
+  AV pairs from the server, reported by Oz Shitrit.
+
+1.3.1
+* Added custom password prompt option
+* Removed password logging when in debug mode
+
+1.3.0
+* Released version 1.3.0 based on 1.2.13.
+  This release finally includes support for TACACS+ chap and login authentication. The
+  default is still pap for backward compatibility.
+
+1.2.13
+* Changed spaces into tabs for pam_tacplus.c so make it more readable
+* Did some minor cleanup
+* Added login option so you can choose which TACACS+ authentication you want to
+  use. You can use pap, chap or login (ascii) at the moment. The default login option is pap.
+* Added cont_s.c needed for TACACS+ login authentication.
+
+1.2.12
+* Missing network byte order convertion to host byte order in function's
+  tac_account_read, tac_authen_pap_read and tac_author_read, reported and
+  patch by Sven van den Steene, thanks!
+* Fixed potential memory leak, when tac_account_read and tac_authen_pap_read are
+  successful msg isn't freed, reported by Sven van den Steene
+
+1.2.11
+* Added NO_STATIC_MODULES to CFLAGS for linking with openpam on netbsd, tested by
+  Fredrik Pettai <pettai@nordu.net>
+* Removed libdl for compiling causing failure on netbsd, reported by
+  Fredrik Pettai <pettai@nordu.net>
+* hdr_check.c: forgot to include stdlib, reported by
+  Fredrik Pettai <pettai@nordu.net>
+* Changed defines to add support for netbsd, fixed by
+  Jeroen Nijhof <jeroen@nijhofnet.nl>
+* magic.c: read() can have a return value, fixed by
+  Jeroen Nijhof <jeroen@nijhofnet.nl>
+* support.c: _pam_log() va_list converted to string with vsnprintf() to support
+  syslog(), we have human readable error's in syslog again, fixed by
+  Jeroen Nijhof <jeroen@nijhofnet.nl>
+
+1.2.10
+  The following changes where made by Jeroen Nijhof <jeroen@nijhofnet.nl>
+* Changed default compile flags to be more compatible
+* Fixed serveral bugs including casts and cleanup's, the code can now compile
+  without any warnings
+* Changed some Makefile definitions to be more compatible with other versions of make
+* Support added for solaris and aix, tested on aix 5.3, solaris 9 and 10. Including
+  standalone version of cdefs.h 
+
+1.2.9
+* Fixed bug with passing username and password, reported by
+  Mark Volpe <volpe.mark@epamail.epa.gov>
+* Fixed bug in passing the remote address, reported by
+  Jason Lambert <jlambert@lambert-comm.net> and
+  Yury Trembach <yt@sns.net.ua>
+* Fixed bug in reception of authorization packet, reported by
+  <svg@disney.surnet.ru>
+
+1.2.8
+* Another bugfix in tty handling - some daemons don't use any terminal, in
+  which case we send "unknown" terminal name to the TACACS+ server
+
+1.2.7
+* Fixed bug in tty determination
+
+1.2.6
+* Better protection against disconnection signals 
+
+1.2.5
+* Fixed bug in task_id initialisation
+
+1.2.4
+* Fixed small bug in accounting
+
+1.2.3
+* upgraded to new libtac version, now pam_tacplus returns the attributes
+  received from server (currently only 'addr' attribute in PAM_RHOST)
+* minor fixes
+
+1.2.2
+* more fixes
+
+1.2.1
+* pam_sm_acct_mgmt() added
+* pam_sm_open_session() added
+* pam_sm_close_session() added
+* minor fixes
+
+1.0.1
+* first working version with pam_sm_authenticate()

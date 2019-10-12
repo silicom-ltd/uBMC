@@ -1,0 +1,38 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2012 Jo-Philipp Wich <xm@subsignal.org>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+-%>
+<style type="text/css">
+.center {
+	width: 1020px;
+	margin: 0 auto;
+	margin-top: 60px;
+	text-align: center;
+}
+.center textarea {
+	width: 1000 !important;
+	height: 600 !important;
+}
+.center div {
+	text-align: right;
+}
+</style>
+<div class="center">
+	<h2>LICENSE AGREEMENT</h2>
+	<textarea><%= cont %></textarea>
+	<hr>
+	<div>
+		<form method="POST" action="<%=REQUEST_URI%>">
+			<input type="submit" name="noaccept" value="I do not accept" />
+			<input type="submit" name="accept" value="I accept" />
+		</form>
+	</div>
+</div>

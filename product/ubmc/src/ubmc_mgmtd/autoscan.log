@@ -1,0 +1,63 @@
+autoscan: warning: missing AC_CHECK_FUNCS([memset]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_action.c:166
+autoscan: warning: missing AC_CHECK_FUNCS([strerror]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_action.c:109
+	mgmtd/src/is_mgmtd_bmc_action.c:120
+autoscan: warning: missing AC_CHECK_FUNCS([strncasecmp]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_status.c:320
+autoscan: warning: missing AC_CHECK_FUNCS([strstr]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_action.c:146
+	mgmtd/src/is_mgmtd_bmc_action.c:150
+	mgmtd/src/is_mgmtd_bmc_action.c:220
+	mgmtd/src/is_mgmtd_bmc_action.c:223
+	mgmtd/src/is_mgmtd_bmc_action.c:227
+	mgmtd/src/is_mgmtd_bmc_action.c:228
+	mgmtd/src/is_mgmtd_bmc_action.c:229
+	mgmtd/src/is_mgmtd_bmc_action.c:233
+	mgmtd/src/is_mgmtd_bmc_action.c:237
+	mgmtd/src/is_mgmtd_bmc_action.c:241
+	mgmtd/src/is_mgmtd_bmc_action.c:271
+	mgmtd/src/is_mgmtd_bmc_action.c:281
+	mgmtd/src/is_mgmtd_bmc_status.c:272
+	mgmtd/src/is_mgmtd_bmc_status.c:363
+autoscan: warning: missing AC_CHECK_FUNCS([strtol]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_action.c:105
+autoscan: warning: missing AC_CHECK_HEADERS([fcntl.h]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_status.c:12
+autoscan: warning: missing AC_CHECK_HEADERS([stdlib.h]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_status.c:14
+autoscan: warning: missing AC_CHECK_HEADERS([unistd.h]) wanted by: 
+	mgmtd/src/is_mgmtd_bmc_status.c:11
+autoscan: warning: missing AC_FUNC_MMAP wanted by: 
+	mgmtd/src/is_mgmtd_bmc_status.c:53
+autoscan: warning: missing AC_PROG_CPP wanted by: 
+	ltmain.sh:2062
+autoscan: warning: missing AC_PROG_CXX wanted by: 
+	ltmain.sh:960
+	ltmain.sh:1380
+	ltmain.sh:1383
+	ltmain.sh:1388
+	ltmain.sh:1388
+	ltmain.sh:1398
+	ltmain.sh:1402
+	ltmain.sh:1405
+	ltmain.sh:1405
+	ltmain.sh:2442
+autoscan: warning: missing AC_PROG_LN_S wanted by: 
+	ltmain.sh:2149
+	ltmain.sh:3720
+	ltmain.sh:9164
+autoscan: warning: missing AC_PROG_RANLIB wanted by: 
+	ltmain.sh:2455
+autoscan: warning: missing AC_TYPE_UINT32_T wanted by: 
+	mgmtd/src/is_mgmtd_bmc_status.c:43
+	mgmtd/src/is_mgmtd_bmc_status.c:68
+	mgmtd/src/is_mgmtd_bmc_status.c:85
+	mgmtd/src/is_mgmtd_bmc_status.c:102
+	mgmtd/src/is_mgmtd_bmc_status.c:126
+	mgmtd/src/is_mgmtd_bmc_status.c:157
+	mgmtd/src/is_mgmtd_bmc_status.c:194
+	mgmtd/src/is_mgmtd_bmc_status.c:279
+	mgmtd/src/is_mgmtd_bmc_status.c:424
+	mgmtd/src/is_mgmtd_bmc_status.c:442
+	mgmtd/src/is_mgmtd_bmc_status.c:451

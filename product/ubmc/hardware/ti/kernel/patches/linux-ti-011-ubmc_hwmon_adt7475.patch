@@ -1,0 +1,22 @@
+--- linux-custom-orig/drivers/hwmon/adt7475.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/adt7475.c	2019-02-22 14:50:07.886564973 +0800
+@@ -164,6 +164,7 @@
+ 	{ "adt7475", adt7475 },
+ 	{ "adt7476", adt7476 },
+ 	{ "adt7490", adt7490 },
++	{ "silc_fan", adt7475 },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(i2c, adt7475_id);
+@@ -185,6 +186,11 @@
+ 		.compatible = "adi,adt7490",
+ 		.data = (void *)adt7490
+ 	},
++	{
++		//add compatibility for UBMC XS system
++		.compatible = "silc_fan",
++		.data = (void *)adt7475
++	},
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(of, adt7475_of_match);

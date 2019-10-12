@@ -1,0 +1,10 @@
+#!/bin/sh
+
+#make copy file, and sync a single command, but return the result of the copy.
+#this is for upgrade operations, so we can track the overrall timing of the emmc copy
+
+cp $1 $2
+cp_result=$?
+sync
+
+exit ${cp_result}

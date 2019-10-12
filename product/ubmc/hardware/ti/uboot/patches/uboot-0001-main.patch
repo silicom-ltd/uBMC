@@ -1,0 +1,362 @@
+diff -uNr -X /home/jeff_zheng/src/buildroot_new/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/include/asm/arch-am33xx/ddr_defs.h uboot-custom-silicom/arch/arm/include/asm/arch-am33xx/ddr_defs.h
+--- uboot-custom-orig/arch/arm/include/asm/arch-am33xx/ddr_defs.h	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/include/asm/arch-am33xx/ddr_defs.h	2018-08-06 21:42:09.008653396 +0800
+@@ -304,12 +304,27 @@
+ 	unsigned long datagiratio0;
+ 	unsigned long datafwsratio0;
+ 	unsigned long datawrsratio0;
++#ifdef CONFIG_TARGET_UBMC335X
++	unsigned long datardsratio1;
++	unsigned long datawdsratio1;
++	unsigned long datawiratio1;
++	unsigned long datagiratio1;
++	unsigned long datafwsratio1;
++	unsigned long datawrsratio1;
++#endif
+ };
+ 
+ /**
+  * Configure DDR CMD control registers
+  */
+ void config_cmd_ctrl(const struct cmd_control *cmd, int nr);
++#ifndef NO_SILC_MOD
++void ddr_dump_cmd_ctrl(int nr);
++void ddr_dump_ddr_data(int nr);
++void ddr_dump_io_ctrl(int nr);
++void ddr_dump_ddr_timing(int nr);
++void ddr_dump_sdram(int nr);
++#endif
+ 
+ /**
+  * Configure DDR DATA registers
+@@ -354,6 +369,14 @@
+ 	unsigned int ddrckectrl;
+ };
+ 
++#ifndef NO_SILC_MOD
++#define emif_ddr_reg_prn(type, reg)	\
++	do { \
++		printf("\t%s:\t%08x @ %08x\n", #reg, readl(&((type)->reg)), (uint32_t)&((type)->reg)); \
++	} while(0)
++
++void emif_ddr_reg_dump(int nr);
++#endif
+ void config_ddr(unsigned int pll, const struct ctrl_ioregs *ioregs,
+ 		const struct ddr_data *data, const struct cmd_control *ctrl,
+ 		const struct emif_regs *regs, int nr);
+diff -uNr -X /home/jeff_zheng/src/buildroot_new/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/include/asm/arch-am33xx/hardware_am33xx.h uboot-custom-silicom/arch/arm/include/asm/arch-am33xx/hardware_am33xx.h
+--- uboot-custom-orig/arch/arm/include/asm/arch-am33xx/hardware_am33xx.h	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/include/asm/arch-am33xx/hardware_am33xx.h	2018-08-06 21:42:09.008653396 +0800
+@@ -46,7 +46,7 @@
+ #define DDR_PHY_DATA_ADDR		0x44E120C8
+ #define DDR_PHY_CMD_ADDR2		0x47C0C800
+ #define DDR_PHY_DATA_ADDR2		0x47C0C8C8
+-#define DDR_DATA_REGS_NR		2
++#define DDR_DATA_REGS_NR		1
+ 
+ #define DDRPHY_0_CONFIG_BASE		(CTRL_BASE + 0x1400)
+ #define DDRPHY_CONFIG_BASE		DDRPHY_0_CONFIG_BASE
+diff -uNr -X /home/jeff_zheng/src/buildroot_new/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/Kconfig uboot-custom-silicom/arch/arm/Kconfig
+--- uboot-custom-orig/arch/arm/Kconfig	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/Kconfig	2018-08-06 21:42:09.007653392 +0800
+@@ -1055,6 +1055,9 @@
+ source "board/ti/am335x/Kconfig"
+ source "board/ti/am43xx/Kconfig"
+ source "board/birdland/bav335x/Kconfig"
++source "board/silicom/ubmc335x/Kconfig"
++source "board/silicom/ubmc_eval/Kconfig"
++source "board/myirtech/myd_j335x/Kconfig"
+ source "board/ti/ti814x/Kconfig"
+ source "board/ti/ti816x/Kconfig"
+ source "board/timll/devkit3250/Kconfig"
+diff -uNr -X /home/jeff_zheng/src/evalbmc/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/mach-omap2/am33xx/board.c uboot-custom-silicom/arch/arm/mach-omap2/am33xx/board.c
+--- uboot-custom-orig/arch/arm/mach-omap2/am33xx/board.c	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/mach-omap2/am33xx/board.c	2018-08-04 21:16:32.273348600 +0800
+@@ -420,6 +420,11 @@
+ 	set_uart_mux_conf();
+ 	setup_early_clocks();
+ 	uart_soft_reset();
++#ifndef NO_SILC_MOD
++	//moved from arch/arm/mach-omap2/boot-common.c
++	preloader_console_init();
++#endif
++
+ #ifdef CONFIG_SPL_BUILD
+ 	/*
+ 	 * Save the boot parameters passed from romcode.
+diff -uNr -X /home/jeff_zheng/src/buildroot_new/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/mach-omap2/am33xx/ddr.c uboot-custom-silicom/arch/arm/mach-omap2/am33xx/ddr.c
+--- uboot-custom-orig/arch/arm/mach-omap2/am33xx/ddr.c	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/mach-omap2/am33xx/ddr.c	2018-08-06 21:42:09.008653396 +0800
+@@ -81,6 +81,7 @@
+  */
+ void config_sdram_emif4d5(const struct emif_regs *regs, int nr)
+ {
++	printf("%s\n", __func__);
+ 	writel(0xA0, &emif_reg[nr]->emif_pwr_mgmt_ctrl);
+ 	writel(0xA0, &emif_reg[nr]->emif_pwr_mgmt_ctrl_shdw);
+ 	writel(regs->zq_config, &emif_reg[nr]->emif_zq_config);
+@@ -134,6 +135,13 @@
+ 		writel(readl(&emif_reg[nr]->emif_ddr_ext_phy_ctrl_36_shdw) |
+ 		       0x100, &emif_reg[nr]->emif_ddr_ext_phy_ctrl_36_shdw);
+ 
++//#ifdef CONFIG_TARGET_UBMC335X
++#if 0
++		puts("Not doing hardware leveling\n");
++#else
++#ifndef NO_SILC_MOD
++		puts("Doing hardware leveling\n");
++#endif
+ 		writel(0x80000000, &emif_reg[nr]->emif_rd_wr_lvl_rmp_ctl);
+ 
+ 		/* Enable read leveling */
+@@ -150,6 +158,7 @@
+ 		/* Check the timeout register to see if leveling is complete */
+ 		if ((readl(&emif_reg[nr]->emif_status) & 0x70) != 0)
+ 			puts("DDR3 H/W leveling incomplete with errors\n");
++#endif
+ 
+ 	} else {
+ 		/* DDR2 */
+@@ -163,6 +172,7 @@
+  */
+ void config_sdram(const struct emif_regs *regs, int nr)
+ {
++	printf("%s\n", __func__);
+ 	if (regs->zq_config) {
+ 		writel(regs->zq_config, &emif_reg[nr]->emif_zq_config);
+ 		writel(regs->sdram_config, &cstat->secure_emif_sdram_config);
+@@ -346,7 +356,9 @@
+ 	if (!data)
+ 		return;
+ 
++#ifndef CONFIG_TARGET_UBMC335X
+ 	for (i = 0; i < DDR_DATA_REGS_NR; i++) {
++#endif
+ 		writel(data->datardsratio0,
+ 			&(ddr_data_reg[nr]+i)->dt0rdsratio0);
+ 		writel(data->datawdsratio0,
+@@ -359,7 +371,24 @@
+ 			&(ddr_data_reg[nr]+i)->dt0fwsratio0);
+ 		writel(data->datawrsratio0,
+ 			&(ddr_data_reg[nr]+i)->dt0wrsratio0);
++#ifndef CONFIG_TARGET_UBMC335X
+ 	}
++#else
++	i=1;
++	writel(data->datardsratio1,
++		&(ddr_data_reg[nr]+i)->dt0rdsratio0);
++	writel(data->datawdsratio1,
++		&(ddr_data_reg[nr]+i)->dt0wdsratio0);
++	writel(data->datawiratio1,
++		&(ddr_data_reg[nr]+i)->dt0wiratio0);
++	writel(data->datagiratio1,
++		&(ddr_data_reg[nr]+i)->dt0giratio0);
++	writel(data->datafwsratio1,
++		&(ddr_data_reg[nr]+i)->dt0fwsratio0);
++	writel(data->datawrsratio1,
++		&(ddr_data_reg[nr]+i)->dt0wrsratio0);
++
++#endif
+ }
+ 
+ void config_io_ctrl(const struct ctrl_ioregs *ioregs)
+@@ -379,3 +408,82 @@
+ 	       &ioctrl_reg->emif_sdram_config_ext);
+ #endif
+ }
++
++#ifndef NO_SILC_MOD
++void ddr_dump_io_ctrl(int nr)
++{
++	printf("%s %u\n", "ddr_cmdtctrl", nr);
++	emif_ddr_reg_prn(ioctrl_reg, cm0ioctl);
++	emif_ddr_reg_prn(ioctrl_reg, cm1ioctl);
++	emif_ddr_reg_prn(ioctrl_reg, cm2ioctl);
++	emif_ddr_reg_prn(ioctrl_reg, dt0ioctl);
++	emif_ddr_reg_prn(ioctrl_reg, dt1ioctl);
++#ifdef CONFIG_AM43XX
++	emif_ddr_reg_prn(ioctrl_reg, dt2ioctrl);
++	emif_ddr_reg_prn(ioctrl_reg, dt3ioctrl);
++	emif_ddr_reg_prn(ioctrl_reg, emif_sdram_config_ext);
++#endif
++
++}
++void ddr_dump_cmd_ctrl(int nr)
++{
++	printf("%s %u\n", "ddr_cmd_regs", nr);
++	emif_ddr_reg_prn(ddr_cmd_reg[nr], cm0csratio);
++	emif_ddr_reg_prn(ddr_cmd_reg[nr], cm0iclkout);
++
++	emif_ddr_reg_prn(ddr_cmd_reg[nr], cm1csratio);
++	emif_ddr_reg_prn(ddr_cmd_reg[nr], cm1iclkout);
++
++	emif_ddr_reg_prn(ddr_cmd_reg[nr], cm2csratio);
++	emif_ddr_reg_prn(ddr_cmd_reg[nr], cm2iclkout);
++}
++void ddr_dump_ddr_data(int nr)
++{
++	int i;
++	struct ddr_data_regs* p_reg;
++	for (i = 0; i < DDR_DATA_REGS_NR; i++) {
++		printf("%s %u.%u\n", "ddr_data_regs", nr, i);
++		p_reg = ddr_data_reg[nr];
++		p_reg = p_reg + i;
++		emif_ddr_reg_prn(p_reg,dt0rdsratio0);
++		emif_ddr_reg_prn(p_reg,dt0wdsratio0);
++		emif_ddr_reg_prn(p_reg,dt0wiratio0);
++		emif_ddr_reg_prn(p_reg,dt0giratio0);
++		emif_ddr_reg_prn(p_reg,dt0fwsratio0);
++		emif_ddr_reg_prn(p_reg,dt0wrsratio0);
++	}
++}
++void ddr_dump_ddr_timing(int nr)
++{
++	printf("%s %u\n", "emif_reg", nr);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_tim_1);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_tim_1_shdw);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_tim_2);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_tim_2_shdw);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_tim_3);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_tim_3_shdw);
++}
++
++void ddr_dump_sdram(int nr)
++{
++	printf("%s %u\n", "emif_reg", nr);
++	emif_ddr_reg_prn(emif_reg[nr], emif_zq_config);
++	emif_ddr_reg_prn(cstat, secure_emif_sdram_config);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_config);
++
++	/* Trigger initialization */
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_ref_ctrl);
++
++	/* Write proper sdram_ref_cref_ctrl value */
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_ref_ctrl);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_ref_ctrl_shdw);
++
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_ref_ctrl);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_ref_ctrl_shdw);
++	emif_ddr_reg_prn(emif_reg[nr], emif_sdram_config);
++
++	/* Write REG_COS_COUNT_1, REG_COS_COUNT_2, and REG_PR_OLD_COUNT. */
++	emif_ddr_reg_prn(emif_reg[nr], emif_l3_config);
++}
++
++#endif
+diff -uNr -X /home/jeff_zheng/src/buildroot_new/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/mach-omap2/am33xx/emif4.c uboot-custom-silicom/arch/arm/mach-omap2/am33xx/emif4.c
+--- uboot-custom-orig/arch/arm/mach-omap2/am33xx/emif4.c	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/mach-omap2/am33xx/emif4.c	2018-08-06 21:42:09.009653400 +0800
+@@ -96,6 +96,19 @@
+ {
+ }
+ 
++#ifndef NO_SILC_MOD
++
++void emif_ddr_reg_dump(int nr)
++{
++	ddr_dump_cmd_ctrl(nr);
++	ddr_dump_io_ctrl(nr);
++	ddr_dump_ddr_data(nr);
++	ddr_dump_sdram(nr);
++	ddr_dump_ddr_timing(nr);
++}
++
++#endif
++
+ void config_ddr(unsigned int pll, const struct ctrl_ioregs *ioregs,
+ 		const struct ddr_data *data, const struct cmd_control *ctrl,
+ 		const struct emif_regs *regs, int nr)
+@@ -137,9 +150,13 @@
+ 	/* Program EMIF instance */
+ 	config_ddr_phy(regs, nr);
+ 	set_sdram_timings(regs, nr);
++	printf("emif_rev %u\n", get_emif_rev(EMIF1_BASE));
++
+ 	if (get_emif_rev(EMIF1_BASE) == EMIF_4D5)
+ 		config_sdram_emif4d5(regs, nr);
++
+ 	else
+ 		config_sdram(regs, nr);
++
+ }
+ #endif
+diff -uNr -X /home/jeff_zheng/src/buildroot_new/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/mach-omap2/am33xx/Kconfig uboot-custom-silicom/arch/arm/mach-omap2/am33xx/Kconfig
+--- uboot-custom-orig/arch/arm/mach-omap2/am33xx/Kconfig	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/mach-omap2/am33xx/Kconfig	2018-08-06 21:42:09.008653396 +0800
+@@ -57,6 +57,24 @@
+ 
+ 	  For more information, visit: http://birdland.com/oem
+ 
++config TARGET_MYD_J335X
++	bool "Support myd_j335x"
++	select DM
++	select DM_SERIAL
++	select SPL
++
++config TARGET_UBMC_EVAL
++	bool "Support ubmc_eval"
++	select DM
++	select DM_SERIAL
++	select SPL
++
++config TARGET_UBMC335X
++	bool "Support ubmc335x"
++	select DM
++	select DM_SERIAL
++	select SPL
++
+ config TARGET_CM_T335
+ 	bool "Support cm_t335"
+ 	select DM
+diff -uNr -X /home/jeff_zheng/src/ubmc_clean/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/arch/arm/mach-omap2/boot-common.c uboot-custom-silicom/arch/arm/mach-omap2/boot-common.c
+--- uboot-custom-orig/arch/arm/mach-omap2/boot-common.c	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/mach-omap2/boot-common.c	2018-07-24 11:30:38.584858106 +0800
+@@ -179,7 +179,10 @@
+ void spl_board_init(void)
+ {
+ 	/* Prepare console output */
++#ifdef NO_SILC_MOD
++	//moved to an earlier stage for debugging
+ 	preloader_console_init();
++#endif
+ 
+ #if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_SPL_ONENAND_SUPPORT)
+ 	gpmc_init();
+diff -uNr -X /home/jeff_zheng/src/evalbmc/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/.gitignore uboot-custom-silicom/.gitignore
+--- uboot-custom-orig/.gitignore	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/.gitignore	2018-08-04 21:16:32.274348590 +0800
+@@ -55,7 +55,7 @@
+ # Generated include files
+ #
+ /include/config/
+-/include/generated/
++#/include/generated/
+ 
+ # stgit generated dirs
+ patches-*
+Binary files uboot-custom-orig/lib/efi_loader/helloworld.efi and uboot-custom-silicom/lib/efi_loader/helloworld.efi differ
+Binary files uboot-custom-orig/lib/efi_loader/helloworld.so and uboot-custom-silicom/lib/efi_loader/helloworld.so differ
+diff -uNr -X /home/julian_zhu/source/svn/IS/trunk/buildroot/silicom/patch_config/uboot_ubmc/files_uboot_ubmc_main_exc.txt uboot-custom-orig/lib/tiny-printf.c uboot-custom-silicom/lib/tiny-printf.c
+--- uboot-custom-orig/lib/tiny-printf.c	2017-09-27 06:20:59.000000000 +0800
++++ uboot-custom-silicom/lib/tiny-printf.c	2018-10-14 12:13:10.705274560 +0800
+@@ -322,6 +322,9 @@
+ {
+ 	struct printf_info info;
+ 
++#ifdef CONFIG_SILENT_CONSOLE
++	return 0;
++#endif
+ 	info.putc = putc_normal;
+ 	return _vprintf(&info, fmt, va);
+ }
+@@ -333,6 +336,10 @@
+ 	va_list va;
+ 	int ret;
+ 
++#ifdef CONFIG_SILENT_CONSOLE
++	udelay(100);
++        return 0;
++#endif
+ 	info.putc = putc_normal;
+ 	va_start(va, fmt);
+ 	ret = _vprintf(&info, fmt, va);

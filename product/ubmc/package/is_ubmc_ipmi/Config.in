@@ -1,0 +1,5 @@
+config BR2_PACKAGE_IS_UBMC_IPMI
+	bool "is_ubmc_ipmi"
+	help
+	  Silicom IS Ubmc Ipmi Application
+

@@ -1,0 +1,90 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2012 Jo-Philipp Wich <xm@subsignal.org>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+-%>
+
+<%+header%>
+<%
+    local params = ""
+    for i, v in pairs(luci.dispatcher.context.requestpath) do
+        params = params .. v .. "/"
+    end
+	local dpt = require "luci.dispatcher"
+%>
+<form method="post" action="<%=luci.dispatcher.build_url(params)%>">
+	<div class="cbi-map">
+		<h2><a id="content" name="content"><%:Change local user password %></a></h2>
+		<div class="cbi-map-descr">
+			<%:Please enter the new password.%>
+			<%- if err_msg then %>
+			<div class="error"><span style='color: red'><%=err_msg%></span></div>
+			<br />
+			<% end -%>
+		</div>
+		<fieldset class="cbi-section"><fieldset class="cbi-section-node">
+			<%- if all_user then %>
+
+<script type="text/javascript">
+function show_old_passwd(sel) {
+        if (sel.value == "<%=curr_user%>")
+                document.getElementById("div-old-passwd").style.display = "block";
+        else
+                document.getElementById("div-old-passwd").style.display = "none";
+}
+</script>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:User%></label>
+				<div class="cbi-value-field">
+					<select class="cbi-input-select" id="target_user" name="target_user" onchange="show_old_passwd(this)">
+					<option value="$##$">-- choose a local user --</option>
+					<% for k, name in pairs(all_user) do -%><option value="<%=name%>"><%=name%></option><%- end %>
+					</select>
+				</div>
+			</div>
+			<div class="cbi-value" id="div-old-passwd" style="display:none">
+			<% else -%>
+			<div class="cbi-value" id="div-old-passwd">
+			<% end -%>
+				<label class="cbi-value-title"><%:Old Password%></label>
+				<div class="cbi-value-field">
+					<input id="focus_old_password" class="cbi-input-password" type="password" name="old_password" maxlength="40" />
+				</div>
+			</div>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:New Password%></label>
+				<div class="cbi-value-field">
+					<input id="focus_new_password" class="cbi-input-password" type="password" name="new_password" maxlength="40" />
+					<label class="cbi-value-description"><%:6-40 characters, at least contain 3 of the following: [a-z][A-Z][0-9][Nonalphanumeric] %></label>
+				</div>
+			</div>
+			<div class="cbi-value cbi-value-last">
+				<label class="cbi-value-title"><%:Confirmation%></label>
+				<div class="cbi-value-field">
+					<input id="focus_confirm_password" class="cbi-input-password" type="password" name="confirm" />
+				</div>
+			</div>
+		</fieldset>
+	</div>
+
+	<div>
+		<input type="submit" value="<%:Save%>" class="cbi-button cbi-button-apply" />
+		<input type="reset" value="<%:Reset%>" class="cbi-button cbi-button-reset" />
+	</div>
+</form>
+
+<script type="text/javascript">//<![CDATA[
+	var input = document.getElementById('focus_old_password');
+	if (input)
+		input.focus();
+//]]>
+</script>
+
+<%+footer%>

@@ -1,0 +1,193 @@
+#!/bin/sh
+
+# flag
+
+is_upgrade_prepare_workpath()
+{
+    FREE_MEM=$(free -m|grep Mem|awk '{print $4}')
+    #check if we have enough memory for direct memory uprade
+    if [ "${FREE_MEM}" -lt $((${IS_UPGRADE_IMG_SIZE}*2 + 70)) ]; then
+        mkdir -p /var/log/upgrade
+        rm -rf /tmp/upgrade
+        ln -s /var/log/upgrade /tmp/upgrade
+    else
+        rm -rf /tmp/upgrade
+    fi
+    mkdir -p ${work_path};
+}
+
+is_mktemp()
+{
+    tmpname=$(mktemp $1)
+    testflag=-f
+    test "$1" == "-d" && testflag=-d
+    while [ ! "${testflag}" "${tmpname}" ] ; do
+        echo "waiting for tmp dir" >&2
+        sleep 1
+    done
+    
+    echo ${tmpname}
+
+}
+
+is_mount()
+{
+    mount $1 $2 && return 0
+    while [ -z "$(mount |grep $2)" ]; do
+        echo "Waiting for mount" >&2
+        mount $1 $2 && return 0
+        sleep 1
+    done
+    return 0
+}
+
+is_read_file_from_part()
+{
+    flag_part=$1
+    flag_name=$2
+    
+    mnt_point=$(is_mktemp -d)
+    is_mount /dev/disk/by-label/${flag_part} ${mnt_point} || error_quit "Failed to mount ${flag_part}"
+    if [ -f ${mnt_point}/${flag_name} ]; then
+        cat ${mnt_point}/${flag_name}
+    else
+        #flag file doesn not exist, may not been created yet.
+        echo "Flag file ${flag_name} not found"
+    fi
+    umount ${mnt_point}
+    rmdir ${mnt_point}
+}
+
+is_write_file_to_part()
+{
+    flag_part=$1
+    flag_name=$2
+    flag_val=$3
+    mnt_point=$(is_mktemp -d)
+    is_mount /dev/disk/by-label/${flag_part} ${mnt_point} || error_quit "Failed to mount ${flag_part}"
+    echo $flag_val > ${mnt_point}/${flag_name} || { umount ${mnt_point}; rmdir ${mnt_point}; error_quit "can not create flag in ${flag_part}"; }
+    sync
+    umount ${mnt_point}
+    rmdir ${mnt_point}
+}
+
+is_read_mmc_addr()
+{
+    read_addr=$1
+    read_unit=$2
+    read_cnt=$3
+    test -b "${sys_mmc_dev}" || error_quit "Can't find device ${sys_mmc_dev}"
+    tmp_value=$(is_mktemp)
+    dd if=${sys_mmc_dev} of=${tmp_value} bs=${read_unit} count=${read_cnt} \
+            skip=$((${read_addr}/${read_unit})) &>/dev/null|| \
+            error_quit "Failed to read ${sys_mmc_dev} at ${read_addr}"
+    cat ${tmp_value}
+    rm -f ${tmp_value}
+}
+
+is_write_mmc_addr()
+{
+    write_addr=$1
+    write_unit=$2
+    write_cnt=$3
+    write_val=$4
+    write_limit=$((${write_unit}*${write_cnt}))
+    test -b "${sys_mmc_dev}" || error_quit "Can't find device ${sys_mmc_dev}"
+    tmp_value=$(is_mktemp)
+    echo "${write_val}" >${tmp_value}
+    val_size=$(stat ${tmp_value}|grep Size:|awk '{print $2}') || error_quit "Failed to get value size from tmp file"
+    test "${val_size}" -gt "${write_limit}" && error_quit "Flag size ${val_size} larger than ${write_limit}"
+    fill_size=$((${write_limit} - ${val_size}))
+    dd if=/dev/zero of=${tmp_value} bs=1 count=${fill_size} seek=${val_size} &>/dev/null || error_quit "Failed to fill zero"
+    dd if=${tmp_value} of=${sys_mmc_dev} bs=${write_unit} count=${write_cnt} \
+            seek=$((${write_addr}/${write_unit})) &>/dev/null || \
+            error_quit "Failed to write ${sys_mmc_dev} at ${write_addr}"
+    rm -f ${tmp_value}
+}
+
+is_upgrade_get_flag()
+{
+    flag_location=$1
+    flag_part=$(echo ${flag_location}|sed "s#/# #"|awk '{print $1}')
+    flag_name=$(echo ${flag_location}|sed "s#/# #"|awk '{print $2}')
+
+    if [ "${flag_part}" == "MMCDEV" ]; then
+        is_read_mmc_addr ${flag_name} 512 1
+    else
+        is_read_file_from_part ${flag_part} ${flag_name}
+    fi
+}
+
+is_upgrade_set_flag()
+{
+    flag_location=$1
+    flag_val=$2
+    flag_part=$(echo ${flag_location}|sed "s#/# #"|awk '{print $1}')
+    flag_name=$(echo ${flag_location}|sed "s#/# #"|awk '{print $2}')
+    if [ "${flag_part}" == "MMCDEV" ]; then
+        is_write_mmc_addr ${flag_name} 512 1 ${flag_val}
+    else
+        is_write_file_to_part ${flag_part} ${flag_name} ${flag_val}
+    fi
+}
+
+#read a flash location to a file
+is_upgrade_get_flash_to_file()
+{
+    flag_location=$1
+    flag_part=$(echo ${flag_location}|sed "s#/# #"|awk '{print $1}')
+    flag_name=$(echo ${flag_location}|sed "s#/# #"|awk '{print $2}')
+    mnt_point=$(is_mktemp -d)
+    is_mount /dev/disk/by-label/${flag_part} ${mnt_point} || error_quit "Failed to mount ${flag_part}" $3
+    if [ -f ${mnt_point}/${flag_name} ]; then
+        if [ $debug_on == "1" ]; then
+            echo "cp -a ${mnt_point}/${flag_name} $2"
+        else
+            cp ${mnt_point}/${flag_name} $2
+        fi
+    else
+        #flag file doesn not exist, may not been created yet.
+        #let's create an empty file
+        echo -n > $2
+    fi
+    umount ${mnt_point}
+    rmdir ${mnt_point}
+}
+
+is_upgrade_burn_flash()
+{
+    img_file=$1
+    dst_location=$2
+    info=$3
+    percent=$4
+    load=$5
+    dst_part=$(echo ${dst_location}|sed "s#/# #"|awk '{print $1}')
+    dst_name=$(echo ${dst_location}|sed "s#/# #"|awk '{print $2}')
+    
+    if [ "${dst_location}" == "mtd0" ]; then
+		modprobe m25p80 || error_quit "Failed to load Flash driver"
+        flashcp ${img_file} /dev/mtd0 || error_quit "Updating ${img_file} failed" $4
+        return 0;
+    fi
+
+    mnt_point=$(is_mktemp -d)
+    is_mount /dev/disk/by-label/${dst_part} ${mnt_point} || error_quit "Failed to mount ${flag_part}" $3
+
+    if [ "$debug_on" == "1" ]; then
+        echo "cp ${img_file} ${mnt_point}/"
+    else
+        is_copy_file_and_sync ${img_file} ${mnt_point}&
+        FLASH_PID=$!
+        for step in `seq 1 $load`; do 
+            output_status $percent "Updating ${info}"
+            sleep 1;
+            percent=$(($percent+1))
+            if [ -z "$(ps|grep is_copy_file_and_sync|grep ${FLASH_PID})" ]; then
+                break
+            fi
+        done
+        wait $! || error_quit "Updating $file failed" $4
+    fi
+    umount ${mnt_point}
+    rmdir ${mnt_point}
+}

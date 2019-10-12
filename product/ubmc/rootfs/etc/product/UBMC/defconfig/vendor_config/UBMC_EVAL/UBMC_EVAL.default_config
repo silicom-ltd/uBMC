@@ -1,0 +1,25 @@
+# NOTICE! DON'T add ANY unnecessary lines after config lines as comments else they will be processed as part of values.
+# Comments can be added before the first config line.
+
+/config/system/misc/hostname,ubmc
+/config/system/misc/login-banner,Silicom UBMC Evaluation Kit
+
+/config/system/mgmt/netdev-list/eth0,
+/config/system/mgmt/netdev-list/eth1,
+/config/system/mgmt/interface-list/eth1,
+/config/system/mgmt/interface-list/eth1/desc,Out-Of-Band
+/config/system/mgmt/interface-list/eth1/ipv4-origin,dhcp
+/config/system/mgmt/interface-list/eth1/ipv4-enabled,true
+/config/system/mgmt/interface-list/eth1/state,true
+/config/snmp/agent/state,false
+/config/bmc,1
+/config/bmc/console,
+/config/bmc/console/log-to-file,true
+/config/bmc/console/log-rotate-num,20
+/config/bmc/console/log-rotate-size,5
+/config/bmc/console/com-speed,115200
+/config/bmc/console/com-data,8
+/config/bmc/console/com-parity,none
+/config/bmc/console/com-stopbits,1
+/config/bmc/console/com-hwflowcrtl,false
+/config/bmc/console/com-swflowcrtl,false

@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Start/stop is_oem
+#
+
+set +e
+#set -x
+
+product=$(cat /etc/product.txt)
+
+case "$1" in
+  start)
+  		is_oem.sh
+        ;;
+  stop)
+        ;;
+  restart|reload)
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

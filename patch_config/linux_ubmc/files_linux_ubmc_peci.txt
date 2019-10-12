@@ -1,0 +1,12 @@
+/include/linux/peci.h
+/include/uapi/linux/peci-ioctl.h
+/drivers/peci/peci-core.c
+/drivers/peci/peci-aspeed.c
+/drivers/peci/peci-smbus.c
+/drivers/peci/Kconfig
+/drivers/peci/Makefile
+/drivers/hwmon/peci-cputemp.c
+/drivers/Kconfig
+/drivers/Makefile
+/drivers/hwmon/Kconfig
+/drivers/hwmon/Makefile

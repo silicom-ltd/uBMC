@@ -1,0 +1,89 @@
+--- linux-custom-orig/drivers/i2c/algos/i2c-algo-bit.c	2017-09-27 05:40:11.000000000 +0800
++++ linux-custom-silicom/drivers/i2c/algos/i2c-algo-bit.c	2018-05-02 15:57:18.920357531 +0800
+@@ -74,6 +74,7 @@
+ static inline void scllo(struct i2c_algo_bit_data *adap)
+ {
+ 	setscl(adap, 0);
++	local_irq_enable();
+ 	udelay(adap->udelay / 2);
+ }
+ 
+@@ -84,7 +85,9 @@
+ static int sclhi(struct i2c_algo_bit_data *adap)
+ {
+ 	unsigned long start;
++	int usecs = 0;
+ 
++	local_irq_disable();
+ 	setscl(adap, 1);
+ 
+ 	/* Not all adapters have scl sense line... */
+@@ -93,6 +96,15 @@
+ 
+ 	start = jiffies;
+ 	while (!getscl(adap)) {
++		/* Try to avoid calling cpu_relax if there's a slow rise
++		 * time on the clock
++		 */
++		for (usecs = 0; !getscl(adap) && usecs < adap->udelay / 2; usecs++) {
++			udelay(1);
++		}
++		if (getscl(adap))
++			goto done;
++
+ 		/* This hw knows how to read the clock line, so we wait
+ 		 * until it actually gets high.  This is safer as some
+ 		 * chips may hold it low ("clock stretching") while they
+@@ -104,8 +116,10 @@
+ 			 */
+ 			if (getscl(adap))
+ 				break;
++			local_irq_enable();
+ 			return -ETIMEDOUT;
+ 		}
++		local_irq_enable();
+ 		cpu_relax();
+ 	}
+ #ifdef DEBUG
+@@ -115,7 +129,7 @@
+ #endif
+ 
+ done:
+-	udelay(adap->udelay);
++	udelay(adap->udelay - usecs);
+ 	return 0;
+ }
+ 
+@@ -145,6 +159,7 @@
+ 	/* assert: scl is low */
+ 	sdalo(adap);
+ 	sclhi(adap);
++	local_irq_enable();
+ 	setsda(adap, 1);
+ 	udelay(adap->udelay);
+ }
+@@ -297,6 +312,7 @@
+ 	}
+ 
+ 	sclhi(adap);
++	local_irq_enable();
+ 	sda = getsda(adap);
+ 	scl = (adap->getscl == NULL) ? 1 : getscl(adap);
+ 	if (!scl) {
+@@ -317,6 +333,7 @@
+ bailout:
+ 	sdahi(adap);
+ 	sclhi(adap);
++	local_irq_enable();
+ 
+ 	if (adap->post_xfer)
+ 		adap->post_xfer(i2c_adap);
+@@ -442,7 +459,7 @@
+ 			if (inval <= 0 || inval > I2C_SMBUS_BLOCK_MAX) {
+ 				if (!(flags & I2C_M_NO_RD_ACK))
+ 					acknak(i2c_adap, 0);
+-				dev_err(&i2c_adap->dev, "readbytes: invalid "
++				dev_info(&i2c_adap->dev, "readbytes: invalid "
+ 					"block length (%d)\n", inval);
+ 				return -EPROTO;
+ 			}

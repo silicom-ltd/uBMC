@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# Start/stop is_netconf
+#
+
+set +e
+#set -x
+
+product=$(cat /etc/product.txt)
+vendor=$(cat /etc/product/vendor)
+
+generate_startup()
+{
+	CONFIG_TOOL=/etc/netopeer/ubmc/ubmc-nc-config
+	DS_FILE=/etc/netopeer/ubmc/datastore.xml
+
+    ${CONFIG_TOOL} -o ${DS_FILE}
+}
+
+run_netopeer()
+{
+	vrf_cfg=/tmp/netconf.vrf
+	vrf_cmd=""
+	if [ -e ${vrf_cfg} ]; then
+		vrf=$(cat ${vrf_cfg})
+		if [ "" != "${vrf}" ]; then
+			echo -n "(vrf=${vrf}) "
+			vrf_cmd="ip vrf exec ${vrf}"
+		fi
+	fi
+	${vrf_cmd} /usr/bin/netopeer-server -d
+}
+
+start()
+{
+	echo -n "Starting netconf: "
+	run_netopeer
+	echo "OK"
+}
+
+stop()
+{
+	echo -n "Stopping netconf: "
+	killall -q netopeer-server
+	echo "OK"
+}
+
+restart()
+{
+	stop
+	start
+}
+
+case "$1" in
+  start)
+		generate_startup
+		start
+        ;;
+  stop)
+		stop
+        ;;
+  restart|reload)
+		restart
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

@@ -1,0 +1,200 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+<%+header%>
+<h2><a id="content" name="content"><%:System Event Log%></a></h2>
+<style type="text/css">
+/** 
+ *	CSS STYLES FOR TABLES 
+ */
+table {
+ 	text-align: left;
+ 	width: 100%;
+ 	border: 0;
+ 	padding: 0;
+ 	margin: 0;
+ 	border-spacing: 0;
+ 	font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+ }
+ 
+/* 
+This is the table headers, aka the first row in our table 
+change to "table tr:first-child tr" if you don't have table headers
+*/
+table tr:first-child th {
+	background: #ffffff;
+	background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjMwJSIgc3RvcC1jb2xvcj0iI2Y2ZjZmNiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjMwJSIgc3RvcC1jb2xvcj0iI2Y2ZjZmNiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlNWU1ZTUiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+	background: -moz-linear-gradient(top,  #ffffff 0%, #f6f6f6 30%, #f6f6f6 30%, #e5e5e5 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(30%,#f6f6f6), color-stop(30%,#f6f6f6), color-stop(100%,#e5e5e5));
+	background: -webkit-linear-gradient(top,  #ffffff 0%,#f6f6f6 30%,#f6f6f6 30%,#e5e5e5 100%);
+	background: -o-linear-gradient(top,  #ffffff 0%,#f6f6f6 30%,#f6f6f6 30%,#e5e5e5 100%);
+	background: -ms-linear-gradient(top,  #ffffff 0%,#f6f6f6 30%,#f6f6f6 30%,#e5e5e5 100%);
+	background: linear-gradient(to bottom,  #ffffff 0%,#f6f6f6 30%,#f6f6f6 30%,#e5e5e5 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e5e5e5',GradientType=0 );
+ 
+	padding: 8px 10px;
+	color: #000;
+	border-top: 1px solid #cecece;
+	border-bottom: 1px solid #E6E6E6;
+ }
+ 
+/* every cell in the table */
+table tr td {
+ 	background-color: #F2F2F2;
+ 	padding: 5px 10px;
+}
+ 
+/* adds a border and a border radius to the top far left cells */
+table tr:first-child th:first-child {
+	border-left: 1px solid #cecece;
+	border-top-left-radius: 5px;
+}
+ 
+/* adds a border and a border radius to the top far right cells */
+table tr:first-child th:last-child {
+	border-right: 1px solid #cecece;
+	border-top-right-radius: 5px;
+}
+ 
+/* adds a left border to all the far left cells*/
+table tr td:first-child {
+ 	border-left: 1px solid #cecece;
+}
+ 
+/* adds a right border to all the far right cells */
+table tr td:last-child {
+	border-right: 1px solid #cecece;
+}
+ 
+/* Add bottom border to all the cells at the last row */
+ table tr:last-child td {
+ 	border-bottom: 1px solid #cecece;
+}
+ 
+/* adds a border radius to the bottom left cell */
+table tr:last-child td:first-child {
+ 	border-bottom-left-radius: 5px;
+}
+ 
+/* adds a border radius to the bottom right cell */
+table tr:last-child td:last-child {
+	border-bottom-right-radius: 5px;
+}
+</style>
+<div id="content_sel">
+<%=msg%>
+<div style="text-align: right;margin: 8px 30px;font-size: 110%;">
+<% if current-1 <=4 then %>
+<%
+local loop = 0
+while loop < count do
+	loop = loop + 1
+	if loop > current + 1 then
+		break
+	end
+	if loop == current then
+%>
+<span style="margin-left: 10px;font-style: italic;"><%=loop%></span>
+<%
+	else
+%>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=loop%>"><%=loop%></a>
+<%
+	end
+end
+%>
+<% else %>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=1">1</a>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=2">2</a>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=3">3</a>
+&nbsp;
+...
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=current-1%>"><%=current-1%></a>
+<span style="margin-left: 10px;font-style: italic;"><%=current%></span>
+<% if current+1 <= count then %>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=current+1%>"><%=current+1%></a>
+<% end %>
+<% end %>
+<% if current >= count - 4 then %>
+<%
+local loop = current+1
+while loop < count do
+	loop = loop +1
+%>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=loop%>"><%=loop%></a>
+<%
+end
+%>
+<% else %>
+&nbsp;
+...
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=count-2%>"><%=count-2%></a>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=count-1%>"><%=count-1%></a>
+<a style="margin-left: 10px;" href="<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=<%=count%>"><%=count%></a>
+<% end %>
+&nbsp;&nbsp;&nbsp;
+Page:
+<select onchange="javascript:window.location.href='<%=luci.dispatcher.build_url('admin/bmc/eventlog/')%>?page=' + this.value;">
+<%
+local loop = 0
+while loop < count do
+        loop = loop + 1
+        if loop == current then
+%>
+<option selected=true><%=loop%></option>
+<%
+        else
+%>
+<option><%=loop%></option>
+<%
+        end
+end
+%>
+</select>
+</div>
+<table>
+	<tr>
+		<th>Timestamp</th>
+		<th>Event</th>
+		<th>Event Code</th>
+		<th>Event Description</th>
+	</tr>
+<% 
+	for num, val in ipairs(events) do
+		if val[4] ~= nil then 
+%>
+<tr>
+	<td><%= val[2] %><%= val[3] %></td>
+<% local luci_util = require 'luci.util' %>
+<% local arr = luci_util.split(val[4], '#') %>
+	<td><%= arr[1] %></td>
+	<td><%= arr[2] %></td>
+	<td><%= val[5] %></td>
+</tr>
+<% 
+		end
+	end 
+%>
+</table>
+<%=msg%>
+
+<div style="text-align: right;margin: 8px 30px;font-size: 110%;">
+	<form method="POST" action="<%=REQUEST_URI%>">
+		<input type="hidden" name="clear" value="1" />
+		<input type="submit" value="Clear Log" onclick="javascript: return confirm('Do you want to clear the event log really?')"/>
+	</form>
+</div>
+</div>
+
+<%+footer%>

@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# console manager        Starts is_console_manager.
+#
+
+umask 077
+
+start() {
+
+
+	echo -n "Starting is_console_manager: "
+
+	if [ ! -c /dev/ttyF0 -a ! -c /dev/uart-sim ];then 
+
+		# Load uart-sim kmod
+		modprobe uart_sim_ubmc.ko
+		echo "load uart-sim kmod"
+	fi
+	#change permission on socket location
+	/usr/bin/is_console_manager &
+        chmod a+rwx /var/run/console_manager_socket
+	echo "OK"
+
+}
+stop() {
+	echo -n "Stopping is_console_manager: "
+
+	if [ -f "/var/run/is_console_manager.lock" ];then
+		rm /var/run/is_console_manager.lock
+	fi
+
+	killall -q is_console_manager
+
+	echo "OK"
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

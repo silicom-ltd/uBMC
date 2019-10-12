@@ -1,0 +1,10 @@
+config BR2_PACKAGE_PERL_TEMPLATE
+	bool "perl-template"
+	depends on !BR2_STATIC_LIBS
+	help
+	  Front-end module to the Template Toolkit
+
+	  https://metacpan.org/release/Template-Toolkit
+
+comment "perl-template needs a toolchain w/ dynamic library"
+	depends on BR2_STATIC_LIBS

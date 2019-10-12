@@ -1,0 +1,3437 @@
+--- linux-custom-orig/include/linux/peci.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/include/linux/peci.h	2018-04-25 22:35:37.950970249 +0800
+@@ -0,0 +1,107 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/* Copyright (c) 2018 Intel Corporation */
++
++#ifndef __LINUX_PECI_H
++#define __LINUX_PECI_H
++
++#include <linux/cdev.h>
++#include <linux/device.h>
++#include <linux/peci-ioctl.h>
++#include <linux/rtmutex.h>
++
++#define PECI_BUFFER_SIZE  32
++#define PECI_NAME_SIZE    32
++
++struct peci_xfer_msg {
++	u8	addr;
++	u8	tx_len;
++	u8	rx_len;
++	u8	tx_buf[PECI_BUFFER_SIZE];
++	u8	rx_buf[PECI_BUFFER_SIZE];
++} __attribute__((__packed__));
++
++struct peci_board_info {
++	char			type[PECI_NAME_SIZE];
++	u8			addr;	/* CPU client address */
++	struct device_node	*of_node;
++};
++
++struct peci_adapter {
++	struct module	*owner;
++	struct rt_mutex	bus_lock;
++	struct device	dev;
++	struct cdev	cdev;
++	int		nr;
++	char		name[PECI_NAME_SIZE];
++	int		(*xfer)(struct peci_adapter *adapter,
++				struct peci_xfer_msg *msg);
++	uint		cmd_mask;
++};
++
++static inline struct peci_adapter *to_peci_adapter(void *d)
++{
++	return container_of(d, struct peci_adapter, dev);
++}
++
++static inline void *peci_get_adapdata(const struct peci_adapter *adapter)
++{
++	return dev_get_drvdata(&adapter->dev);
++}
++
++static inline void peci_set_adapdata(struct peci_adapter *adapter, void *data)
++{
++	dev_set_drvdata(&adapter->dev, data);
++}
++
++struct peci_client {
++	struct device		dev;		/* the device structure */
++	struct peci_adapter	*adapter;	/* the adapter we sit on */
++	u8			addr;		/* CPU client address */
++	u8			idx;		/* device index */
++	char			name[PECI_NAME_SIZE];
++};
++
++static inline struct peci_client *to_peci_client(void *d)
++{
++	return container_of(d, struct peci_client, dev);
++}
++
++struct peci_device_id {
++	char		name[PECI_NAME_SIZE];
++	kernel_ulong_t	driver_data;	/* Data private to the driver */
++};
++
++struct peci_driver {
++	int				(*probe)(struct peci_client *client);
++	int				(*remove)(struct peci_client *client);
++	void				(*shutdown)(struct peci_client *client);
++	struct device_driver		driver;
++	const struct peci_device_id	*id_table;
++};
++
++static inline struct peci_driver *to_peci_driver(void *d)
++{
++	return container_of(d, struct peci_driver, driver);
++}
++
++/**
++ * module_peci_driver() - Helper macro for registering a modular PECI driver
++ * @__peci_driver: peci_driver struct
++ *
++ * Helper macro for PECI drivers which do not do anything special in module
++ * init/exit. This eliminates a lot of boilerplate. Each module may only
++ * use this macro once, and calling it replaces module_init() and module_exit()
++ */
++#define module_peci_driver(__peci_driver) \
++	module_driver(__peci_driver, peci_add_driver, peci_del_driver)
++
++/* use a define to avoid include chaining to get THIS_MODULE */
++#define peci_add_driver(driver) peci_register_driver(THIS_MODULE, driver)
++
++int  peci_register_driver(struct module *owner, struct peci_driver *drv);
++void peci_del_driver(struct peci_driver *driver);
++int  peci_add_adapter(struct peci_adapter *adapter);
++void peci_del_adapter(struct peci_adapter *adapter);
++int  peci_command(struct peci_adapter *adpater, enum peci_cmd cmd, void *vmsg);
++
++#endif /* __LINUX_PECI_H */
+--- linux-custom-orig/include/uapi/linux/peci-ioctl.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/include/uapi/linux/peci-ioctl.h	2018-04-25 22:35:37.950970249 +0800
+@@ -0,0 +1,200 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/* Copyright (c) 2018 Intel Corporation */
++
++#ifndef __PECI_IOCTL_H
++#define __PECI_IOCTL_H
++
++#include <linux/ioctl.h>
++#include <linux/types.h>
++
++/* Base Address of 48d */
++#define PECI_BASE_ADDR  0x30  /* The PECI client's default address of 0x30 */
++#define PECI_OFFSET_MAX 8     /* Max numver of CPU clients */
++
++/* PCI Access */
++#define MAX_PCI_READ_LEN 24   /* Number of bytes of the PCI Space read */
++
++#define PCI_BUS0_CPU0      0x00
++#define PCI_BUS0_CPU1      0x80
++#define PCI_CPUBUSNO_BUS   0x00
++#define PCI_CPUBUSNO_DEV   0x08
++#define PCI_CPUBUSNO_FUNC  0x02
++#define PCI_CPUBUSNO       0xcc
++#define PCI_CPUBUSNO_1     0xd0
++#define PCI_CPUBUSNO_VALID 0xd4
++
++/* Package Identifier Read Parameter Value */
++#define PKG_ID_CPU_ID               0x0000  /* CPUID Info */
++#define PKG_ID_PLATFORM_ID          0x0001  /* Platform ID */
++#define PKG_ID_UNCORE_ID            0x0002  /* Uncore Device ID */
++#define PKG_ID_MAX_THREAD_ID        0x0003  /* Max Thread ID */
++#define PKG_ID_MICROCODE_REV        0x0004  /* CPU Microcode Update Revision */
++#define PKG_ID_MACHINE_CHECK_STATUS 0x0005  /* Machine Check Status */
++
++/* RdPkgConfig Index */
++#define MBX_INDEX_CPU_ID            0   /* Package Identifier Read */
++#define MBX_INDEX_VR_DEBUG          1   /* VR Debug */
++#define MBX_INDEX_PKG_TEMP_READ     2   /* Package Temperature Read */
++#define MBX_INDEX_ENERGY_COUNTER    3   /* Energy counter */
++#define MBX_INDEX_ENERGY_STATUS     4   /* DDR Energy Status */
++#define MBX_INDEX_WAKE_MODE_BIT     5   /* "Wake on PECI" Mode bit */
++#define MBX_INDEX_EPI               6   /* Efficient Performance Indication */
++#define MBX_INDEX_PKG_RAPL_PERF     8   /* Pkg RAPL Performance Status Read */
++#define MBX_INDEX_PER_CORE_DTS_TEMP 9   /* Per Core DTS Temperature Read */
++#define MBX_INDEX_DTS_MARGIN        10  /* DTS thermal margin */
++#define MBX_INDEX_SKT_PWR_THRTL_DUR 11  /* Socket Power Throttled Duration */
++#define MBX_INDEX_CFG_TDP_CONTROL   12  /* TDP Config Control */
++#define MBX_INDEX_CFG_TDP_LEVELS    13  /* TDP Config Levels */
++#define MBX_INDEX_DDR_DIMM_TEMP     14  /* DDR DIMM Temperature */
++#define MBX_INDEX_CFG_ICCMAX        15  /* Configurable ICCMAX */
++#define MBX_INDEX_TEMP_TARGET       16  /* Temperature Target Read */
++#define MBX_INDEX_CURR_CFG_LIMIT    17  /* Current Config Limit */
++#define MBX_INDEX_DIMM_TEMP_READ    20  /* Package Thermal Status Read */
++#define MBX_INDEX_DRAM_IMC_TMP_READ 22  /* DRAM IMC Temperature Read */
++#define MBX_INDEX_DDR_CH_THERM_STAT 23  /* DDR Channel Thermal Status */
++#define MBX_INDEX_PKG_POWER_LIMIT1  26  /* Package Power Limit1 */
++#define MBX_INDEX_PKG_POWER_LIMIT2  27  /* Package Power Limit2 */
++#define MBX_INDEX_TDP               28  /* Thermal design power minimum */
++#define MBX_INDEX_TDP_HIGH          29  /* Thermal design power maximum */
++#define MBX_INDEX_TDP_UNITS         30  /* Units for power/energy registers */
++#define MBX_INDEX_RUN_TIME          31  /* Accumulated Run Time */
++#define MBX_INDEX_CONSTRAINED_TIME  32  /* Thermally Constrained Time Read */
++#define MBX_INDEX_TURBO_RATIO       33  /* Turbo Activation Ratio */
++#define MBX_INDEX_DDR_RAPL_PL1      34  /* DDR RAPL PL1 */
++#define MBX_INDEX_DDR_PWR_INFO_HIGH 35  /* DRAM Power Info Read (high) */
++#define MBX_INDEX_DDR_PWR_INFO_LOW  36  /* DRAM Power Info Read (low) */
++#define MBX_INDEX_DDR_RAPL_PL2      37  /* DDR RAPL PL2 */
++#define MBX_INDEX_DDR_RAPL_STATUS   38  /* DDR RAPL Performance Status */
++#define MBX_INDEX_DDR_HOT_ABSOLUTE  43  /* DDR Hottest Dimm Absolute Temp */
++#define MBX_INDEX_DDR_HOT_RELATIVE  44  /* DDR Hottest Dimm Relative Temp */
++#define MBX_INDEX_DDR_THROTTLE_TIME 45  /* DDR Throttle Time */
++#define MBX_INDEX_DDR_THERM_STATUS  46  /* DDR Thermal Status */
++#define MBX_INDEX_TIME_AVG_TEMP     47  /* Package time-averaged temperature */
++#define MBX_INDEX_TURBO_RATIO_LIMIT 49  /* Turbo Ratio Limit Read */
++#define MBX_INDEX_HWP_AUTO_OOB      53  /* HWP Autonomous Out-of-band */
++#define MBX_INDEX_DDR_WARM_BUDGET   55  /* DDR Warm Power Budget */
++#define MBX_INDEX_DDR_HOT_BUDGET    56  /* DDR Hot Power Budget */
++#define MBX_INDEX_PKG_PSYS_PWR_LIM3 57  /* Package/Psys Power Limit3 */
++#define MBX_INDEX_PKG_PSYS_PWR_LIM1 58  /* Package/Psys Power Limit1 */
++#define MBX_INDEX_PKG_PSYS_PWR_LIM2 59  /* Package/Psys Power Limit2 */
++#define MBX_INDEX_PKG_PSYS_PWR_LIM4 60  /* Package/Psys Power Limit4 */
++#define MBX_INDEX_PERF_LIMIT_REASON 65  /* Performance Limit Reasons */
++
++/* WrPkgConfig Index */
++#define MBX_INDEX_DIMM_AMBIENT 19
++#define MBX_INDEX_DIMM_TEMP    24
++
++enum peci_cmd {
++	PECI_CMD_XFER = 0,
++	PECI_CMD_PING,
++	PECI_CMD_GET_DIB,
++	PECI_CMD_GET_TEMP,
++	PECI_CMD_RD_PKG_CFG,
++	PECI_CMD_WR_PKG_CFG,
++	PECI_CMD_RD_IA_MSR,
++	PECI_CMD_WR_IA_MSR,
++	PECI_CMD_RD_PCI_CFG,
++	PECI_CMD_WR_PCI_CFG,
++	PECI_CMD_RD_PCI_CFG_LOCAL,
++	PECI_CMD_WR_PCI_CFG_LOCAL,
++	PECI_CMD_MAX
++};
++
++struct peci_ping_msg {
++	__u8 addr;
++} __attribute__((__packed__));
++
++struct peci_get_dib_msg {
++	__u8  addr;
++	__u32 dib;
++} __attribute__((__packed__));
++
++struct peci_get_temp_msg {
++	__u8  addr;
++	__s16 temp_raw;
++} __attribute__((__packed__));
++
++struct peci_rd_pkg_cfg_msg {
++	__u8  addr;
++	__u8  index;
++	__u16 param;
++	__u8  rx_len;
++	__u8  pkg_config[4];
++} __attribute__((__packed__));
++
++struct peci_wr_pkg_cfg_msg {
++	__u8  addr;
++	__u8  index;
++	__u16 param;
++	__u8  tx_len;
++	__u32 value;
++} __attribute__((__packed__));
++
++struct peci_rd_ia_msr_msg {
++	__u8  addr;
++	__u8  thread_id;
++	__u16 address;
++	__u64 value;
++} __attribute__((__packed__));
++
++struct peci_rd_pci_cfg_msg {
++	__u8  addr;
++	__u8  bus;
++	__u8  device;
++	__u8  function;
++	__u16 reg;
++	__u8  pci_config[4];
++} __attribute__((__packed__));
++
++struct peci_rd_pci_cfg_local_msg {
++	__u8  addr;
++	__u8  bus;
++	__u8  device;
++	__u8  function;
++	__u16 reg;
++	__u8  rx_len;
++	__u8  pci_config[4];
++} __attribute__((__packed__));
++
++struct peci_wr_pci_cfg_local_msg {
++	__u8  addr;
++	__u8  bus;
++	__u8  device;
++	__u8  function;
++	__u16 reg;
++	__u8  tx_len;
++	__u32 value;
++} __attribute__((__packed__));
++
++#define PECI_IOC_BASE  0xb6
++
++#define PECI_IOC_PING \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_PING, struct peci_ping_msg)
++
++#define PECI_IOC_GET_DIB \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_GET_DIB, struct peci_get_dib_msg)
++
++#define PECI_IOC_GET_TEMP \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_GET_TEMP, struct peci_get_temp_msg)
++
++#define PECI_IOC_RD_PKG_CFG \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_RD_PKG_CFG, struct peci_rd_pkg_cfg_msg)
++
++#define PECI_IOC_WR_PKG_CFG \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_WR_PKG_CFG, struct peci_wr_pkg_cfg_msg)
++
++#define PECI_IOC_RD_IA_MSR \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_RD_IA_MSR, struct peci_rd_ia_msr_msg)
++
++#define PECI_IOC_RD_PCI_CFG \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_RD_PCI_CFG, struct peci_rd_pci_cfg_msg)
++
++#define PECI_IOC_RD_PCI_CFG_LOCAL \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_RD_PCI_CFG_LOCAL, \
++	      struct peci_rd_pci_cfg_local_msg)
++
++#define PECI_IOC_WR_PCI_CFG_LOCAL \
++	_IOWR(PECI_IOC_BASE, PECI_CMD_WR_PCI_CFG_LOCAL, \
++	      struct peci_wr_pci_cfg_local_msg)
++
++#endif /* __PECI_IOCTL_H */
+--- linux-custom-orig/drivers/peci/peci-core.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/peci/peci-core.c	2018-04-28 13:22:18.336956059 +0800
+@@ -0,0 +1,1295 @@
++// SPDX-License-Identifier: GPL-2.0
++// Copyright (c) 2018 Intel Corporation
++
++#include <linux/crc8.h>
++#include <linux/delay.h>
++#include <linux/fs.h>
++#include <linux/module.h>
++#include <linux/of_device.h>
++#include <linux/peci.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++
++/* Device Specific Completion Code (CC) Definition */
++#define DEV_PECI_CC_SUCCESS          0x40
++#define DEV_PECI_CC_TIMEOUT          0x80
++#define DEV_PECI_CC_OUT_OF_RESOURCE  0x81
++#define DEV_PECI_CC_UNAVAIL_RESOURCE 0x82
++#define DEV_PECI_CC_INVALID_REQ      0x90
++
++/* Completion Code mask to check retry needs */
++#define DEV_PECI_CC_RETRY_CHECK_MASK 0xf0
++#define DEV_PECI_CC_NEED_RETRY       0x80
++
++/* Skylake EDS says to retry for 250ms */
++#define DEV_PECI_RETRY_TIME_MS     250
++#define DEV_PECI_RETRY_INTERVAL_MS 10
++#define DEV_PECI_RETRY_BIT         0x01
++
++#define GET_TEMP_WR_LEN   1
++#define GET_TEMP_RD_LEN   2
++#define GET_TEMP_PECI_CMD 0x01
++
++#define GET_DIB_WR_LEN   1
++#define GET_DIB_RD_LEN   8
++#define GET_DIB_PECI_CMD 0xf7
++
++#define RDPKGCFG_WRITE_LEN     5
++#define RDPKGCFG_READ_LEN_BASE 1
++#define RDPKGCFG_PECI_CMD      0xa1
++
++#define WRPKGCFG_WRITE_LEN_BASE 6
++#define WRPKGCFG_READ_LEN       1
++#define WRPKGCFG_PECI_CMD       0xa5
++
++#define RDIAMSR_WRITE_LEN 5
++#define RDIAMSR_READ_LEN  9
++#define RDIAMSR_PECI_CMD  0xb1
++
++#define WRIAMSR_PECI_CMD  0xb5
++
++#define RDPCICFG_WRITE_LEN 6
++#define RDPCICFG_READ_LEN  5
++#define RDPCICFG_PECI_CMD  0x61
++
++#define WRPCICFG_PECI_CMD  0x65
++
++#define RDPCICFGLOCAL_WRITE_LEN     5
++#define RDPCICFGLOCAL_READ_LEN_BASE 1
++#define RDPCICFGLOCAL_PECI_CMD      0xe1
++
++#define WRPCICFGLOCAL_WRITE_LEN_BASE 6
++#define WRPCICFGLOCAL_READ_LEN       1
++#define WRPCICFGLOCAL_PECI_CMD       0xe5
++
++/* Macro for getting minor revision number from DIB */
++#define GET_MINOR_REV_NUM(x) (((x) >> 8) & 0xF)
++#define GET_MAJOR_REV_NUM(x) (((x) >> 16) & 0xF)
++
++/* CRC8 table for Assure Write Frame Check */
++#define PECI_CRC8_POLYNOMIAL 0x07
++DECLARE_CRC8_TABLE(peci_crc8_table);
++
++static struct device_type peci_adapter_type;
++static struct device_type peci_client_type;
++
++/* Max number of peci cdev */
++#define PECI_CDEV_MAX    16
++
++/* Max index of devices sharing the same client address */
++#define PECI_DEV_IDX_MAX 16
++
++static dev_t peci_devt;
++static bool is_registered;
++
++static DEFINE_MUTEX(core_lock);
++static DEFINE_IDR(peci_adapter_idr);
++
++static ssize_t name_show(struct device *dev,
++			 struct device_attribute *attr,
++			 char *buf)
++{
++	return sprintf(buf, "%s\n", dev->type == &peci_client_type ?
++		       to_peci_client(dev)->name : to_peci_adapter(dev)->name);
++}
++static DEVICE_ATTR_RO(name);
++
++static void peci_client_dev_release(struct device *dev)
++{
++	kfree(to_peci_client(dev));
++}
++
++static struct attribute *peci_device_attrs[] = {
++	&dev_attr_name.attr,
++	NULL
++};
++ATTRIBUTE_GROUPS(peci_device);
++
++static struct device_type peci_client_type = {
++	.groups		= peci_device_groups,
++	.release	= peci_client_dev_release,
++};
++
++static struct peci_client *peci_verify_client(struct device *dev)
++{
++	return (dev->type == &peci_client_type)
++			? to_peci_client(dev)
++			: NULL;
++}
++
++static void peci_adapter_dev_release(struct device *dev)
++{
++	/* do nothing */
++}
++
++static struct attribute *peci_adapter_attrs[] = {
++	&dev_attr_name.attr,
++	NULL
++};
++ATTRIBUTE_GROUPS(peci_adapter);
++
++static struct device_type peci_adapter_type = {
++	.groups		= peci_adapter_groups,
++	.release	= peci_adapter_dev_release,
++};
++
++static struct peci_adapter *peci_verify_adapter(struct device *dev)
++{
++	return (dev->type == &peci_adapter_type)
++			? to_peci_adapter(dev)
++			: NULL;
++}
++
++static struct peci_adapter *peci_get_adapter(int nr)
++{
++	struct peci_adapter *adapter;
++
++	mutex_lock(&core_lock);
++	adapter = idr_find(&peci_adapter_idr, nr);
++	if (!adapter)
++		goto out_unlock;
++
++	if (try_module_get(adapter->owner))
++		get_device(&adapter->dev);
++	else
++		adapter = NULL;
++
++out_unlock:
++	mutex_unlock(&core_lock);
++	return adapter;
++}
++
++static void peci_put_adapter(struct peci_adapter *adapter)
++{
++	if (!adapter)
++		return;
++
++	put_device(&adapter->dev);
++	module_put(adapter->owner);
++}
++
++static u8 peci_aw_fcs(u8 *data, int len)
++{
++	return crc8(peci_crc8_table, data, (size_t)len, 0);
++}
++
++static int __peci_xfer(struct peci_adapter *adapter, struct peci_xfer_msg *msg,
++		       bool do_retry, bool has_aw_fcs)
++{
++	ktime_t start, end;
++	s64 elapsed_ms;
++	int rc = 0;
++
++	/**
++	 * For some commands, the PECI originator may need to retry a command if
++	 * the processor PECI client responds with a 0x8x completion code. In
++	 * each instance, the processor PECI client may have started the
++	 * operation but not completed it yet. When the 'retry' bit is set, the
++	 * PECI client will ignore a new request if it exactly matches a
++	 * previous valid request.
++	 */
++
++	if (do_retry)
++		start = ktime_get();
++
++	do {
++		rc = adapter->xfer(adapter, msg);
++
++		if (!do_retry || rc)
++			break;
++
++		if (msg->rx_buf[0] == DEV_PECI_CC_SUCCESS)
++			break;
++
++		/* Retry is needed when completion code is 0x8x */
++		if ((msg->rx_buf[0] & DEV_PECI_CC_RETRY_CHECK_MASK) !=
++		    DEV_PECI_CC_NEED_RETRY) {
++			rc = -EIO;
++			break;
++		}
++
++		/* Set the retry bit to indicate a retry attempt */
++		msg->tx_buf[1] |= DEV_PECI_RETRY_BIT;
++
++		/* Recalculate the AW FCS if it has one */
++		if (has_aw_fcs)
++			msg->tx_buf[msg->tx_len - 1] = 0x80 ^
++						peci_aw_fcs((u8 *)msg,
++							    2 + msg->tx_len);
++
++		/**
++		 * Retry for at least 250ms before returning an error.
++		 * Retry interval guideline:
++		 *   No minimum < Retry Interval < No maximum
++		 *                (recommend 10ms)
++		 */
++		end = ktime_get();
++		elapsed_ms = ktime_to_ms(ktime_sub(end, start));
++		if (elapsed_ms >= DEV_PECI_RETRY_TIME_MS) {
++			dev_dbg(&adapter->dev, "Timeout retrying xfer!\n");
++			rc = -ETIMEDOUT;
++			break;
++		}
++
++		usleep_range(DEV_PECI_RETRY_INTERVAL_MS * 1000,
++			     (DEV_PECI_RETRY_INTERVAL_MS * 1000) + 1000);
++	} while (true);
++
++	if (rc)
++		dev_dbg(&adapter->dev, "xfer error, rc: %d\n", rc);
++
++	return rc;
++}
++
++static int peci_xfer(struct peci_adapter *adapter, struct peci_xfer_msg *msg)
++{
++	return __peci_xfer(adapter, msg, false, false);
++}
++
++static int peci_xfer_with_retries(struct peci_adapter *adapter,
++				  struct peci_xfer_msg *msg,
++				  bool has_aw_fcs)
++{
++	return __peci_xfer(adapter, msg, true, has_aw_fcs);
++}
++
++static int peci_scan_cmd_mask(struct peci_adapter *adapter)
++{
++	struct peci_xfer_msg msg;
++	int rc = 0;
++	u32 dib;
++
++	/* Update command mask just once */
++	if (adapter->cmd_mask & BIT(PECI_CMD_PING))
++		return 0;
++
++	msg.addr      = PECI_BASE_ADDR;
++	msg.tx_len    = GET_DIB_WR_LEN;
++	msg.rx_len    = GET_DIB_RD_LEN;
++	msg.tx_buf[0] = GET_DIB_PECI_CMD;
++
++	rc = peci_xfer(adapter, &msg);
++	if (rc)
++		return rc;
++
++	dib = msg.rx_buf[0] | (msg.rx_buf[1] << 8) |
++	      (msg.rx_buf[2] << 16) | (msg.rx_buf[3] << 24);
++
++	/* Check special case for Get DIB command */
++	if (dib == 0x00) {
++		dev_dbg(&adapter->dev, "DIB read as 0x00\n");
++		return -EIO;
++	}
++	dev_info(&adapter->dev, "DIB read as 0x%02x Major %x Minor %x\n",
++			dib, GET_MAJOR_REV_NUM(dib), GET_MINOR_REV_NUM(dib));
++
++	/**
++	 * Setting up the supporting commands based on minor revision number.
++	 * See PECI Spec Table 3-1.
++	 */
++	switch (GET_MINOR_REV_NUM(dib)) {
++	case 6:
++		adapter->cmd_mask |= BIT(PECI_CMD_WR_IA_MSR);
++		/* fallthrough */
++	case 5:
++		adapter->cmd_mask |= BIT(PECI_CMD_WR_PCI_CFG);
++		/* fallthrough */
++	case 4:
++		adapter->cmd_mask |= BIT(PECI_CMD_RD_PCI_CFG);
++		/* fallthrough */
++	case 3:
++		adapter->cmd_mask |= BIT(PECI_CMD_RD_PCI_CFG_LOCAL);
++		adapter->cmd_mask |= BIT(PECI_CMD_WR_PCI_CFG_LOCAL);
++		/* fallthrough */
++	case 2:
++		adapter->cmd_mask |= BIT(PECI_CMD_RD_IA_MSR);
++		/* fallthrough */
++	case 1:
++		adapter->cmd_mask |= BIT(PECI_CMD_RD_PKG_CFG);
++		adapter->cmd_mask |= BIT(PECI_CMD_WR_PKG_CFG);
++	}
++
++	adapter->cmd_mask |= BIT(PECI_CMD_GET_TEMP);
++	adapter->cmd_mask |= BIT(PECI_CMD_GET_DIB);
++	adapter->cmd_mask |= BIT(PECI_CMD_PING);
++
++	dev_info(&adapter->dev, "adapter cmd mask %08x\n", adapter->cmd_mask);
++	return rc;
++}
++
++static int peci_cmd_support(struct peci_adapter *adapter, enum peci_cmd cmd)
++{
++	if (!(adapter->cmd_mask & BIT(PECI_CMD_PING)) &&
++	    peci_scan_cmd_mask(adapter) < 0) {
++		dev_dbg(&adapter->dev, "Failed to scan command mask\n");
++		return -EIO;
++	}
++
++	if (!(adapter->cmd_mask & BIT(cmd))) {
++		dev_dbg(&adapter->dev, "Command %d is not supported\n", cmd);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++static int peci_ioctl_ping(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_ping_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++
++	msg.addr   = umsg->addr;
++	msg.tx_len = 0;
++	msg.rx_len = 0;
++
++	return peci_xfer(adapter, &msg);
++}
++
++static int peci_ioctl_get_dib(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_get_dib_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	int rc;
++
++	msg.addr      = umsg->addr;
++	msg.tx_len    = GET_DIB_WR_LEN;
++	msg.rx_len    = GET_DIB_RD_LEN;
++	msg.tx_buf[0] = GET_DIB_PECI_CMD;
++
++	rc = peci_xfer(adapter, &msg);
++	if (rc)
++		return rc;
++
++	umsg->dib = msg.rx_buf[0] | (msg.rx_buf[1] << 8) |
++		     (msg.rx_buf[2] << 16) | (msg.rx_buf[3] << 24);
++
++	return 0;
++}
++
++static int peci_ioctl_get_temp(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_get_temp_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	int rc;
++
++	msg.addr      = umsg->addr;
++	msg.tx_len    = GET_TEMP_WR_LEN;
++	msg.rx_len    = GET_TEMP_RD_LEN;
++	msg.tx_buf[0] = GET_TEMP_PECI_CMD;
++
++	rc = peci_xfer(adapter, &msg);
++	if (rc)
++		return rc;
++
++	umsg->temp_raw = msg.rx_buf[0] | (msg.rx_buf[1] << 8);
++
++	return 0;
++}
++
++static int peci_ioctl_rd_pkg_cfg(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_rd_pkg_cfg_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	int rc = 0;
++
++	/* Per the PECI spec, the read length must be a byte, word, or dword */
++	if (umsg->rx_len != 1 && umsg->rx_len != 2 && umsg->rx_len != 4) {
++		dev_dbg(&adapter->dev, "Invalid read length, rx_len: %d\n",
++			umsg->rx_len);
++		return -EINVAL;
++	}
++
++	msg.addr = umsg->addr;
++	msg.tx_len = RDPKGCFG_WRITE_LEN;
++	/* read lengths of 1 and 2 result in an error, so only use 4 for now */
++	msg.rx_len = RDPKGCFG_READ_LEN_BASE + umsg->rx_len;
++	msg.tx_buf[0] = RDPKGCFG_PECI_CMD;
++	msg.tx_buf[1] = 0x00;         /* request byte for Host ID | Retry bit */
++				      /* Host ID is 0 for PECI 3.0 */
++	msg.tx_buf[2] = umsg->index;            /* RdPkgConfig index */
++	msg.tx_buf[3] = (u8)umsg->param;        /* LSB - Config parameter */
++	msg.tx_buf[4] = (u8)(umsg->param >> 8); /* MSB - Config parameter */
++
++	rc = peci_xfer_with_retries(adapter, &msg, false);
++	if (!rc)
++		memcpy(umsg->pkg_config, &msg.rx_buf[1], umsg->rx_len);
++
++	return rc;
++}
++
++static int peci_ioctl_wr_pkg_cfg(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_wr_pkg_cfg_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	int rc = 0, i;
++
++	/* Per the PECI spec, the write length must be a dword */
++	if (umsg->tx_len != 4) {
++		dev_dbg(&adapter->dev, "Invalid write length, tx_len: %d\n",
++			umsg->tx_len);
++		return -EINVAL;
++	}
++
++	msg.addr = umsg->addr;
++	msg.tx_len = WRPKGCFG_WRITE_LEN_BASE + umsg->tx_len;
++	/* read lengths of 1 and 2 result in an error, so only use 4 for now */
++	msg.rx_len = WRPKGCFG_READ_LEN;
++	msg.tx_buf[0] = WRPKGCFG_PECI_CMD;
++	msg.tx_buf[1] = 0x00;         /* request byte for Host ID | Retry bit */
++				      /* Host ID is 0 for PECI 3.0 */
++	msg.tx_buf[2] = umsg->index;            /* RdPkgConfig index */
++	msg.tx_buf[3] = (u8)umsg->param;        /* LSB - Config parameter */
++	msg.tx_buf[4] = (u8)(umsg->param >> 8); /* MSB - Config parameter */
++	for (i = 0; i < umsg->tx_len; i++)
++		msg.tx_buf[5 + i] = (u8)(umsg->value >> (i << 3));
++
++	/* Add an Assure Write Frame Check Sequence byte */
++	msg.tx_buf[5 + i] = 0x80 ^
++			    peci_aw_fcs((u8 *)&msg, 8 + umsg->tx_len);
++
++	rc = peci_xfer_with_retries(adapter, &msg, true);
++
++	return rc;
++}
++
++static int peci_ioctl_rd_ia_msr(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_rd_ia_msr_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	int rc = 0;
++
++	msg.addr = umsg->addr;
++	msg.tx_len = RDIAMSR_WRITE_LEN;
++	msg.rx_len = RDIAMSR_READ_LEN;
++	msg.tx_buf[0] = RDIAMSR_PECI_CMD;
++	msg.tx_buf[1] = 0x00;
++	msg.tx_buf[2] = umsg->thread_id;
++	msg.tx_buf[3] = (u8)umsg->address;
++	msg.tx_buf[4] = (u8)(umsg->address >> 8);
++
++	rc = peci_xfer_with_retries(adapter, &msg, false);
++	if (!rc)
++		memcpy(&umsg->value, &msg.rx_buf[1], sizeof(uint64_t));
++
++	return rc;
++}
++
++static int peci_ioctl_rd_pci_cfg(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_rd_pci_cfg_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	u32 address;
++	int rc = 0;
++
++	address = umsg->reg;                  /* [11:0]  - Register */
++	address |= (u32)umsg->function << 12; /* [14:12] - Function */
++	address |= (u32)umsg->device << 15;   /* [19:15] - Device   */
++	address |= (u32)umsg->bus << 20;      /* [27:20] - Bus      */
++					      /* [31:28] - Reserved */
++	msg.addr = umsg->addr;
++	msg.tx_len = RDPCICFG_WRITE_LEN;
++	msg.rx_len = RDPCICFG_READ_LEN;
++	msg.tx_buf[0] = RDPCICFG_PECI_CMD;
++	msg.tx_buf[1] = 0x00;         /* request byte for Host ID | Retry bit */
++				      /* Host ID is 0 for PECI 3.0 */
++	msg.tx_buf[2] = (u8)address;         /* LSB - PCI Config Address */
++	msg.tx_buf[3] = (u8)(address >> 8);  /* PCI Config Address */
++	msg.tx_buf[4] = (u8)(address >> 16); /* PCI Config Address */
++	msg.tx_buf[5] = (u8)(address >> 24); /* MSB - PCI Config Address */
++
++	rc = peci_xfer_with_retries(adapter, &msg, false);
++	if (!rc)
++		memcpy(umsg->pci_config, &msg.rx_buf[1], 4);
++
++	return rc;
++}
++
++static int peci_ioctl_rd_pci_cfg_local(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_rd_pci_cfg_local_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	u32 address;
++	int rc = 0;
++
++	/* Per the PECI spec, the read length must be a byte, word, or dword */
++	if (umsg->rx_len != 1 && umsg->rx_len != 2 && umsg->rx_len != 4) {
++		dev_dbg(&adapter->dev, "Invalid read length, rx_len: %d\n",
++			umsg->rx_len);
++		return -EINVAL;
++	}
++
++	address = umsg->reg;                  /* [11:0]  - Register */
++	address |= (u32)umsg->function << 12; /* [14:12] - Function */
++	address |= (u32)umsg->device << 15;   /* [19:15] - Device   */
++	address |= (u32)umsg->bus << 20;      /* [23:20] - Bus      */
++
++	msg.addr = umsg->addr;
++	msg.tx_len = RDPCICFGLOCAL_WRITE_LEN;
++	msg.rx_len = RDPCICFGLOCAL_READ_LEN_BASE + umsg->rx_len;
++	msg.tx_buf[0] = RDPCICFGLOCAL_PECI_CMD;
++	msg.tx_buf[1] = 0x00;         /* request byte for Host ID | Retry bit */
++				      /* Host ID is 0 for PECI 3.0 */
++	msg.tx_buf[2] = (u8)address;       /* LSB - PCI Configuration Address */
++	msg.tx_buf[3] = (u8)(address >> 8);  /* PCI Configuration Address */
++	msg.tx_buf[4] = (u8)(address >> 16); /* PCI Configuration Address */
++
++	rc = peci_xfer_with_retries(adapter, &msg, false);
++	if (!rc)
++		memcpy(umsg->pci_config, &msg.rx_buf[1], umsg->rx_len);
++
++	return rc;
++}
++
++static int peci_ioctl_wr_pci_cfg_local(struct peci_adapter *adapter, void *vmsg)
++{
++	struct peci_wr_pci_cfg_local_msg *umsg = vmsg;
++	struct peci_xfer_msg msg;
++	int rc = 0, i;
++	u32 address;
++
++	/* Per the PECI spec, the write length must be a byte, word, or dword */
++	if (umsg->tx_len != 1 && umsg->tx_len != 2 && umsg->tx_len != 4) {
++		dev_dbg(&adapter->dev, "Invalid write length, tx_len: %d\n",
++			umsg->tx_len);
++		return -EINVAL;
++	}
++
++	address = umsg->reg;                  /* [11:0]  - Register */
++	address |= (u32)umsg->function << 12; /* [14:12] - Function */
++	address |= (u32)umsg->device << 15;   /* [19:15] - Device   */
++	address |= (u32)umsg->bus << 20;      /* [23:20] - Bus      */
++
++	msg.addr = umsg->addr;
++	msg.tx_len = WRPCICFGLOCAL_WRITE_LEN_BASE + umsg->tx_len;
++	msg.rx_len = WRPCICFGLOCAL_READ_LEN;
++	msg.tx_buf[0] = WRPCICFGLOCAL_PECI_CMD;
++	msg.tx_buf[1] = 0x00;         /* request byte for Host ID | Retry bit */
++				      /* Host ID is 0 for PECI 3.0 */
++	msg.tx_buf[2] = (u8)address;       /* LSB - PCI Configuration Address */
++	msg.tx_buf[3] = (u8)(address >> 8);  /* PCI Configuration Address */
++	msg.tx_buf[4] = (u8)(address >> 16); /* PCI Configuration Address */
++	for (i = 0; i < umsg->tx_len; i++)
++		msg.tx_buf[5 + i] = (u8)(umsg->value >> (i << 3));
++
++	/* Add an Assure Write Frame Check Sequence byte */
++	msg.tx_buf[5 + i] = 0x80 ^
++			    peci_aw_fcs((u8 *)&msg, 8 + umsg->tx_len);
++
++	rc = peci_xfer_with_retries(adapter, &msg, true);
++
++	return rc;
++}
++
++typedef int (*peci_ioctl_fn_type)(struct peci_adapter *, void *);
++
++static const peci_ioctl_fn_type peci_ioctl_fn[PECI_CMD_MAX] = {
++	NULL, /* Reserved */
++	peci_ioctl_ping,
++	peci_ioctl_get_dib,
++	peci_ioctl_get_temp,
++	peci_ioctl_rd_pkg_cfg,
++	peci_ioctl_wr_pkg_cfg,
++	peci_ioctl_rd_ia_msr,
++	NULL, /* Reserved */
++	peci_ioctl_rd_pci_cfg,
++	NULL, /* Reserved */
++	peci_ioctl_rd_pci_cfg_local,
++	peci_ioctl_wr_pci_cfg_local,
++};
++
++int peci_command(struct peci_adapter *adapter, enum peci_cmd cmd, void *vmsg)
++{
++	int rc = 0;
++
++	if (cmd >= PECI_CMD_MAX || cmd < PECI_CMD_XFER)
++		return -EINVAL;
++
++	dev_dbg(&adapter->dev, "%s, cmd=0x%02x\n", __func__, cmd);
++
++	if (!peci_ioctl_fn[cmd])
++		return -EINVAL;
++
++	rt_mutex_lock(&adapter->bus_lock);
++
++	rc = peci_cmd_support(adapter, cmd);
++	if (!rc)
++		rc = peci_ioctl_fn[cmd](adapter, vmsg);
++
++	rt_mutex_unlock(&adapter->bus_lock);
++
++	return rc;
++}
++EXPORT_SYMBOL_GPL(peci_command);
++
++static long peci_ioctl(struct file *file, unsigned int iocmd, unsigned long arg)
++{
++	struct peci_adapter *adapter = file->private_data;
++	void __user *argp = (void __user *)arg;
++	unsigned int msg_len;
++	enum peci_cmd cmd;
++	int rc = 0;
++	u8 *msg;
++
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	dev_dbg(&adapter->dev, "ioctl, cmd=0x%x, arg=0x%lx\n", iocmd, arg);
++
++	switch (iocmd) {
++	case PECI_IOC_PING:
++	case PECI_IOC_GET_DIB:
++	case PECI_IOC_GET_TEMP:
++	case PECI_IOC_RD_PKG_CFG:
++	case PECI_IOC_WR_PKG_CFG:
++	case PECI_IOC_RD_IA_MSR:
++	case PECI_IOC_RD_PCI_CFG:
++	case PECI_IOC_RD_PCI_CFG_LOCAL:
++	case PECI_IOC_WR_PCI_CFG_LOCAL:
++		cmd = _IOC_NR(iocmd);
++		msg_len = _IOC_SIZE(iocmd);
++		break;
++
++	default:
++		dev_dbg(&adapter->dev, "Invalid ioctl cmd : 0x%x\n", iocmd);
++		return -ENOTTY;
++	}
++
++	msg = memdup_user(argp, msg_len);
++	if (IS_ERR(msg))
++		return PTR_ERR(msg);
++
++	rc = peci_command(adapter, cmd, msg);
++
++	if (!rc && copy_to_user(argp, msg, msg_len))
++		rc = -EFAULT;
++
++	kfree(msg);
++	return (long)rc;
++}
++
++static int peci_open(struct inode *inode, struct file *file)
++{
++	unsigned int minor = iminor(inode);
++	struct peci_adapter *adapter;
++
++	adapter = peci_get_adapter(minor);
++	if (!adapter)
++		return -ENODEV;
++
++	file->private_data = adapter;
++
++	return 0;
++}
++
++static int peci_release(struct inode *inode, struct file *file)
++{
++	struct peci_adapter *adapter = file->private_data;
++
++	peci_put_adapter(adapter);
++	file->private_data = NULL;
++
++	return 0;
++}
++
++static const struct file_operations peci_fops = {
++	.owner          = THIS_MODULE,
++	.unlocked_ioctl = peci_ioctl,
++	.open           = peci_open,
++	.release        = peci_release,
++};
++
++static int peci_detect(struct peci_adapter *adapter, u8 addr)
++{
++	struct peci_ping_msg msg;
++
++	msg.addr = addr;
++
++	return peci_command(adapter, PECI_CMD_PING, &msg);
++}
++
++#if IS_ENABLED(CONFIG_OF)
++static const struct of_device_id *
++peci_of_match_device(const struct of_device_id *matches,
++		     struct peci_client *client)
++{
++	if (!(client && matches))
++		return NULL;
++
++	return of_match_device(matches, &client->dev);
++}
++#endif
++
++static const struct peci_device_id *
++peci_match_id(const struct peci_device_id *id, struct peci_client *client)
++{
++	if (!(id && client))
++		return NULL;
++
++	while (id->name[0]) {
++		if (strcmp(client->name, id->name) == 0)
++			return id;
++		id++;
++	}
++
++	return NULL;
++}
++
++static int peci_device_match(struct device *dev, struct device_driver *drv)
++{
++	struct peci_client *client = peci_verify_client(dev);
++	struct peci_driver *driver;
++
++	/* Attempt an OF style match */
++	if (peci_of_match_device(drv->of_match_table, client))
++		return 1;
++
++	driver = to_peci_driver(drv);
++
++	if (peci_match_id(driver->id_table, client))
++		return 1;
++
++	return 0;
++}
++
++static int peci_device_probe(struct device *dev)
++{
++	struct peci_client	*client = peci_verify_client(dev);
++	struct peci_driver	*driver;
++	int status = -EINVAL;
++
++	if (!client)
++		return 0;
++
++	if (!peci_of_match_device(dev->driver->of_match_table, client))
++		return -ENODEV;
++
++	dev_dbg(dev, "%s: name:%s\n", __func__, client->name);
++
++	driver = to_peci_driver(dev->driver);
++	if (driver->probe)
++		status = driver->probe(client);
++
++	return status;
++}
++
++static int peci_device_remove(struct device *dev)
++{
++	struct peci_client *client = peci_verify_client(dev);
++	struct peci_driver *driver;
++	int status = 0;
++
++	if (!client || !dev->driver)
++		return 0;
++
++	driver = to_peci_driver(dev->driver);
++	if (driver->remove) {
++		dev_dbg(dev, "%s: name:%s\n", __func__, client->name);
++		status = driver->remove(client);
++	}
++
++	return status;
++}
++
++static void peci_device_shutdown(struct device *dev)
++{
++	struct peci_client *client = peci_verify_client(dev);
++	struct peci_driver *driver;
++
++	if (!client || !dev->driver)
++		return;
++
++	dev_dbg(dev, "%s: name:%s\n", __func__, client->name);
++
++	driver = to_peci_driver(dev->driver);
++	if (driver->shutdown)
++		driver->shutdown(client);
++}
++
++static struct bus_type peci_bus_type = {
++	.name		= "peci",
++	.match		= peci_device_match,
++	.probe		= peci_device_probe,
++	.remove		= peci_device_remove,
++	.shutdown	= peci_device_shutdown,
++};
++
++static void peci_unregister_device(struct peci_client *client)
++{
++	if (client->dev.of_node)
++		of_node_clear_flag(client->dev.of_node, OF_POPULATED);
++
++	device_unregister(&client->dev);
++}
++
++static int peci_check_addr_validity(u8 addr)
++{
++	if (addr < PECI_BASE_ADDR && addr > PECI_BASE_ADDR + PECI_OFFSET_MAX)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int peci_check_client_busy(struct device *dev, void *client_new_p)
++{
++	struct peci_client *client = peci_verify_client(dev);
++	struct peci_client *client_new = client_new_p;
++
++	if (client && client->addr == client_new->addr &&
++	    client->idx == client_new->idx)
++		return -EBUSY;
++
++	return 0;
++}
++
++static struct peci_client *peci_new_device(struct peci_adapter *adapter,
++					   struct peci_board_info const *info)
++{
++	struct peci_client *client;
++	int rc;
++
++	client = kzalloc(sizeof(*client), GFP_KERNEL);
++	if (!client)
++		return NULL;
++
++	client->adapter = adapter;
++	client->addr = info->addr;
++	strlcpy(client->name, info->type, sizeof(client->name));
++
++	rc = peci_check_addr_validity(client->addr);
++	if (rc) {
++		dev_err(&adapter->dev, "Invalid PECI CPU address 0x%02hx\n",
++			client->addr);
++		goto err_free_client_silent;
++	}
++
++	/* Check client's online status */
++	rc = peci_detect(adapter, client->addr);
++	if (rc)
++		goto err_free_client;
++
++	for (client->idx = 0; client->idx < PECI_DEV_IDX_MAX; client->idx++) {
++		rc = device_for_each_child(&adapter->dev, client,
++					   peci_check_client_busy);
++		if (!rc)
++			break;
++	}
++
++	if (rc || client->idx == PECI_DEV_IDX_MAX)
++		goto err_free_client;
++
++	client->dev.parent = &client->adapter->dev;
++	client->dev.bus = &peci_bus_type;
++	client->dev.type = &peci_client_type;
++	client->dev.of_node = info->of_node;
++	dev_set_name(&client->dev, "%d-%02x:%02x",
++		     adapter->nr, client->addr, client->idx);
++
++	rc = device_register(&client->dev);
++	if (rc)
++		goto err_free_client;
++
++	dev_dbg(&adapter->dev, "client [%s] registered with bus id %s\n",
++		client->name, dev_name(&client->dev));
++
++	return client;
++
++err_free_client:
++	dev_err(&adapter->dev,
++		"Failed to register peci client %s at 0x%02x (%d)\n",
++		client->name, client->addr, rc);
++err_free_client_silent:
++	kfree(client);
++	return NULL;
++}
++
++#if IS_ENABLED(CONFIG_OF)
++static struct peci_client *peci_of_register_device(struct peci_adapter *adapter,
++						   struct device_node *node)
++{
++	struct peci_board_info info = {};
++	struct peci_client *result;
++	const __be32 *addr_be;
++	u32 addr;
++	int len;
++
++	dev_dbg(&adapter->dev, "register %s\n", node->full_name);
++
++	if (of_modalias_node(node, info.type, sizeof(info.type)) < 0) {
++		dev_err(&adapter->dev, "modalias failure on %s\n",
++			node->full_name);
++		return ERR_PTR(-EINVAL);
++	}
++
++	addr_be = of_get_property(node, "reg", &len);
++	if (!addr_be || len < sizeof(*addr_be)) {
++		dev_err(&adapter->dev, "invalid reg on %s\n",
++			node->full_name);
++		return ERR_PTR(-EINVAL);
++	}
++
++	addr = be32_to_cpup(addr_be);
++
++	if (peci_check_addr_validity(addr)) {
++		dev_err(&adapter->dev, "invalid addr=%x on %s\n",
++			addr, node->full_name);
++		return ERR_PTR(-EINVAL);
++	}
++
++	info.addr = addr;
++	info.of_node = of_node_get(node);
++
++	result = peci_new_device(adapter, &info);
++	if (!result)
++		result = ERR_PTR(-EINVAL);
++
++	of_node_put(node);
++	return result;
++}
++
++static void peci_of_register_devices(struct peci_adapter *adapter)
++{
++	struct device_node *bus, *node;
++	struct peci_client *client;
++
++	/* Only register child devices if the adapter has a node pointer set */
++	if (!adapter->dev.of_node)
++		return;
++
++	bus = of_get_child_by_name(adapter->dev.of_node, "peci-bus");
++	if (!bus)
++		bus = of_node_get(adapter->dev.of_node);
++
++	for_each_available_child_of_node(bus, node) {
++		if (of_node_test_and_set_flag(node, OF_POPULATED))
++			continue;
++
++		client = peci_of_register_device(adapter, node);
++		if (IS_ERR(client)) {
++			dev_warn(&adapter->dev,
++				 "Failed to create PECI device for %s\n",
++				 node->full_name);
++			of_node_clear_flag(node, OF_POPULATED);
++		}
++	}
++
++	of_node_put(bus);
++}
++
++static int peci_of_match_node(struct device *dev, void *data)
++{
++	return dev->of_node == data;
++}
++
++/* must call put_device() when done with returned peci_client device */
++static struct peci_client *peci_of_find_device(struct device_node *node)
++{
++	struct peci_client *client;
++	struct device *dev;
++
++	dev = bus_find_device(&peci_bus_type, NULL, node, peci_of_match_node);
++	if (!dev)
++		return NULL;
++
++	client = peci_verify_client(dev);
++	if (!client)
++		put_device(dev);
++
++	return client;
++}
++
++/* must call put_device() when done with returned peci_adapter device */
++static struct peci_adapter *peci_of_find_adapter(struct device_node *node)
++{
++	struct peci_adapter *adapter;
++	struct device *dev;
++
++	dev = bus_find_device(&peci_bus_type, NULL, node, peci_of_match_node);
++	if (!dev)
++		return NULL;
++
++	adapter = peci_verify_adapter(dev);
++	if (!adapter)
++		put_device(dev);
++
++	return adapter;
++}
++#else
++static void peci_of_register_devices(struct peci_adapter *adapter) { }
++#endif /* CONFIG_OF */
++
++#if IS_ENABLED(CONFIG_OF_DYNAMIC)
++static int peci_of_notify(struct notifier_block *nb,
++			  unsigned long action,
++			  void *arg)
++{
++	struct of_reconfig_data *rd = arg;
++	struct peci_adapter *adapter;
++	struct peci_client *client;
++
++	switch (of_reconfig_get_state_change(action, rd)) {
++	case OF_RECONFIG_CHANGE_ADD:
++		adapter = peci_of_find_adapter(rd->dn->parent);
++		if (!adapter)
++			return NOTIFY_OK;	/* not for us */
++
++		if (of_node_test_and_set_flag(rd->dn, OF_POPULATED)) {
++			put_device(&adapter->dev);
++			return NOTIFY_OK;
++		}
++
++		client = peci_of_register_device(adapter, rd->dn);
++		put_device(&adapter->dev);
++
++		if (IS_ERR(client)) {
++			dev_err(&adapter->dev,
++				"failed to create client for '%s'\n",
++				rd->dn->full_name);
++			of_node_clear_flag(rd->dn, OF_POPULATED);
++			return notifier_from_errno(PTR_ERR(client));
++		}
++		break;
++	case OF_RECONFIG_CHANGE_REMOVE:
++		/* already depopulated? */
++		if (!of_node_check_flag(rd->dn, OF_POPULATED))
++			return NOTIFY_OK;
++
++		/* find our device by node */
++		client = peci_of_find_device(rd->dn);
++		if (!client)
++			return NOTIFY_OK;	/* no? not meant for us */
++
++		/* unregister takes one ref away */
++		peci_unregister_device(client);
++
++		/* and put the reference of the find */
++		put_device(&client->dev);
++		break;
++	}
++
++	return NOTIFY_OK;
++}
++
++static struct notifier_block peci_of_notifier = {
++	.notifier_call = peci_of_notify,
++};
++#else
++extern struct notifier_block peci_of_notifier;
++#endif /* CONFIG_OF_DYNAMIC */
++
++static int peci_register_adapter(struct peci_adapter *adapter)
++{
++	int rc = -EINVAL;
++
++	/* Can't register until after driver model init */
++	if (WARN_ON(!is_registered))
++		goto err_free_idr;
++
++	if (WARN(!adapter->name[0], "peci adapter has no name"))
++		goto err_free_idr;
++
++	if (WARN(!adapter->xfer, "peci adapter has no xfer function\n"))
++		goto err_free_idr;
++
++	rt_mutex_init(&adapter->bus_lock);
++
++	dev_set_name(&adapter->dev, "peci%d", adapter->nr);
++	adapter->dev.bus = &peci_bus_type;
++	adapter->dev.type = &peci_adapter_type;
++	device_initialize(&adapter->dev);
++
++	/* cdev */
++	cdev_init(&adapter->cdev, &peci_fops);
++	adapter->cdev.owner = THIS_MODULE;
++	adapter->cdev.kobj.parent = &adapter->dev.kobj;
++	adapter->dev.devt = MKDEV(MAJOR(peci_devt), adapter->nr);
++	rc = cdev_add(&adapter->cdev, adapter->dev.devt, 1);
++	if (rc) {
++		pr_err("adapter '%s': can't add cdev (%d)\n",
++		       adapter->name, rc);
++		goto err_free_idr;
++	}
++	rc = device_add(&adapter->dev);
++	if (rc) {
++		pr_err("adapter '%s': can't add device (%d)\n",
++		       adapter->name, rc);
++		goto err_del_cdev;
++	}
++
++	dev_dbg(&adapter->dev, "adapter [%s] registered\n", adapter->name);
++
++	/* create pre-declared device nodes */
++	peci_of_register_devices(adapter);
++
++	return 0;
++
++err_del_cdev:
++	cdev_del(&adapter->cdev);
++err_free_idr:
++	mutex_lock(&core_lock);
++	idr_remove(&peci_adapter_idr, adapter->nr);
++	mutex_unlock(&core_lock);
++	return rc;
++}
++
++static int peci_add_numbered_adapter(struct peci_adapter *adapter)
++{
++	int id;
++
++	mutex_lock(&core_lock);
++	id = idr_alloc(&peci_adapter_idr, adapter,
++		       adapter->nr, adapter->nr + 1, GFP_KERNEL);
++	mutex_unlock(&core_lock);
++	if (WARN(id < 0, "couldn't get idr"))
++		return id == -ENOSPC ? -EBUSY : id;
++
++	return peci_register_adapter(adapter);
++}
++
++int peci_add_adapter(struct peci_adapter *adapter)
++{
++	struct device *dev = &adapter->dev;
++	int id;
++
++	if (dev->of_node) {
++		id = of_alias_get_id(dev->of_node, "peci");
++		if (id >= 0) {
++			adapter->nr = id;
++			return peci_add_numbered_adapter(adapter);
++		}
++	}
++
++	mutex_lock(&core_lock);
++	id = idr_alloc(&peci_adapter_idr, adapter, 0, 0, GFP_KERNEL);
++	mutex_unlock(&core_lock);
++	if (WARN(id < 0, "couldn't get idr"))
++		return id;
++
++	adapter->nr = id;
++
++	return peci_register_adapter(adapter);
++}
++EXPORT_SYMBOL_GPL(peci_add_adapter);
++
++static int peci_unregister_client(struct device *dev, void *dummy)
++{
++	struct peci_client *client = peci_verify_client(dev);
++
++	if (client)
++		peci_unregister_device(client);
++
++	return 0;
++}
++
++void peci_del_adapter(struct peci_adapter *adapter)
++{
++	struct peci_adapter *found;
++
++	/* First make sure that this adapter was ever added */
++	mutex_lock(&core_lock);
++	found = idr_find(&peci_adapter_idr, adapter->nr);
++	mutex_unlock(&core_lock);
++
++	if (found != adapter)
++		return;
++
++	/**
++	 * Detach any active clients. This can't fail, thus we do not
++	 * check the returned value.
++	 */
++	device_for_each_child(&adapter->dev, NULL, peci_unregister_client);
++
++	/* device name is gone after device_unregister */
++	dev_dbg(&adapter->dev, "adapter [%s] unregistered\n", adapter->name);
++
++	device_unregister(&adapter->dev);
++
++	/* free cdev */
++	cdev_del(&adapter->cdev);
++
++	/* free bus id */
++	mutex_lock(&core_lock);
++	idr_remove(&peci_adapter_idr, adapter->nr);
++	mutex_unlock(&core_lock);
++}
++EXPORT_SYMBOL_GPL(peci_del_adapter);
++
++/**
++ * A peci_driver is used with one or more peci_client (device) nodes to access
++ * peci clients, on a bus instance associated with some peci_adapter.
++ */
++int peci_register_driver(struct module *owner, struct peci_driver *driver)
++{
++	int rc;
++
++	/* Can't register until after driver model init */
++	if (WARN_ON(!is_registered))
++		return -EAGAIN;
++
++	/* add the driver to the list of peci drivers in the driver core */
++	driver->driver.owner = owner;
++	driver->driver.bus = &peci_bus_type;
++
++	/**
++	 * When registration returns, the driver core
++	 * will have called probe() for all matching-but-unbound devices.
++	 */
++	rc = driver_register(&driver->driver);
++	if (rc)
++		return rc;
++
++	pr_debug("driver [%s] registered\n", driver->driver.name);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(peci_register_driver);
++
++void peci_del_driver(struct peci_driver *driver)
++{
++	driver_unregister(&driver->driver);
++	pr_debug("driver [%s] unregistered\n", driver->driver.name);
++}
++EXPORT_SYMBOL_GPL(peci_del_driver);
++
++static int __init peci_init(void)
++{
++	int ret;
++
++	ret = bus_register(&peci_bus_type);
++	if (ret < 0) {
++		pr_err("peci: Failed to register PECI bus type!\n");
++		return ret;
++	}
++
++	ret = alloc_chrdev_region(&peci_devt, 0, PECI_CDEV_MAX, "peci");
++	if (ret < 0) {
++		pr_err("peci: Failed to allocate chr dev region!\n");
++		bus_unregister(&peci_bus_type);
++		return ret;
++	}
++
++	crc8_populate_msb(peci_crc8_table, PECI_CRC8_POLYNOMIAL);
++
++	if (IS_ENABLED(CONFIG_OF_DYNAMIC))
++		WARN_ON(of_reconfig_notifier_register(&peci_of_notifier));
++
++	is_registered = true;
++
++	return 0;
++}
++
++static void __exit peci_exit(void)
++{
++	if (IS_ENABLED(CONFIG_OF_DYNAMIC))
++		WARN_ON(of_reconfig_notifier_unregister(&peci_of_notifier));
++
++	unregister_chrdev_region(peci_devt, PECI_CDEV_MAX);
++	bus_unregister(&peci_bus_type);
++}
++
++postcore_initcall(peci_init);
++module_exit(peci_exit);
++
++MODULE_AUTHOR("Jason M Biils <jason.m.bills@linux.intel.com>");
++MODULE_AUTHOR("Jae Hyun Yoo <jae.hyun.yoo@linux.intel.com>");
++MODULE_DESCRIPTION("PECI bus core module");
++MODULE_LICENSE("GPL v2");
+--- linux-custom-orig/drivers/peci/peci-aspeed.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/peci/peci-aspeed.c	2018-04-26 17:39:46.583521924 +0800
+@@ -0,0 +1,504 @@
++// SPDX-License-Identifier: GPL-2.0
++// Copyright (C) 2012-2017 ASPEED Technology Inc.
++// Copyright (c) 2018 Intel Corporation
++
++#include <linux/clk.h>
++#include <linux/delay.h>
++#include <linux/interrupt.h>
++#include <linux/jiffies.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/peci.h>
++#include <linux/platform_device.h>
++#include <linux/regmap.h>
++
++#define DUMP_DEBUG 0
++
++/* Aspeed PECI Registers */
++#define AST_PECI_CTRL     0x00
++#define AST_PECI_TIMING   0x04
++#define AST_PECI_CMD      0x08
++#define AST_PECI_CMD_CTRL 0x0c
++#define AST_PECI_EXP_FCS  0x10
++#define AST_PECI_CAP_FCS  0x14
++#define AST_PECI_INT_CTRL 0x18
++#define AST_PECI_INT_STS  0x1c
++#define AST_PECI_W_DATA0  0x20
++#define AST_PECI_W_DATA1  0x24
++#define AST_PECI_W_DATA2  0x28
++#define AST_PECI_W_DATA3  0x2c
++#define AST_PECI_R_DATA0  0x30
++#define AST_PECI_R_DATA1  0x34
++#define AST_PECI_R_DATA2  0x38
++#define AST_PECI_R_DATA3  0x3c
++#define AST_PECI_W_DATA4  0x40
++#define AST_PECI_W_DATA5  0x44
++#define AST_PECI_W_DATA6  0x48
++#define AST_PECI_W_DATA7  0x4c
++#define AST_PECI_R_DATA4  0x50
++#define AST_PECI_R_DATA5  0x54
++#define AST_PECI_R_DATA6  0x58
++#define AST_PECI_R_DATA7  0x5c
++
++/* AST_PECI_CTRL - 0x00 : Control Register */
++#define PECI_CTRL_SAMPLING_MASK     GENMASK(19, 16)
++#define PECI_CTRL_SAMPLING(x)       (((x) << 16) & PECI_CTRL_SAMPLING_MASK)
++#define PECI_CTRL_SAMPLING_GET(x)   (((x) & PECI_CTRL_SAMPLING_MASK) >> 16)
++#define PECI_CTRL_READ_MODE_MASK    GENMASK(13, 12)
++#define PECI_CTRL_READ_MODE(x)      (((x) << 12) & PECI_CTRL_READ_MODE_MASK)
++#define PECI_CTRL_READ_MODE_GET(x)  (((x) & PECI_CTRL_READ_MODE_MASK) >> 12)
++#define PECI_CTRL_READ_MODE_COUNT   BIT(12)
++#define PECI_CTRL_READ_MODE_DBG     BIT(13)
++#define PECI_CTRL_CLK_SOURCE_MASK   BIT(11)
++#define PECI_CTRL_CLK_SOURCE(x)     (((x) << 11) & PECI_CTRL_CLK_SOURCE_MASK)
++#define PECI_CTRL_CLK_SOURCE_GET(x) (((x) & PECI_CTRL_CLK_SOURCE_MASK) >> 11)
++#define PECI_CTRL_CLK_DIV_MASK      GENMASK(10, 8)
++#define PECI_CTRL_CLK_DIV(x)        (((x) << 8) & PECI_CTRL_CLK_DIV_MASK)
++#define PECI_CTRL_CLK_DIV_GET(x)    (((x) & PECI_CTRL_CLK_DIV_MASK) >> 8)
++#define PECI_CTRL_INVERT_OUT        BIT(7)
++#define PECI_CTRL_INVERT_IN         BIT(6)
++#define PECI_CTRL_BUS_CONTENT_EN    BIT(5)
++#define PECI_CTRL_PECI_EN           BIT(4)
++#define PECI_CTRL_PECI_CLK_EN       BIT(0)
++
++/* AST_PECI_TIMING - 0x04 : Timing Negotiation Register */
++#define PECI_TIMING_MESSAGE_MASK   GENMASK(15, 8)
++#define PECI_TIMING_MESSAGE(x)     (((x) << 8) & PECI_TIMING_MESSAGE_MASK)
++#define PECI_TIMING_MESSAGE_GET(x) (((x) & PECI_TIMING_MESSAGE_MASK) >> 8)
++#define PECI_TIMING_ADDRESS_MASK   GENMASK(7, 0)
++#define PECI_TIMING_ADDRESS(x)     ((x) & PECI_TIMING_ADDRESS_MASK)
++#define PECI_TIMING_ADDRESS_GET(x) ((x) & PECI_TIMING_ADDRESS_MASK)
++
++/* AST_PECI_CMD - 0x08 : Command Register */
++#define PECI_CMD_PIN_MON    BIT(31)
++#define PECI_CMD_STS_MASK   GENMASK(27, 24)
++#define PECI_CMD_STS_GET(x) (((x) & PECI_CMD_STS_MASK) >> 24)
++#define PECI_CMD_FIRE       BIT(0)
++
++/* AST_PECI_LEN - 0x0C : Read/Write Length Register */
++#define PECI_AW_FCS_EN       BIT(31)
++#define PECI_READ_LEN_MASK   GENMASK(23, 16)
++#define PECI_READ_LEN(x)     (((x) << 16) & PECI_READ_LEN_MASK)
++#define PECI_WRITE_LEN_MASK  GENMASK(15, 8)
++#define PECI_WRITE_LEN(x)    (((x) << 8) & PECI_WRITE_LEN_MASK)
++#define PECI_TAGET_ADDR_MASK GENMASK(7, 0)
++#define PECI_TAGET_ADDR(x)   ((x) & PECI_TAGET_ADDR_MASK)
++
++/* AST_PECI_EXP_FCS - 0x10 : Expected FCS Data Register */
++#define PECI_EXPECT_READ_FCS_MASK      GENMASK(23, 16)
++#define PECI_EXPECT_READ_FCS_GET(x)    (((x) & PECI_EXPECT_READ_FCS_MASK) >> 16)
++#define PECI_EXPECT_AW_FCS_AUTO_MASK   GENMASK(15, 8)
++#define PECI_EXPECT_AW_FCS_AUTO_GET(x) (((x) & PECI_EXPECT_AW_FCS_AUTO_MASK) \
++					>> 8)
++#define PECI_EXPECT_WRITE_FCS_MASK     GENMASK(7, 0)
++#define PECI_EXPECT_WRITE_FCS_GET(x)   ((x) & PECI_EXPECT_WRITE_FCS_MASK)
++
++/* AST_PECI_CAP_FCS - 0x14 : Captured FCS Data Register */
++#define PECI_CAPTURE_READ_FCS_MASK    GENMASK(23, 16)
++#define PECI_CAPTURE_READ_FCS_GET(x)  (((x) & PECI_CAPTURE_READ_FCS_MASK) >> 16)
++#define PECI_CAPTURE_WRITE_FCS_MASK   GENMASK(7, 0)
++#define PECI_CAPTURE_WRITE_FCS_GET(x) ((x) & PECI_CAPTURE_WRITE_FCS_MASK)
++
++/* AST_PECI_INT_CTRL/STS - 0x18/0x1c : Interrupt Register */
++#define PECI_INT_TIMING_RESULT_MASK GENMASK(31, 30)
++#define PECI_INT_TIMEOUT            BIT(4)
++#define PECI_INT_CONNECT            BIT(3)
++#define PECI_INT_W_FCS_BAD          BIT(2)
++#define PECI_INT_W_FCS_ABORT        BIT(1)
++#define PECI_INT_CMD_DONE           BIT(0)
++
++struct aspeed_peci {
++	struct peci_adapter	adaper;
++	struct device		*dev;
++	struct regmap		*regmap;
++	int			irq;
++	struct completion	xfer_complete;
++	u32			status;
++	u32			cmd_timeout_ms;
++};
++
++#define PECI_INT_MASK  (PECI_INT_TIMEOUT | PECI_INT_CONNECT | \
++			PECI_INT_W_FCS_BAD | PECI_INT_W_FCS_ABORT | \
++			PECI_INT_CMD_DONE)
++
++#define PECI_IDLE_CHECK_TIMEOUT_MS      50
++#define PECI_IDLE_CHECK_INTERVAL_MS     10
++
++#define PECI_RD_SAMPLING_POINT_DEFAULT  8
++#define PECI_RD_SAMPLING_POINT_MAX      15
++#define PECI_CLK_DIV_DEFAULT            0
++#define PECI_CLK_DIV_MAX                7
++#define PECI_MSG_TIMING_NEGO_DEFAULT    1
++#define PECI_MSG_TIMING_NEGO_MAX        255
++#define PECI_ADDR_TIMING_NEGO_DEFAULT   1
++#define PECI_ADDR_TIMING_NEGO_MAX       255
++#define PECI_CMD_TIMEOUT_MS_DEFAULT     1000
++#define PECI_CMD_TIMEOUT_MS_MAX         60000
++
++static int aspeed_peci_xfer_native(struct aspeed_peci *priv,
++				   struct peci_xfer_msg *msg)
++{
++	long err, timeout = msecs_to_jiffies(priv->cmd_timeout_ms);
++	u32 peci_head, peci_state, rx_data, cmd_sts;
++	ktime_t start, end;
++	s64 elapsed_ms;
++	int i, rc = 0;
++	uint reg;
++
++	start = ktime_get();
++
++	/* Check command sts and bus idle state */
++	while (!regmap_read(priv->regmap, AST_PECI_CMD, &cmd_sts) &&
++	       (cmd_sts & (PECI_CMD_STS_MASK | PECI_CMD_PIN_MON))) {
++		end = ktime_get();
++		elapsed_ms = ktime_to_ms(ktime_sub(end, start));
++		if (elapsed_ms >= PECI_IDLE_CHECK_TIMEOUT_MS) {
++			dev_dbg(priv->dev, "Timeout waiting for idle state!\n");
++			return -ETIMEDOUT;
++		}
++
++		usleep_range(PECI_IDLE_CHECK_INTERVAL_MS * 1000,
++			     (PECI_IDLE_CHECK_INTERVAL_MS * 1000) + 1000);
++	};
++
++	reinit_completion(&priv->xfer_complete);
++
++	peci_head = PECI_TAGET_ADDR(msg->addr) |
++				    PECI_WRITE_LEN(msg->tx_len) |
++				    PECI_READ_LEN(msg->rx_len);
++
++	rc = regmap_write(priv->regmap, AST_PECI_CMD_CTRL, peci_head);
++	if (rc)
++		return rc;
++
++	for (i = 0; i < msg->tx_len; i += 4) {
++		reg = i < 16 ? AST_PECI_W_DATA0 + i % 16 :
++			       AST_PECI_W_DATA4 + i % 16;
++		rc = regmap_write(priv->regmap, reg,
++				  (msg->tx_buf[i + 3] << 24) |
++				  (msg->tx_buf[i + 2] << 16) |
++				  (msg->tx_buf[i + 1] << 8) |
++				  msg->tx_buf[i + 0]);
++		if (rc)
++			return rc;
++	}
++
++	dev_dbg(priv->dev, "HEAD : 0x%08x\n", peci_head);
++#if DUMP_DEBUG
++	print_hex_dump(KERN_DEBUG, "TX : ", DUMP_PREFIX_NONE, 16, 1,
++		       msg->tx_buf, msg->tx_len, true);
++#endif
++
++	rc = regmap_write(priv->regmap, AST_PECI_CMD, PECI_CMD_FIRE);
++	if (rc)
++		return rc;
++
++	err = wait_for_completion_interruptible_timeout(&priv->xfer_complete,
++							timeout);
++
++	dev_dbg(priv->dev, "INT_STS : 0x%08x\n", priv->status);
++	if (!regmap_read(priv->regmap, AST_PECI_CMD, &peci_state))
++		dev_dbg(priv->dev, "PECI_STATE : 0x%lx\n",
++			PECI_CMD_STS_GET(peci_state));
++	else
++		dev_dbg(priv->dev, "PECI_STATE : read error\n");
++
++	rc = regmap_write(priv->regmap, AST_PECI_CMD, 0);
++	if (rc)
++		return rc;
++
++	if (err <= 0 || !(priv->status & PECI_INT_CMD_DONE)) {
++		if (err < 0) { /* -ERESTARTSYS */
++			return (int)err;
++		} else if (err == 0) {
++			dev_dbg(priv->dev, "Timeout waiting for a response!\n");
++			return -ETIMEDOUT;
++		}
++
++		dev_dbg(priv->dev, "No valid response!\n");
++		return -EIO;
++	}
++
++	for (i = 0; i < msg->rx_len; i++) {
++		u8 byte_offset = i % 4;
++
++		if (byte_offset == 0) {
++			reg = i < 16 ? AST_PECI_R_DATA0 + i % 16 :
++				       AST_PECI_R_DATA4 + i % 16;
++			rc = regmap_read(priv->regmap, reg, &rx_data);
++			if (rc)
++				return rc;
++		}
++
++		msg->rx_buf[i] = (u8)(rx_data >> (byte_offset << 3));
++	}
++
++#if DUMP_DEBUG
++	print_hex_dump(KERN_DEBUG, "RX : ", DUMP_PREFIX_NONE, 16, 1,
++		       msg->rx_buf, msg->rx_len, true);
++#endif
++	if (!regmap_read(priv->regmap, AST_PECI_CMD, &peci_state))
++		dev_dbg(priv->dev, "PECI_STATE : 0x%lx\n",
++			PECI_CMD_STS_GET(peci_state));
++	else
++		dev_dbg(priv->dev, "PECI_STATE : read error\n");
++	dev_dbg(priv->dev, "------------------------\n");
++
++	return rc;
++}
++
++static irqreturn_t aspeed_peci_irq_handler(int irq, void *arg)
++{
++	struct aspeed_peci *priv = arg;
++	u32 status_ack = 0;
++
++	if (regmap_read(priv->regmap, AST_PECI_INT_STS, &priv->status))
++		return IRQ_NONE;
++
++	/* Be noted that multiple interrupt bits can be set at the same time */
++	if (priv->status & PECI_INT_TIMEOUT) {
++		dev_dbg(priv->dev, "PECI_INT_TIMEOUT\n");
++		status_ack |= PECI_INT_TIMEOUT;
++	}
++
++	if (priv->status & PECI_INT_CONNECT) {
++		dev_dbg(priv->dev, "PECI_INT_CONNECT\n");
++		status_ack |= PECI_INT_CONNECT;
++	}
++
++	if (priv->status & PECI_INT_W_FCS_BAD) {
++		dev_dbg(priv->dev, "PECI_INT_W_FCS_BAD\n");
++		status_ack |= PECI_INT_W_FCS_BAD;
++	}
++
++	if (priv->status & PECI_INT_W_FCS_ABORT) {
++		dev_dbg(priv->dev, "PECI_INT_W_FCS_ABORT\n");
++		status_ack |= PECI_INT_W_FCS_ABORT;
++	}
++
++	/**
++	 * All commands should be ended up with a PECI_INT_CMD_DONE bit set
++	 * even in an error case.
++	 */
++	if (priv->status & PECI_INT_CMD_DONE) {
++		dev_dbg(priv->dev, "PECI_INT_CMD_DONE\n");
++		status_ack |= PECI_INT_CMD_DONE;
++		complete(&priv->xfer_complete);
++	}
++
++	if (regmap_write(priv->regmap, AST_PECI_INT_STS, status_ack))
++		return IRQ_NONE;
++
++	return IRQ_HANDLED;
++}
++
++static int aspeed_peci_init_ctrl(struct aspeed_peci *priv)
++{
++	u32 msg_timing_nego, addr_timing_nego, rd_sampling_point;
++	u32 clk_freq, clk_divisor, clk_div_val = 0;
++	struct clk *clkin;
++	int ret;
++
++	clkin = devm_clk_get(priv->dev, NULL);
++	if (IS_ERR(clkin)) {
++		dev_err(priv->dev, "Failed to get clk source.\n");
++		return PTR_ERR(clkin);
++	}
++
++	ret = of_property_read_u32(priv->dev->of_node, "clock-frequency",
++				   &clk_freq);
++	if (ret < 0) {
++		dev_err(priv->dev,
++			"Could not read clock-frequency property.\n");
++		return ret;
++	}
++
++	clk_divisor = clk_get_rate(clkin) / clk_freq;
++	devm_clk_put(priv->dev, clkin);
++
++	while ((clk_divisor >> 1) && (clk_div_val < PECI_CLK_DIV_MAX))
++		clk_div_val++;
++
++	ret = of_property_read_u32(priv->dev->of_node, "msg-timing-nego",
++				   &msg_timing_nego);
++	if (ret || msg_timing_nego > PECI_MSG_TIMING_NEGO_MAX) {
++		dev_warn(priv->dev,
++			 "Invalid msg-timing-nego : %u, Use default : %u\n",
++			 msg_timing_nego, PECI_MSG_TIMING_NEGO_DEFAULT);
++		msg_timing_nego = PECI_MSG_TIMING_NEGO_DEFAULT;
++	}
++
++	ret = of_property_read_u32(priv->dev->of_node, "addr-timing-nego",
++				   &addr_timing_nego);
++	if (ret || addr_timing_nego > PECI_ADDR_TIMING_NEGO_MAX) {
++		dev_warn(priv->dev,
++			 "Invalid addr-timing-nego : %u, Use default : %u\n",
++			 addr_timing_nego, PECI_ADDR_TIMING_NEGO_DEFAULT);
++		addr_timing_nego = PECI_ADDR_TIMING_NEGO_DEFAULT;
++	}
++
++	ret = of_property_read_u32(priv->dev->of_node, "rd-sampling-point",
++				   &rd_sampling_point);
++	if (ret || rd_sampling_point > PECI_RD_SAMPLING_POINT_MAX) {
++		dev_warn(priv->dev,
++			 "Invalid rd-sampling-point : %u. Use default : %u\n",
++			 rd_sampling_point,
++			 PECI_RD_SAMPLING_POINT_DEFAULT);
++		rd_sampling_point = PECI_RD_SAMPLING_POINT_DEFAULT;
++	}
++
++	ret = of_property_read_u32(priv->dev->of_node, "cmd-timeout-ms",
++				   &priv->cmd_timeout_ms);
++	if (ret || priv->cmd_timeout_ms > PECI_CMD_TIMEOUT_MS_MAX ||
++	    priv->cmd_timeout_ms == 0) {
++		dev_warn(priv->dev,
++			 "Invalid cmd-timeout-ms : %u. Use default : %u\n",
++			 priv->cmd_timeout_ms,
++			 PECI_CMD_TIMEOUT_MS_DEFAULT);
++		priv->cmd_timeout_ms = PECI_CMD_TIMEOUT_MS_DEFAULT;
++	}
++
++	ret = regmap_write(priv->regmap, AST_PECI_CTRL,
++			   PECI_CTRL_CLK_DIV(PECI_CLK_DIV_DEFAULT) |
++			   PECI_CTRL_PECI_CLK_EN);
++	if (ret)
++		return ret;
++
++	usleep_range(1000, 5000);
++
++	/**
++	 * Timing negotiation period setting.
++	 * The unit of the programmed value is 4 times of PECI clock period.
++	 */
++	ret = regmap_write(priv->regmap, AST_PECI_TIMING,
++			   PECI_TIMING_MESSAGE(msg_timing_nego) |
++			   PECI_TIMING_ADDRESS(addr_timing_nego));
++	if (ret)
++		return ret;
++
++	/* Clear interrupts */
++	ret = regmap_write(priv->regmap, AST_PECI_INT_STS, PECI_INT_MASK);
++	if (ret)
++		return ret;
++
++	/* Enable interrupts */
++	ret = regmap_write(priv->regmap, AST_PECI_INT_CTRL, PECI_INT_MASK);
++	if (ret)
++		return ret;
++
++	/* Read sampling point and clock speed setting */
++	ret = regmap_write(priv->regmap, AST_PECI_CTRL,
++			   PECI_CTRL_SAMPLING(rd_sampling_point) |
++			   PECI_CTRL_CLK_DIV(clk_div_val) |
++			   PECI_CTRL_PECI_EN | PECI_CTRL_PECI_CLK_EN);
++	if (ret)
++		return ret;
++
++	return 0;
++}
++
++static const struct regmap_config aspeed_peci_regmap_config = {
++	.reg_bits = 32,
++	.val_bits = 32,
++	.reg_stride = 4,
++	.max_register = AST_PECI_R_DATA7,
++	.val_format_endian = REGMAP_ENDIAN_LITTLE,
++	.fast_io = true,
++};
++
++static int aspeed_peci_xfer(struct peci_adapter *adaper,
++			    struct peci_xfer_msg *msg)
++{
++	struct aspeed_peci *priv = peci_get_adapdata(adaper);
++
++	return aspeed_peci_xfer_native(priv, msg);
++}
++
++static int aspeed_peci_probe(struct platform_device *pdev)
++{
++	struct aspeed_peci *priv;
++	struct resource *res;
++	void __iomem *base;
++	int ret = 0;
++
++	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++
++	dev_set_drvdata(&pdev->dev, priv);
++	priv->dev = &pdev->dev;
++
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	base = devm_ioremap_resource(&pdev->dev, res);
++	if (IS_ERR(base))
++		return PTR_ERR(base);
++
++	priv->regmap = devm_regmap_init_mmio(&pdev->dev, base,
++					     &aspeed_peci_regmap_config);
++	if (IS_ERR(priv->regmap))
++		return PTR_ERR(priv->regmap);
++
++	priv->irq = platform_get_irq(pdev, 0);
++	if (!priv->irq)
++		return -ENODEV;
++
++	ret = devm_request_irq(&pdev->dev, priv->irq, aspeed_peci_irq_handler,
++			       IRQF_SHARED,
++			       "peci-aspeed-irq",
++			       priv);
++	if (ret < 0)
++		return ret;
++
++	init_completion(&priv->xfer_complete);
++
++	priv->adaper.dev.parent = priv->dev;
++	priv->adaper.dev.of_node = of_node_get(dev_of_node(priv->dev));
++	strlcpy(priv->adaper.name, pdev->name, sizeof(priv->adaper.name));
++	priv->adaper.xfer = aspeed_peci_xfer;
++	peci_set_adapdata(&priv->adaper, priv);
++
++	ret = aspeed_peci_init_ctrl(priv);
++	if (ret < 0)
++		return ret;
++
++	ret = peci_add_adapter(&priv->adaper);
++	if (ret < 0)
++		return ret;
++
++	dev_info(&pdev->dev, "peci bus %d registered, irq %d\n",
++		 priv->adaper.nr, priv->irq);
++
++	return 0;
++}
++
++static int aspeed_peci_remove(struct platform_device *pdev)
++{
++	struct aspeed_peci *priv = dev_get_drvdata(&pdev->dev);
++
++	peci_del_adapter(&priv->adaper);
++	of_node_put(priv->adaper.dev.of_node);
++
++	return 0;
++}
++
++static const struct of_device_id aspeed_peci_of_table[] = {
++	{ .compatible = "aspeed,ast2400-peci", },
++	{ .compatible = "aspeed,ast2500-peci", },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, aspeed_peci_of_table);
++
++static struct platform_driver aspeed_peci_driver = {
++	.probe  = aspeed_peci_probe,
++	.remove = aspeed_peci_remove,
++	.driver = {
++		.name           = "peci-aspeed",
++		.of_match_table = of_match_ptr(aspeed_peci_of_table),
++	},
++};
++module_platform_driver(aspeed_peci_driver);
++
++MODULE_AUTHOR("Ryan Chen <ryan_chen@aspeedtech.com>");
++MODULE_AUTHOR("Jae Hyun Yoo <jae.hyun.yoo@linux.intel.com>");
++MODULE_DESCRIPTION("Aspeed PECI driver");
++MODULE_LICENSE("GPL v2");
+--- linux-custom-orig/drivers/peci/peci-smbus.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/peci/peci-smbus.c	2018-04-28 19:17:37.179447375 +0800
+@@ -0,0 +1,328 @@
++/*
++ * peci-smbus.c
++ *
++ *  Created on: Apr 26, 2018
++ *      Author: jeff_zheng
++ */
++#if defined(MODVERSIONS)
++#include <linux/modversions.h>
++#endif
++#include <linux/module.h>
++#include <linux/moduleparam.h>
++
++#include <linux/i2c.h>
++#include <linux/of.h>
++#include <linux/peci.h>
++#include <linux/delay.h>
++
++#define smbp_dbg(fmt, ...)	dev_dbg(&adapter->dev, fmt "\n", ## __VA_ARGS__)
++
++#define smbp_info(fmt, ...)	dev_info(&adapter->dev, fmt"\n", ## __VA_ARGS__)
++
++#define smbp_dev_dbg		dev_info
++
++#if 1
++#define SMBUS_PECI_ADDR_READ	0x4b
++#define SMBUS_PECI_ADDR_WRITE	0x4c
++#else
++#define SMBUS_PECI_ADDR_READ	0x25
++#define SMBUS_PECI_ADDR_WRITE	0x26
++#endif
++
++#define SMBUS_PECI_CMD
++
++struct smbus_peci {
++	struct peci_adapter	adapter;
++	struct i2c_client	*client_read;		//0x4b
++	struct i2c_client	*client_write;		//0x4c
++	struct regmap		*regmap;
++	bool				adapter_installed;
++	struct completion	xfer_complete;
++	u32			status;
++	u32			cmd_timeout_ms;
++};
++
++struct smbus_peci* smbus_peci_dev = NULL;
++
++#define SMBUS_PECI_I2C_COMMAND_WRITE	0x62
++#define SMBUS_PECI_I2C_COMMAND_READ		0x40
++#define SMBUS_PECI_WAIT_SLEEP_MS	10
++#define SMBUS_PECI_RETRY_MAX	10
++
++static int smbus_chk_data_err(u8 * p_data, u32 size)
++{
++	int loop = size;
++	if(p_data[size-1] != 0xff)
++
++	while(loop>0)
++	{
++	}
++
++}
++static int smbus_peci_xfer(struct peci_adapter *adapter,
++			    struct peci_xfer_msg *msg)
++{
++	int result;
++	u8 txrxbuf[PECI_BUFFER_SIZE*2];
++	u8 smbus_txlen;
++	int retry_cnt = 0;
++	struct smbus_peci *priv = peci_get_adapdata(adapter);
++	char* err_msg = NULL;
++
++retry_write_data:
++	retry_cnt++;
++	if(retry_cnt>SMBUS_PECI_RETRY_MAX)
++	{
++		dev_err(&adapter->dev, "PECI xfer failed");
++		return -EIO;
++	}
++	retry_cnt--;//reduce it back, we have another check for read
++
++	smbus_txlen = msg->tx_len + 4; //extra 4 bytes include, controlbyte, peci_addr, peci_txlen, peci_rxlen
++	txrxbuf[0] = 0; //control byte, reserved.
++	txrxbuf[1] = msg->addr;
++	txrxbuf[2] = msg->tx_len;
++	txrxbuf[3] = msg->rx_len;
++	memcpy(txrxbuf+4, msg->tx_buf, msg->tx_len);
++
++	smbp_dbg("xfer write i2c_addr 0x%02x, i2c wr_size %02u, PECI addr 0x%02x TX %u RX %u",
++			priv->client_write->addr, smbus_txlen,
++			msg->addr, msg->tx_len, msg->rx_len);
++	if(retry_cnt==1)
++	{
++		print_hex_dump(KERN_INFO, "PECI_TX:", DUMP_PREFIX_OFFSET, 16, 1, txrxbuf, smbus_txlen, false);
++	}
++	dynamic_hex_dump("PECI_TX:", DUMP_PREFIX_OFFSET, 16, 1, txrxbuf, smbus_txlen, false);
++
++
++	if(retry_cnt)
++		msleep(1);
++
++	result = i2c_smbus_write_block_data(
++			priv->client_write, SMBUS_PECI_I2C_COMMAND_WRITE,
++			smbus_txlen, txrxbuf);
++	if (result != 0)
++	{
++		retry_cnt ++;
++		smbp_info("xfer i2c write return %d, retry %u", result, retry_cnt);
++		goto retry_write_data;
++	}
++
++	smbp_dbg("xfer read  i2c_addr 0x%02x, expect return size %u",
++			priv->client_read->addr, msg->rx_len);
++
++retry_read_data:
++	retry_cnt++;
++	if(retry_cnt>SMBUS_PECI_RETRY_MAX)
++	{
++		dev_err(&adapter->dev, "PECI xfer failed");
++		return -EIO;
++	}
++	result = i2c_smbus_read_block_data(
++			priv->client_read, SMBUS_PECI_I2C_COMMAND_READ,
++			txrxbuf);
++	if(result<=0)
++	{
++		smbp_info("xfer i2c read  return %d, retry %u", result, retry_cnt);
++		goto retry_write_data;
++	}
++
++	smbp_dbg("xfer read returned %d", result);
++
++	dynamic_hex_dump("recv:", DUMP_PREFIX_OFFSET, 16, 1, txrxbuf, result, false);
++
++	if(result <= 2)
++	{
++		//bit 0 is busy, bit 1 is err
++		smbp_dbg("xfer read returned %d, status %x, code %02x", result, txrxbuf[0], txrxbuf[1]);
++		if(txrxbuf[0]==0)
++		{
++			return 0;
++		}
++		if(txrxbuf[0] & 0x1) //busy
++		{
++			smbp_info("xfer read PECI busy, status %x, code %02x, retry: %u",
++					txrxbuf[0], txrxbuf[1], retry_cnt);
++			msleep(1);
++			goto retry_read_data;
++		}
++		if(txrxbuf[0] & 0x2) //err
++		{
++			if(result ==1)
++			{
++				smbp_info("xfer read PECI no error code, status %x retry: %u",
++						txrxbuf[0], retry_cnt);
++				goto retry_read_data;
++			}
++			err_msg = NULL;
++			switch (txrxbuf[1])
++			{
++			case 0x1:
++				print_hex_dump(KERN_INFO, "peci tx message:", DUMP_PREFIX_OFFSET, 16, 1, txrxbuf, result, false);
++				err_msg = "Bad format";
++				break;
++			case 0x9:
++				smbp_info("xfer read PECI Disabled, status %x, code %02x, not retry",
++						txrxbuf[0], txrxbuf[1]);
++				dev_err(&adapter->dev, "PECI disabled");
++				return -ENODEV;
++			case 0x3e:
++				err_msg = "invalid socket";
++				break;
++			case 0xE1:
++				err_msg = "Timed out";
++				break;
++			case 0xfe:
++				err_msg = "PECI Failure";
++				break;
++			default:
++				err_msg = "Other error";
++				break;
++			}
++			smbp_info("xfer read PECI %s, status %x, code %02x, retry: %u",
++					err_msg, txrxbuf[0], txrxbuf[1], retry_cnt);
++			goto retry_write_data;
++		}
++	}
++	//Seems like sometime the PECI will stop responding, and we receive all FF
++	//a temp hack to detect such error
++	if(txrxbuf[result-1] == 0xFF && txrxbuf[result-2] == 0xFF)
++	{
++		smbp_info("xfer read PECI FFs at the end, status %x, code %02x, retry: %u",
++				err_msg, txrxbuf[0], txrxbuf[1], retry_cnt);
++		goto retry_write_data;
++	}
++	if(result != (msg->rx_len + 2))
++	{
++		smbp_info("xfer read data %u does not match requested %d, status %x, code %02x, retry: %u",
++				msg->rx_len, result-2, txrxbuf[0], txrxbuf[1], retry_cnt);
++		goto retry_write_data;
++	}
++	if(msg->rx_len)
++	{
++		memcpy(msg->rx_buf, txrxbuf+2, msg->rx_len);
++	}
++	return 0;
++}
++
++
++static int smbus_peci_probe(struct i2c_client * client, const struct i2c_device_id * dev_id)
++{
++	struct smbus_peci *priv;
++	int ret = 0;
++
++	if( smbus_peci_dev == NULL)
++	{
++		priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
++		if (!priv)
++			return -ENOMEM;
++		smbus_peci_dev = priv;
++	}
++	priv = smbus_peci_dev;
++
++	smbp_dev_dbg(&client->dev, "i2c client bus %u, addr %02x\n", client->adapter->nr, client->addr);
++	if(client->addr == SMBUS_PECI_ADDR_READ)
++	{
++		priv->client_read = client;
++		client->flags |= I2C_M_RECV_LEN;
++	}
++	else if (client->addr == SMBUS_PECI_ADDR_WRITE)
++	{
++		priv->client_write = client;
++		priv->adapter.dev.of_node = of_node_get(dev_of_node(&priv->client_write->dev));
++		smbp_dev_dbg(&client->dev, "of_node %s", priv->adapter.dev.of_node->name);
++
++	}
++	else
++	{
++		smbp_dev_dbg(&client->dev, "not for peci\n");
++		return -ENODEV;
++	}
++	i2c_set_clientdata(client, priv);
++
++	if(priv->client_read == NULL || priv->client_write == NULL)
++	{
++		smbp_dev_dbg(&client->dev, "defer registering peci adapter\n");
++		return 0;
++	}
++	smbp_dev_dbg(&client->dev, "registering peci adapter\n");
++	peci_set_adapdata(&priv->adapter, priv);
++
++#if 0
++	ret = smbus_peci_init_ctrl(priv);
++	if (ret < 0)
++		return ret;
++#endif
++
++	priv->adapter.dev.parent = &priv->client_write->dev;
++//	priv->adapter.dev.of_node = of_node_get(dev_of_node(priv->dev));
++	strlcpy(priv->adapter.name, "peci_smbus", sizeof("peci_smbus"));
++	priv->adapter.xfer = smbus_peci_xfer;
++	//according to C3K spec 30.7, the below are supported,
++	//until peci-core.c regconize Major 3, we add this here
++	priv->adapter.cmd_mask |= BIT(PECI_CMD_RD_PKG_CFG); // | BIT(PECI_CMD_RD_PCI_CFG_LOCAL);
++
++	ret = peci_add_adapter(&priv->adapter);
++	if (ret < 0)
++		return ret;
++
++	priv->adapter_installed =true;
++	dev_info(&client->dev, "peci bus %d registered\n",
++		 priv->adapter.nr);
++
++	return 0;
++}
++
++static int smbus_peci_remove(struct i2c_client *client)
++{
++	struct smbus_peci *priv = i2c_get_clientdata(client);
++
++	if(priv->client_read == client)
++	{
++		priv->client_read = NULL;
++	}
++	if(priv->client_write == client)
++	{
++		priv->client_write = NULL;
++	}
++	if(priv->adapter_installed)
++	{
++		peci_del_adapter(&priv->adapter);
++		of_node_put(priv->adapter.dev.of_node);
++		priv->adapter_installed = false;
++	}
++
++	return 0;
++}
++
++#if 0
++static const struct of_device_id smbus_peci_of_table[] = {
++	{ .compatible = "smbus-peci", },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, smbus_peci_of_table);
++#endif
++
++#define DEVICE_NAME "smbus-peci"
++
++static const struct i2c_device_id smbus_peci[] = {
++	{ DEVICE_NAME, 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, smbus_peci);
++
++static struct i2c_driver smbus_peci_driver = {
++	.probe  = smbus_peci_probe,
++	.remove = smbus_peci_remove,
++	.id_table = smbus_peci,
++//	.detect = smbus_peci_detect,
++	.driver = {
++		.name           = "smbus-peci",
++//		.of_match_table = of_match_ptr(smbus_peci_of_table),
++	},
++};
++module_i2c_driver(smbus_peci_driver);
++
++MODULE_AUTHOR("Jeff Zheng <jeff.zheng@silicom.co.il>");
++MODULE_DESCRIPTION("PECI smbus");
++MODULE_LICENSE("GPL v2");
+--- linux-custom-orig/drivers/peci/Kconfig	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/peci/Kconfig	2018-04-28 12:07:30.468408886 +0800
+@@ -0,0 +1,56 @@
++#
++# Platform Environment Control Interface (PECI) subsystem configuration
++#
++
++menu "PECI support"
++
++config PECI
++	tristate "PECI support"
++	select RT_MUTEXES
++	select CRC8
++	help
++	  The Platform Environment Control Interface (PECI) is a one-wire bus
++	  interface that provides a communication channel between Intel
++	  processors and chipset components to external monitoring or control
++	  devices.
++
++	  If you want PECI support, you should say Y here and also to the
++	  specific driver for your bus adapter(s) below.
++
++if PECI
++
++#
++# PECI hardware bus configuration
++#
++
++menu "PECI Hardware Bus support"
++
++config PECI_SMBUS
++	tristate "SMBus PECI support"
++	select I2C
++	depends on OF
++	help
++	  Say Y here if you want support for the Platform Environment Control
++	  Interface (PECI) bus adapter driver on the SMBus
++
++	  This support is also available as a module.  If so, the module
++	  will be called peci-smbus.
++
++config PECI_ASPEED
++	tristate "Aspeed AST24xx/AST25xx PECI support"
++	select REGMAP_MMIO
++	depends on OF
++	depends on ARCH_ASPEED || COMPILE_TEST
++	help
++	  Say Y here if you want support for the Platform Environment Control
++	  Interface (PECI) bus adapter driver on the Aspeed AST24XX and AST25XX
++	  SoCs.
++
++	  This support is also available as a module.  If so, the module
++	  will be called peci-aspeed.
++
++endmenu
++
++endif # PECI
++
++endmenu
+--- linux-custom-orig/drivers/peci/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/peci/Makefile	2018-04-26 19:37:49.072864738 +0800
+@@ -0,0 +1,11 @@
++#
++# Makefile for the PECI core and bus drivers.
++#
++
++# Core functionality
++obj-$(CONFIG_PECI)		+= peci-core.o
++
++# Hardware specific bus drivers
++obj-$(CONFIG_PECI_ASPEED)	+= peci-aspeed.o
++
++obj-$(CONFIG_PECI_SMBUS)	+= peci-smbus.o
+--- linux-custom-orig/drivers/hwmon/peci-cputemp.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/peci-cputemp.c	2018-07-18 13:09:54.977425830 +0800
+@@ -0,0 +1,801 @@
++// SPDX-License-Identifier: GPL-2.0
++// Copyright (c) 2018 Intel Corporation
++
++#include <linux/delay.h>
++#include <linux/hwmon.h>
++#include <linux/hwmon-sysfs.h>
++#include <linux/jiffies.h>
++#include <linux/module.h>
++#include <linux/of_device.h>
++#include <linux/peci.h>
++
++#define TEMP_TYPE_PECI        6  /* Sensor type 6: Intel PECI */
++
++#define CORE_MAX_ON_HSX       18 /* Max number of cores on Haswell */
++#define CORE_MAX_ON_BDX       24 /* Max number of cores on Broadwell */
++#define CORE_MAX_ON_SKX       28 /* Max number of cores on Skylake */
++#define CORE_MAX_ON_C3K       16 /* Max number of cores on Skylake */
++
++#define DEFAULT_CHANNEL_NUMS  5
++#define CORETEMP_CHANNEL_NUMS CORE_MAX_ON_SKX
++#define CPUTEMP_CHANNEL_NUMS  (DEFAULT_CHANNEL_NUMS + CORETEMP_CHANNEL_NUMS)
++
++#define CLIENT_CPU_ID_MASK    0xf0ff0  /* Mask for Family / Model info */
++
++#define UPDATE_INTERVAL_MIN   HZ
++#define peci_dbg(dev, fmt, ...)	dev_info(dev, "[SPECI] [%20s]"fmt"\n", __func__, ## __VA_ARGS__)
++
++enum cpu_gens {
++	CPU_GEN_HSX, /* Haswell Xeon */
++	CPU_GEN_BRX, /* Broadwell Xeon */
++	CPU_GEN_SKX, /* Skylake Xeon */
++	CPU_GEN_C3K, /* C3000 Atom */
++	CPU_GEN_MAX
++};
++
++struct cpu_gen_info {
++	u32 type;
++	u32 cpu_id;
++	u32 core_max;
++};
++
++struct temp_data {
++	bool valid;
++	s32  value;
++	unsigned long last_updated;
++};
++
++struct temp_group {
++	struct temp_data die;
++	struct temp_data dts_margin;
++	struct temp_data tcontrol;
++	struct temp_data tthrottle;
++	struct temp_data tjmax;
++	struct temp_data core[CORETEMP_CHANNEL_NUMS];
++};
++
++struct peci_cputemp {
++	struct peci_client *client;
++	struct device *dev;
++	char name[PECI_NAME_SIZE];
++	struct temp_group temp;
++	u8 addr;
++	uint cpu_no;
++	const struct cpu_gen_info *gen_info;
++	u32 core_mask;
++	u32 temp_config[CPUTEMP_CHANNEL_NUMS + 1];
++	uint config_idx;
++	struct hwmon_channel_info temp_info;
++	const struct hwmon_channel_info *info[2];
++	struct hwmon_chip_info chip;
++};
++
++enum cputemp_channels {
++	channel_die,
++	channel_dts_mrgn,
++	channel_tcontrol,
++	channel_tthrottle,
++	channel_tjmax,
++	channel_core,
++};
++
++static const struct cpu_gen_info cpu_gen_info_table[] = {
++	{ .type = CPU_GEN_HSX,
++	  .cpu_id = 0x306f0, /* Family code: 6, Model number: 63 (0x3f) */
++	  .core_max = CORE_MAX_ON_HSX },
++	{ .type = CPU_GEN_BRX,
++	  .cpu_id = 0x406f0, /* Family code: 6, Model number: 79 (0x4f) */
++	  .core_max = CORE_MAX_ON_BDX },
++	{ .type = CPU_GEN_SKX,
++	  .cpu_id = 0x50650, /* Family code: 6, Model number: 85 (0x55) */
++	  .core_max = CORE_MAX_ON_SKX },
++	{ .type = CPU_GEN_C3K,
++	  .cpu_id = 0x506f0, /* Family code: 6, Model number: 85 (0x55) */
++	  .core_max = CORE_MAX_ON_C3K },
++};
++
++static const u32 config_table[DEFAULT_CHANNEL_NUMS + 1] = {
++	/* Die temperature */
++	HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_CRIT |
++	HWMON_T_CRIT_HYST,
++
++	/* DTS margin temperature */
++	HWMON_T_INPUT | HWMON_T_MIN | HWMON_T_LCRIT,
++
++	/* Tcontrol temperature */
++	HWMON_T_INPUT | HWMON_T_CRIT,
++
++	/* Tthrottle temperature */
++	HWMON_T_INPUT,
++
++	/* Tjmax temperature */
++	HWMON_T_INPUT,
++
++	/* Core temperature - for all core channels */
++	HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_CRIT |
++	HWMON_T_CRIT_HYST,
++};
++
++static const char *cputemp_label[CPUTEMP_CHANNEL_NUMS] = {
++	"Die",
++	"DTS margin",
++	"Tcontrol",
++	"Tthrottle",
++	"Tjmax",
++	"Core 0", "Core 1", "Core 2", "Core 3",
++	"Core 4", "Core 5", "Core 6", "Core 7",
++	"Core 8", "Core 9", "Core 10", "Core 11",
++	"Core 12", "Core 13", "Core 14", "Core 15",
++	"Core 16", "Core 17", "Core 18", "Core 19",
++	"Core 20", "Core 21", "Core 22", "Core 23",
++};
++
++static int send_peci_cmd(struct peci_cputemp *priv,
++			 enum peci_cmd cmd,
++			 void *msg)
++{
++	return peci_command(priv->client->adapter, cmd, msg);
++}
++
++static int need_update(struct temp_data *temp)
++{
++	if (temp->valid &&
++	    time_before(jiffies, temp->last_updated + UPDATE_INTERVAL_MIN))
++		return 0;
++
++	return 1;
++}
++
++static void mark_updated(struct temp_data *temp)
++{
++	temp->valid = true;
++	temp->last_updated = jiffies;
++}
++
++static s32 ten_dot_six_to_millidegree(s32 val)
++{
++	return ((val ^ 0x8000) - 0x8000) * 1000 / 64;
++}
++
++static int get_tjmax(struct peci_cputemp *priv)
++{
++	struct peci_rd_pkg_cfg_msg msg;
++	int rc;
++
++	if (!priv->temp.tjmax.valid) {
++		msg.addr = priv->addr;
++		msg.index = MBX_INDEX_TEMP_TARGET;
++		msg.param = 0;
++		msg.rx_len = 4;
++
++		rc = send_peci_cmd(priv, PECI_CMD_RD_PKG_CFG, &msg);
++		if (rc)
++			return rc;
++
++		priv->temp.tjmax.value = (s32)msg.pkg_config[2] * 1000;
++		priv->temp.tjmax.valid = true;
++	}
++
++	return 0;
++}
++
++static int get_tcontrol(struct peci_cputemp *priv)
++{
++	struct peci_rd_pkg_cfg_msg msg;
++	s32 tcontrol_margin;
++	s32 tthrottle_offset;
++	int rc;
++
++	if (!need_update(&priv->temp.tcontrol))
++		return 0;
++
++	rc = get_tjmax(priv);
++	if (rc)
++		return rc;
++
++	msg.addr = priv->addr;
++	msg.index = MBX_INDEX_TEMP_TARGET;
++	msg.param = 0;
++	msg.rx_len = 4;
++
++	rc = send_peci_cmd(priv, PECI_CMD_RD_PKG_CFG, &msg);
++	if (rc)
++		return rc;
++
++	tcontrol_margin = msg.pkg_config[1];
++	tcontrol_margin = ((tcontrol_margin ^ 0x80) - 0x80) * 1000;
++	priv->temp.tcontrol.value = priv->temp.tjmax.value - tcontrol_margin;
++
++	tthrottle_offset = (msg.pkg_config[3] & 0x2f) * 1000;
++	priv->temp.tthrottle.value = priv->temp.tjmax.value - tthrottle_offset;
++
++	mark_updated(&priv->temp.tcontrol);
++	mark_updated(&priv->temp.tthrottle);
++
++	return 0;
++}
++
++static int get_tthrottle(struct peci_cputemp *priv)
++{
++	struct peci_rd_pkg_cfg_msg msg;
++	s32 tcontrol_margin;
++	s32 tthrottle_offset;
++	int rc;
++
++	if (!need_update(&priv->temp.tthrottle))
++		return 0;
++
++	rc = get_tjmax(priv);
++	if (rc)
++		return rc;
++
++	msg.addr = priv->addr;
++	msg.index = MBX_INDEX_TEMP_TARGET;
++	msg.param = 0;
++	msg.rx_len = 4;
++
++	rc = send_peci_cmd(priv, PECI_CMD_RD_PKG_CFG, &msg);
++	if (rc)
++		return rc;
++
++	tthrottle_offset = (msg.pkg_config[3] & 0x2f) * 1000;
++	priv->temp.tthrottle.value = priv->temp.tjmax.value - tthrottle_offset;
++
++	tcontrol_margin = msg.pkg_config[1];
++	tcontrol_margin = ((tcontrol_margin ^ 0x80) - 0x80) * 1000;
++	priv->temp.tcontrol.value = priv->temp.tjmax.value - tcontrol_margin;
++
++	mark_updated(&priv->temp.tthrottle);
++	mark_updated(&priv->temp.tcontrol);
++
++	return 0;
++}
++
++static int get_die_temp(struct peci_cputemp *priv)
++{
++	struct peci_get_temp_msg msg;
++	int rc;
++
++	if (!need_update(&priv->temp.die))
++		return 0;
++
++	rc = get_tjmax(priv);
++	if (rc)
++		return rc;
++
++	msg.addr = priv->addr;
++
++	rc = send_peci_cmd(priv, PECI_CMD_GET_TEMP, &msg);
++	if (rc)
++		return rc;
++
++	priv->temp.die.value = priv->temp.tjmax.value +
++			       ((s32)msg.temp_raw * 1000 / 64);
++
++	mark_updated(&priv->temp.die);
++
++	return 0;
++}
++
++static int get_dts_margin(struct peci_cputemp *priv)
++{
++	struct peci_rd_pkg_cfg_msg msg;
++	s32 dts_margin;
++	int rc;
++
++	if (!need_update(&priv->temp.dts_margin))
++		return 0;
++
++	msg.addr = priv->addr;
++	msg.index = MBX_INDEX_DTS_MARGIN;
++	msg.param = 0;
++	msg.rx_len = 4;
++
++	rc = send_peci_cmd(priv, PECI_CMD_RD_PKG_CFG, &msg);
++	if (rc)
++		return rc;
++
++	dts_margin = (msg.pkg_config[1] << 8) | msg.pkg_config[0];
++
++	/**
++	 * Processors return a value of DTS reading in 10.6 format
++	 * (10 bits signed decimal, 6 bits fractional).
++	 * Error codes:
++	 *   0x8000: General sensor error
++	 *   0x8001: Reserved
++	 *   0x8002: Underflow on reading value
++	 *   0x8003-0x81ff: Reserved
++	 */
++	if (dts_margin >= 0x8000 && dts_margin <= 0x81ff)
++		return -EIO;
++
++	dts_margin = ten_dot_six_to_millidegree(dts_margin);
++
++	priv->temp.dts_margin.value = dts_margin;
++
++	mark_updated(&priv->temp.dts_margin);
++
++	return 0;
++}
++
++static int get_core_temp(struct peci_cputemp *priv, int core_index)
++{
++	struct peci_rd_pkg_cfg_msg msg;
++	s32 core_dts_margin;
++	int rc;
++
++	if (!need_update(&priv->temp.core[core_index]))
++		return 0;
++
++	rc = get_tjmax(priv);
++	if (rc)
++		return rc;
++
++	msg.addr = priv->addr;
++	msg.index = MBX_INDEX_PER_CORE_DTS_TEMP;
++	msg.param = core_index;
++	msg.rx_len = 4;
++
++	rc = send_peci_cmd(priv, PECI_CMD_RD_PKG_CFG, &msg);
++	if (rc)
++		return rc;
++
++	core_dts_margin = (msg.pkg_config[1] << 8) | msg.pkg_config[0];
++
++	/**
++	 * Processors return a value of the core DTS reading in 10.6 format
++	 * (10 bits signed decimal, 6 bits fractional).
++	 * Error codes:
++	 *   0x8000: General sensor error
++	 *   0x8001: Reserved
++	 *   0x8002: Underflow on reading value
++	 *   0x8003-0x81ff: Reserved
++	 */
++	if (core_dts_margin >= 0x8000 && core_dts_margin <= 0x81ff)
++		return -EIO;
++
++	core_dts_margin = ten_dot_six_to_millidegree(core_dts_margin);
++
++	priv->temp.core[core_index].value = priv->temp.tjmax.value +
++					    core_dts_margin;
++
++	mark_updated(&priv->temp.core[core_index]);
++
++	return 0;
++}
++
++static int find_core_index(struct peci_cputemp *priv, int channel)
++{
++	int core_channel = channel - DEFAULT_CHANNEL_NUMS;
++	int idx, found = 0;
++
++	for (idx = 0; idx < priv->gen_info->core_max; idx++) {
++		if (priv->core_mask & BIT(idx)) {
++			if (core_channel == found)
++				break;
++
++			found++;
++		}
++	}
++
++	return idx;
++}
++
++static int cputemp_read_string(struct device *dev,
++			       enum hwmon_sensor_types type,
++			       u32 attr, int channel, const char **str)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int core_index;
++
++	switch (attr) {
++	case hwmon_temp_label:
++		if (channel < DEFAULT_CHANNEL_NUMS) {
++			*str = cputemp_label[channel];
++		} else {
++			core_index = find_core_index(priv, channel);
++			*str = cputemp_label[DEFAULT_CHANNEL_NUMS + core_index];
++		}
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read_die(struct device *dev,
++			    enum hwmon_sensor_types type,
++			    u32 attr, int channel, long *val)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int rc;
++
++	switch (attr) {
++	case hwmon_temp_input:
++		rc = get_die_temp(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.die.value;
++		return 0;
++	case hwmon_temp_max:
++		rc = get_tcontrol(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tcontrol.value;
++		return 0;
++	case hwmon_temp_crit:
++		rc = get_tjmax(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tjmax.value;
++		return 0;
++	case hwmon_temp_crit_hyst:
++		rc = get_tcontrol(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tjmax.value - priv->temp.tcontrol.value;
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read_dts_margin(struct device *dev,
++				   enum hwmon_sensor_types type,
++				   u32 attr, int channel, long *val)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int rc;
++
++	switch (attr) {
++	case hwmon_temp_input:
++		rc = get_dts_margin(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.dts_margin.value;
++		return 0;
++	case hwmon_temp_min:
++		*val = 0;
++		return 0;
++	case hwmon_temp_lcrit:
++		rc = get_tcontrol(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tcontrol.value - priv->temp.tjmax.value;
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read_tcontrol(struct device *dev,
++				 enum hwmon_sensor_types type,
++				 u32 attr, int channel, long *val)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int rc;
++
++	switch (attr) {
++	case hwmon_temp_input:
++		rc = get_tcontrol(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tcontrol.value;
++		return 0;
++	case hwmon_temp_crit:
++		rc = get_tjmax(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tjmax.value;
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read_tthrottle(struct device *dev,
++				  enum hwmon_sensor_types type,
++				  u32 attr, int channel, long *val)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int rc;
++
++	switch (attr) {
++	case hwmon_temp_input:
++		rc = get_tthrottle(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tthrottle.value;
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read_tjmax(struct device *dev,
++			      enum hwmon_sensor_types type,
++			      u32 attr, int channel, long *val)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int rc;
++
++	switch (attr) {
++	case hwmon_temp_input:
++		rc = get_tjmax(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tjmax.value;
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read_core(struct device *dev,
++			     enum hwmon_sensor_types type,
++			     u32 attr, int channel, long *val)
++{
++	struct peci_cputemp *priv = dev_get_drvdata(dev);
++	int core_index = find_core_index(priv, channel);
++	int rc;
++
++	switch (attr) {
++	case hwmon_temp_input:
++		rc = get_core_temp(priv, core_index);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.core[core_index].value;
++		return 0;
++	case hwmon_temp_max:
++		rc = get_tcontrol(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tcontrol.value;
++		return 0;
++	case hwmon_temp_crit:
++		rc = get_tjmax(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tjmax.value;
++		return 0;
++	case hwmon_temp_crit_hyst:
++		rc = get_tcontrol(priv);
++		if (rc)
++			return rc;
++
++		*val = priv->temp.tjmax.value - priv->temp.tcontrol.value;
++		return 0;
++	default:
++		return -EOPNOTSUPP;
++	}
++}
++
++static int cputemp_read(struct device *dev,
++			enum hwmon_sensor_types type,
++			u32 attr, int channel, long *val)
++{
++	switch (channel) {
++	case channel_die:
++		return cputemp_read_die(dev, type, attr, channel, val);
++	case channel_dts_mrgn:
++		return cputemp_read_dts_margin(dev, type, attr, channel, val);
++	case channel_tcontrol:
++		return cputemp_read_tcontrol(dev, type, attr, channel, val);
++	case channel_tthrottle:
++		return cputemp_read_tthrottle(dev, type, attr, channel, val);
++	case channel_tjmax:
++		return cputemp_read_tjmax(dev, type, attr, channel, val);
++	default:
++		if (channel < CPUTEMP_CHANNEL_NUMS)
++			return cputemp_read_core(dev, type, attr, channel, val);
++
++		return -EOPNOTSUPP;
++	}
++}
++
++static umode_t cputemp_is_visible(const void *data,
++				  enum hwmon_sensor_types type,
++				  u32 attr, int channel)
++{
++	const struct peci_cputemp *priv = data;
++
++	if (priv->temp_config[channel] & BIT(attr))
++		return 0444;
++
++	return 0;
++}
++
++static const struct hwmon_ops cputemp_ops = {
++	.is_visible = cputemp_is_visible,
++	//.read_string = cputemp_read_string,
++	.read = cputemp_read,
++};
++
++static int check_resolved_cores(struct peci_cputemp *priv)
++{
++	struct peci_rd_pci_cfg_local_msg msg;
++	int rc;
++
++	if (!(priv->client->adapter->cmd_mask & BIT(PECI_CMD_RD_PCI_CFG_LOCAL)))
++	{
++		if(priv->gen_info->type == CPU_GEN_C3K)
++		{
++			priv->core_mask = 0xff;
++			return 0;
++		}
++		return -EINVAL;
++	}
++
++	/* Get the RESOLVED_CORES register value */
++	msg.addr = priv->addr;
++	msg.bus = 1;
++	msg.device = 30;
++	msg.function = 3;
++	msg.reg = 0xB4;
++	msg.rx_len = 4;
++
++
++	rc = send_peci_cmd(priv, PECI_CMD_RD_PCI_CFG_LOCAL, &msg);
++	if (rc)
++		return rc;
++
++	priv->core_mask = msg.pci_config[3] << 24 |
++			  msg.pci_config[2] << 16 |
++			  msg.pci_config[1] << 8 |
++			  msg.pci_config[0];
++
++	if (!priv->core_mask)
++		return -EAGAIN;
++
++	dev_dbg(priv->dev, "Scanned resolved cores: 0x%x\n", priv->core_mask);
++	return 0;
++}
++
++static int create_core_temp_info(struct peci_cputemp *priv)
++{
++	int rc, i;
++
++	rc = check_resolved_cores(priv);
++	if (!rc) {
++		for (i = 0; i < priv->gen_info->core_max; i++) {
++			if (priv->core_mask & BIT(i)) {
++				priv->temp_config[priv->config_idx++] =
++						     config_table[channel_core];
++			}
++		}
++	}
++
++	return rc;
++}
++
++static int check_cpu_id(struct peci_cputemp *priv)
++{
++	struct peci_rd_pkg_cfg_msg msg;
++	u32 cpu_id;
++	int i, rc;
++
++	msg.addr = priv->addr;
++	msg.index = MBX_INDEX_CPU_ID;
++	msg.param = PKG_ID_CPU_ID;
++	msg.rx_len = 4;
++
++	rc = send_peci_cmd(priv, PECI_CMD_RD_PKG_CFG, &msg);
++	if (rc)
++		return rc;
++
++	cpu_id = ((msg.pkg_config[2] << 16) | (msg.pkg_config[1] << 8) |
++		  msg.pkg_config[0]) & CLIENT_CPU_ID_MASK;
++
++	for (i = 0; i < CPU_GEN_MAX; i++) {
++		if (cpu_id == cpu_gen_info_table[i].cpu_id) {
++			priv->gen_info = &cpu_gen_info_table[i];
++			break;
++		}
++	}
++
++	dev_dbg(priv->dev, "CPU_ID: 0x%x\n", cpu_id);
++	if (!priv->gen_info)
++		return -ENODEV;
++
++	return 0;
++}
++
++static int peci_cputemp_probe(struct peci_client *client)
++{
++	struct device *dev = &client->dev;
++	struct peci_cputemp *priv;
++	struct device *hwmon_dev;
++	int rc;
++
++	peci_dbg(&client->dev, "probe addr %02x idex %u name %s", client->addr, client->idx, client->name);
++	if ((client->adapter->cmd_mask &
++	    (BIT(PECI_CMD_GET_TEMP) | BIT(PECI_CMD_RD_PKG_CFG))) !=
++	    (BIT(PECI_CMD_GET_TEMP) | BIT(PECI_CMD_RD_PKG_CFG))) {
++		dev_err(dev, "Client doesn't support temperature monitoring, mask %08x\n", client->adapter->cmd_mask);
++		return -EINVAL;
++	}
++
++	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++
++	dev_set_drvdata(dev, priv);
++	priv->client = client;
++	priv->dev = dev;
++	priv->addr = client->addr;
++	priv->cpu_no = priv->addr - PECI_BASE_ADDR;
++
++	snprintf(priv->name, PECI_NAME_SIZE, "peci_cputemp.cpu%d",
++		 priv->cpu_no);
++
++	rc = check_cpu_id(priv);
++	if (rc) {
++		dev_err(dev, "Client CPU is not supported\n");
++		return rc;
++	}
++
++	priv->temp_config[priv->config_idx++] = config_table[channel_die];
++	priv->temp_config[priv->config_idx++] = config_table[channel_dts_mrgn];
++	priv->temp_config[priv->config_idx++] = config_table[channel_tcontrol];
++	priv->temp_config[priv->config_idx++] = config_table[channel_tthrottle];
++	priv->temp_config[priv->config_idx++] = config_table[channel_tjmax];
++
++	rc = create_core_temp_info(priv);
++	if (rc)
++		dev_dbg(dev, "Failed to create core temp info\n");
++
++	priv->chip.ops = &cputemp_ops;
++	priv->chip.info = priv->info;
++
++	priv->info[0] = &priv->temp_info;
++
++	priv->temp_info.type = hwmon_temp;
++	priv->temp_info.config = priv->temp_config;
++
++	hwmon_dev = devm_hwmon_device_register_with_info(priv->dev,
++							 priv->name,
++							 priv,
++							 &priv->chip,
++							 NULL);
++
++	if (IS_ERR(hwmon_dev))
++	{
++		dev_err(dev, "Failed to regsiter devm_hwmon_device_register_with_info\n");
++		return PTR_ERR(hwmon_dev);
++	}
++
++	dev_dbg(dev, "%s: sensor '%s'\n", dev_name(hwmon_dev), priv->name);
++
++	return 0;
++}
++
++static const struct of_device_id peci_cputemp_of_table[] = {
++	{ .compatible = "intel,peci-cputemp" },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, peci_cputemp_of_table);
++
++static struct peci_driver peci_cputemp_driver = {
++	.probe  = peci_cputemp_probe,
++	.driver = {
++		.name           = "peci-cputemp",
++		.of_match_table = of_match_ptr(peci_cputemp_of_table),
++	},
++};
++module_peci_driver(peci_cputemp_driver);
++
++MODULE_AUTHOR("Jae Hyun Yoo <jae.hyun.yoo@linux.intel.com>");
++MODULE_DESCRIPTION("PECI cputemp driver");
++MODULE_LICENSE("GPL v2");
+--- linux-custom-orig/drivers/Kconfig	2018-07-15 00:46:28.000000000 +0800
++++ linux-custom-silicom/drivers/Kconfig	2018-07-16 13:51:24.673533311 +0800
+@@ -209,4 +209,6 @@
+ 
+ source "drivers/mux/Kconfig"
+ 
++source "drivers/peci/Kconfig"
++
+ endmenu
+--- linux-custom-orig/drivers/Makefile	2018-07-15 00:46:28.000000000 +0800
++++ linux-custom-silicom/drivers/Makefile	2018-07-16 13:51:24.673533311 +0800
+@@ -183,3 +183,4 @@
+ obj-$(CONFIG_FSI)		+= fsi/
+ obj-$(CONFIG_TEE)		+= tee/
+ obj-$(CONFIG_MULTIPLEXER)	+= mux/
++obj-$(CONFIG_PECI)		+= peci/
+--- linux-custom-orig/drivers/hwmon/Kconfig	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/Kconfig	2018-07-16 13:51:24.674533301 +0800
+@@ -1243,6 +1243,34 @@
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called nct7904.
+ 
++config SENSORS_PECI_CPUTEMP
++	tristate "PECI CPU temperature monitoring support"
++	depends on OF
++	depends on PECI
++	help
++	  If you say yes here you get support for the generic Intel PECI
++	  cputemp driver which provides Digital Thermal Sensor (DTS) thermal
++	  readings of the CPU package and CPU cores that are accessible using
++	  the PECI Client Command Suite via the processor PECI client.
++	  Check Documentation/hwmon/peci-cputemp for details.
++
++	  This driver can also be built as a module.  If so, the module
++	  will be called peci-cputemp.
++
++config SENSORS_PECI_DIMMTEMP
++	tristate "PECI DIMM temperature monitoring support"
++	depends on OF
++	depends on PECI
++	help
++	  If you say yes here you get support for the generic Intel PECI hwmon
++	  driver which provides Digital Thermal Sensor (DTS) thermal readings of
++	  DIMM components that are accessible using the PECI Client Command
++	  Suite via the processor PECI client.
++	  Check Documentation/hwmon/peci-dimmtemp for details.
++
++	  This driver can also be built as a module.  If so, the module
++	  will be called peci-dimmtemp.
++
+ config SENSORS_NSA320
+ 	tristate "ZyXEL NSA320 and compatible fan speed and temperature sensors"
+ 	depends on GPIOLIB && OF
+@@ -1388,6 +1416,16 @@
+ 	  This driver can also be built as a module.  If so, the module
+ 	  will be called emc2103.
+ 
++config SENSORS_EMC2300
++	tristate "SMSC EMC2300"
++	depends on I2C
++	help
++	  If you say yes here you get support for the temperature
++	  and fan sensors of the SMSC EMC2300 chips.
++
++	  This driver can also be built as a module.  If so, the module
++	  will be called emc2300.
++
+ config SENSORS_EMC6W201
+ 	tristate "SMSC EMC6W201"
+ 	depends on I2C
+@@ -1869,6 +1907,12 @@
+ 	  If you say yes here you get support for the temperature
+ 	  and power sensors for APM X-Gene SoC.
+ 
++config SILC_PAC1014A
++	tristate "SILC_PAC1014A hardware monitoring driver"
++	depends on I2C
++	help
++	  This driver provides support for the lattice isp power chip PAC1014A
++
+ if ACPI
+ 
+ comment "ACPI drivers"
+--- linux-custom-orig/drivers/hwmon/Makefile	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/Makefile	2019-03-04 10:50:31.968528732 +0800
+@@ -58,6 +58,7 @@
+ obj-$(CONFIG_SENSORS_DS1621)	+= ds1621.o
+ obj-$(CONFIG_SENSORS_EMC1403)	+= emc1403.o
+ obj-$(CONFIG_SENSORS_EMC2103)	+= emc2103.o
++obj-$(CONFIG_SENSORS_EMC2300)   += emc2300.o
+ obj-$(CONFIG_SENSORS_EMC6W201)	+= emc6w201.o
+ obj-$(CONFIG_SENSORS_F71805F)	+= f71805f.o
+ obj-$(CONFIG_SENSORS_F71882FG)	+= f71882fg.o
+@@ -133,6 +134,8 @@
+ obj-$(CONFIG_SENSORS_NCT7904)	+= nct7904.o
+ obj-$(CONFIG_SENSORS_NSA320)	+= nsa320-hwmon.o
+ obj-$(CONFIG_SENSORS_NTC_THERMISTOR)	+= ntc_thermistor.o
++obj-$(CONFIG_SENSORS_PECI_CPUTEMP)	+= peci-cputemp.o
++obj-$(CONFIG_SENSORS_PECI_DIMMTEMP)	+= peci-dimmtemp.o
+ obj-$(CONFIG_SENSORS_PC87360)	+= pc87360.o
+ obj-$(CONFIG_SENSORS_PC87427)	+= pc87427.o
+ obj-$(CONFIG_SENSORS_PCF8591)	+= pcf8591.o
+@@ -171,7 +174,7 @@
+ obj-$(CONFIG_SENSORS_WM831X)	+= wm831x-hwmon.o
+ obj-$(CONFIG_SENSORS_WM8350)	+= wm8350-hwmon.o
+ obj-$(CONFIG_SENSORS_XGENE)	+= xgene-hwmon.o
+-
++obj-$(CONFIG_SILC_PAC1014A)	+= silc_pac1014a.o
+ obj-$(CONFIG_PMBUS)		+= pmbus/
+ 
+ ccflags-$(CONFIG_HWMON_DEBUG_CHIP) := -DDEBUG

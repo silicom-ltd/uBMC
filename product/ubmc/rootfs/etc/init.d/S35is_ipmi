@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# Start/stop is_ipmi
+#
+
+set +e
+#set -x
+MODEL_PATH="/etc/product/UBMC/OEMI/model.txt"
+MODEL="NONE"
+clear_all_driver(){
+	
+	rmmod silc_pac1014a
+	rmmod ads7828 &>/dev/null
+	rmmod emc2300 &>/dev/null
+	rmmod peci_cputemp &>/dev/null
+	rmmod peci_smbus &>/dev/null
+	rmmod i2c_gpio &>/dev/null
+	rmmod ucd9000.ko &>/dev/null
+	rmmod adt7475.ko &>/dev/null	
+	rmmod gpio_pca953x.ko &>/dev/null
+
+}
+load_driver_for_large()
+{
+	modprobe adt7475.ko	//first to load this one
+	#for CPU temp driver
+#	modprobe peci_core
+#	modprobe peci_cputemp
+	#for smbus i2c-3
+	modprobe peci_smbus
+	modprobe i2c_gpio
+	#for volt sensor driver
+	modprobe ucd9000.ko
+	#for fan and temp
+	modprobe ads7828
+	#for gpio expander 
+	modprobe gpio_pca953x.ko
+
+}
+load_driver_for_medium()
+{
+#	modprobe peci_core
+#	modprobe peci_cputemp
+	modprobe peci_smbus
+	modprobe i2c_gpio
+	modprobe adt7475.ko
+	modprobe silc_pac1014a
+	modprobe ads7828
+}
+load_fan_driver()
+{
+	modprobe adt7475.ko
+}
+load_driver_for_small()
+{
+#	modprobe peci_core
+#	modprobe peci_cputemp
+	modprobe peci_smbus
+	modprobe i2c_gpio
+	modprobe adt7475.ko
+	modprobe silc_pac1014a
+	modprobe ads7828
+}
+load_driver_for_xsmall()
+{
+	#for CPU temp driver
+	modprobe peci_core
+	modprobe peci_cputemp
+	modprobe peci_smbus
+	modprobe i2c_gpio
+	#for fan and temp
+	modprobe emc2300
+	#for vlot sensor driver
+	modprobe ads7828
+}
+get_machine_model()
+{	
+	eeprom_op -p
+	if [ -f $MODEL_PATH ];then
+		value=$(cat $MODEL_PATH)
+		MODEL=$value
+	else
+		MODEL="NONE"
+	fi	
+}
+
+case "$1" in
+	start)
+	echo 1>/dev/watchdog
+	clear_all_driver
+	modprobe ubmc-ipmi-slave
+	modprobe i2c-omap
+	get_machine_model
+	if [ $MODEL != "NONE" ];then
+		case "$MODEL" in
+			"ATT-V150")
+			load_driver_for_xsmall
+			;;
+			"ATT-V250")
+			load_driver_for_small
+			ubmc_fan_control -A &
+			;;
+			"ATT-V450")
+			load_driver_for_medium
+			ubmc_fan_control -A &
+			;;
+			"ATT-V850")
+			load_driver_for_large
+#			ubmc_fan_control -t 2 -T 76 -v 0 -V 255 &
+			;;
+			*)
+			load_fan_driver
+			ubmc_fan_control -A &
+			echo "no such machine model $MODEL please check fru eeprom infor \n"
+			exit 1
+		esac
+		
+	else
+		load_driver_for_xsmall
+		load_fan_driver
+		ubmc_fan_control -A &
+		echo "can not get machine model ,please check $MODEL_PATH \n"
+	fi
+	/usr/bin/ubmc_ipmi &
+	echo 1>/dev/watchdog
+      	;;
+	reload_peci)
+  
+	rmmod peci_cputemp &>/dev/null
+	rmmod peci_smbus &>/dev/null
+	rmmod i2c_gpio &>/dev/null
+	modprobe peci_core
+	modprobe peci_cputemp
+	modprobe peci_smbus
+	modprobe i2c_gpio
+		;;
+	
+	stop)
+        ;;
+  restart|reload)
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

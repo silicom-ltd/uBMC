@@ -1,0 +1,18 @@
+To generate NETCONF YANG model:
+
+1, copy svn dir buildroot/silicom/src/silc_netconf/ubmc
+#cp ${BUILDROOT}/silicom/src/silc_netconf/ubmc ${TEMP}/work
+#cd ${TEMP}/work/ubmc
+
+2, modify ubmc.yang and ubmc_paths.txt
+
+3, call lnctool to generate code
+#lnctool --model ./ubmc.yang transapi --paths ./ubmc_paths.txt
+
+4, copy some output files back to svn
+#cp -ar ubmc-config.rng ubmc-schematron.xsl ubmc.yin ubmc-gdefs-config.rng  ubmc_paths.txt  ubmc.yang ${BUILDROOT}/silicom/src/silc_netconf/ubmc/
+
+5, merge ubmc.c
+#diff ubmc.c ${BUILDROOT}/silicom/src/silc_netconf/ubmc/ubmc.c
+
+

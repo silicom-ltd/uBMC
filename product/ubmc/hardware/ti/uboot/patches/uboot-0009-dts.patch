@@ -1,0 +1,12 @@
+--- uboot-custom-orig/arch/arm/dts/Makefile	2017-09-27 06:20:57.000000000 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2018-08-04 21:16:32.304348288 +0800
+@@ -117,6 +117,9 @@
+ dtb-$(CONFIG_AM33XX) += am335x-boneblack.dtb am335x-bone.dtb \
+ 	am335x-draco.dtb \
+ 	am335x-evm.dtb \
++	ubmc335x.dtb \
++	ubmc_eval.dtb \
++	myd_j335x.dtb \
+ 	am335x-evmsk.dtb \
+ 	am335x-bonegreen.dtb \
+ 	am335x-icev2.dtb \

@@ -1,0 +1,122 @@
+#!/bin/sh
+
+ln -fs /bin/busybox /bin/ulimit
+ulimit -c unlimited
+echo "0 0 0 0" >/proc/sys/kernel/printk
+
+PRODUCT=$(cat /etc/product.txt)
+PRODUCT_SUB=$(cat /etc/product_sub.txt 2>/dev/null)
+#echo "Product is ${PRODUCT}"
+
+# The following services will be started by is_mgmtd
+mv /etc/init.d/S49ntp /etc/init.d/IS_S49ntp
+mv /etc/init.d/S50sshd /etc/init.d/IS_S50sshd
+mv /etc/init.d/S50is_web /etc/init.d/IS_S50is_web
+mv /etc/init.d/S50nginx /etc/init.d/IS_S50nginx
+
+
+DISABLED_SERVICE=""
+if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
+	DISABLED_SERVICE="${DISABLED_SERVICE} S85is_dying_gasp S99is_phonehome"
+fi
+
+for serv_disable in ${DISABLED_SERVICE}; do
+	mv /etc/init.d/${serv_disable} /etc/init.d/UNUSED_${serv_disable}
+done
+
+#load watchdog
+modprobe omap_wdt
+WATCHDOG_DEV=/dev/watchdog
+if [ -e ${WATCHDOG_DEV} ]; then
+	touch ${WATCHDOG_DEV}
+else
+	echo "${WATCHDOG_DEV} not found"
+fi
+
+#disable input echoing and start is_boot_monitor
+stty -echo
+/usr/sbin/is_boot_monitor.sh &
+
+INITLOG_SZIE=4M
+INITLOG=/tmp/init_log
+mkdir -p ${INITLOG}
+mount -o size=${INITLOG_SZIE} -t tmpfs none ${INITLOG}
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+for i in /etc/init.d/S??* ;do
+    # Ignore dangling symlinks (if any).
+    [ ! -f "$i" ] && continue
+	logname=$(basename $i)
+
+	# Check whether is_boot_monitor generates the reset-config flag
+	if [ "${logname}" == "S90is_console_manager" ]; then
+		stty echo
+		if [ -e /etc/boot_action_flag ]; then
+			action=$(cat /etc/boot_action_flag)
+			if [ "${action}" == "1" ]; then
+				/usr/sbin/is_action reset-admin-passwd
+				echo "Administrator's password has been reset to default."
+			elif [ "${action}" == "2" ]; then
+				rm -rf /config/is_mgmtd.conf*
+				echo "System configuration has been reset to default, now reboot the system."
+				reboot
+				exit
+			fi
+		fi
+	fi
+
+    case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start &>/${INITLOG}/${logname}.log
+		echo -n "."
+	    ;;
+    esac
+done
+
+chown -R :is_admin /var/images
+
+pin_offset=2                                                
+bank_offset=33                                              
+line=$(lsgpio | grep -n LED_BMC_BOT_BLU_N | cut -d ':' -f 1)
+#	echo $line        
+chip_num=$((line))             
+#	echo $chip_num                   
+if [ $((line%bank_offset)) -eq 0 ]; then  
+        chip_num=$((3-line/bank_offset+1))
+        pin_num=31             
+else                           
+		chip_num=$((3-line/bank_offset))
+        pin_num=$((line%bank_offset-pin_offset))
+fi            
+LED_BLU_GPIO_NUM=$((chip_num*32+pin_num))
+SYS_GPIO_PATH="/sys/class/gpio"
+SYS_GPIO_EXPORT_PATH="/sys/class/gpio/export"
+echo $LED_BLU_GPIO_NUM > $SYS_GPIO_EXPORT_PATH
+echo out > "$SYS_GPIO_PATH/gpio$LED_BLU_GPIO_NUM/direction"
+echo 0 > "$SYS_GPIO_PATH/gpio$LED_BLU_GPIO_NUM/value"
+
+#check machine model file
+MODEL_FILE="/etc/product/UBMC/OEMI/model.txt"
+WARNING_FILE="/tmp/is_global_warning"
+eeprom_op -c
+if [ ! -f $MODEL_FILE -o "$?" != "0" -o $(cat $MODEL_FILE) == "NONE" ]; then
+	echo "Invalid eeprom content, please contact support!"
+	touch $WARNING_FILE
+	echo "Invalid eeprom data, please contact support" > $WARNING_FILE
+fi
+
+echo -n " Done"
+echo ""
+
+

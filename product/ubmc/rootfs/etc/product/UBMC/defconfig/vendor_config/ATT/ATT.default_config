@@ -1,0 +1,112 @@
+
+/config/system/misc/login-banner,* LEGAL NOTICE * 
+This system is restricted solely to AT&T authorized users for 
+legitimate business purposes only. The actual or attempted 
+unauthorized access, use or modification of this system is 
+strictly prohibited by AT&T. Unauthorized users are subject to 
+Company disciplinary proceedings and/or criminal and civil 
+penalties under state, federal or other applicable domestic and 
+foreign laws. The use of this system may be monitored and 
+recorded for administrative and security reasons. Anyone 
+accessing this system expressly consents to such monitoring and 
+is advised that if such monitoring reveals possible evidence of 
+criminal activity, AT&T may provide the evidence of such 
+activity to law enforcement officials. All users must comply 
+with AT&T company policies regarding the 
+protection of AT&T information assets. 
+
+/config/system/mgmt/vrf-list/vrf-ib,
+/config/system/mgmt/vrf-list/vrf-ib/table,100
+/config/system/mgmt/vrf-list/vrf-ib/state,true
+/config/system/mgmt/vrf-list/vrf-ib-vlan,
+/config/system/mgmt/vrf-list/vrf-ib-vlan/table,200
+/config/system/mgmt/vrf-list/vrf-ib-vlan/state,true
+/config/system/mgmt/vrf-list/vrf-pub,
+/config/system/mgmt/vrf-list/vrf-pub/table,300
+/config/system/mgmt/vrf-list/vrf-pub/state,true
+/config/system/mgmt/vrf-process-list/ib-web,
+/config/system/mgmt/vrf-process-list/ib-web/process,web
+/config/system/mgmt/vrf-process-list/ib-web/vrf,vrf-ib
+/config/system/mgmt/vrf-process-list/ib-ssh,
+/config/system/mgmt/vrf-process-list/ib-ssh/process,ssh
+/config/system/mgmt/vrf-process-list/ib-ssh/vrf,vrf-ib
+/config/system/mgmt/vrf-process-list/ib-vlan-web,
+/config/system/mgmt/vrf-process-list/ib-vlan-web/process,web
+/config/system/mgmt/vrf-process-list/ib-vlan-web/vrf,vrf-ib-vlan
+/config/system/mgmt/vrf-process-list/ib-vlan-ssh,
+/config/system/mgmt/vrf-process-list/ib-vlan-ssh/process,ssh
+/config/system/mgmt/vrf-process-list/ib-vlan-ssh/vrf,vrf-ib-vlan
+/config/system/mgmt/vrf-process-list/ib-vlan-netconf,
+/config/system/mgmt/vrf-process-list/ib-vlan-netconf/process,netconf
+/config/system/mgmt/vrf-process-list/ib-vlan-netconf/vrf,vrf-ib-vlan
+/config/system/mgmt/vrf-process-list/ib-vlan-dying-gasp,
+/config/system/mgmt/vrf-process-list/ib-vlan-dying-gasp/process,dying-gasp
+/config/system/mgmt/vrf-process-list/ib-vlan-dying-gasp/vrf,vrf-ib-vlan
+/config/system/mgmt/vrf-process-list/ib-vlan-syslog,
+/config/system/mgmt/vrf-process-list/ib-vlan-syslog/process,syslog
+/config/system/mgmt/vrf-process-list/ib-vlan-syslog/vrf,vrf-ib-vlan
+/config/system/mgmt/vrf-process-list/pub-ntp,
+/config/system/mgmt/vrf-process-list/pub-ntp/process,ntp
+/config/system/mgmt/vrf-process-list/pub-ntp/vrf,vrf-pub
+/config/system/mgmt/vrf-process-list/pub-ipsec,
+/config/system/mgmt/vrf-process-list/pub-ipsec/process,ipsec
+/config/system/mgmt/vrf-process-list/pub-ipsec/vrf,vrf-pub
+/config/system/mgmt/vrf-process-list/pub-phonehome,
+/config/system/mgmt/vrf-process-list/pub-phonehome/process,phonehome
+/config/system/mgmt/vrf-process-list/pub-phonehome/vrf,vrf-pub
+/config/system/mgmt/interface-list/eth0/desc,In-Band
+/config/system/mgmt/interface-list/eth0/master,vrf-ib
+/config/system/mgmt/interface-list/eth0/ipv4-origin,static
+/config/system/mgmt/interface-list/eth0/ipv4-address,192.168.0.10
+/config/system/mgmt/interface-list/eth0/ipv4-prefix,24
+/config/system/mgmt/interface-list/eth0/ipv4-enabled,true
+/config/system/mgmt/interface-list/eth0/state,true
+/config/system/mgmt/interface-list/eth0.4088,
+/config/system/mgmt/interface-list/eth0.4088/desc,In-Band-VLAN
+/config/system/mgmt/interface-list/eth0.4088/dev,eth0
+/config/system/mgmt/interface-list/eth0.4088/vlan,4088
+/config/system/mgmt/interface-list/eth0.4088/master,vrf-ib-vlan
+/config/system/mgmt/interface-list/eth0.4088/ipv4-origin,static
+/config/system/mgmt/interface-list/eth0.4088/ipv4-address,12.80.1.30
+/config/system/mgmt/interface-list/eth0.4088/ipv4-prefix,28
+/config/system/mgmt/interface-list/eth0.4088/ipv4-enabled,true
+/config/system/mgmt/interface-list/eth0.4088/state,true
+/config/system/mgmt/interface-list/eth1/desc,Out-Of-Band
+/config/system/mgmt/interface-list/eth1/master,vrf-pub
+/config/system/mgmt/interface-list/eth1/ipv4-origin,dhcp
+/config/system/mgmt/interface-list/eth1/ipv4-enabled,true
+/config/system/mgmt/interface-list/eth1/state,true
+/config/system/mgmt/route-list/ib-vlan-default,    
+/config/system/mgmt/route-list/ib-vlan-default/dest,default
+/config/system/mgmt/route-list/ib-vlan-default/via,12.80.1.17
+/config/system/mgmt/route-list/ib-vlan-default/table,200
+/config/system/mgmt/route-list/ib-vlan-default/dev,eth0.4088
+/config/system/mgmt/route-list/ib-vlan-default/metric,
+/config/system/mgmt/iptables-rule/pub-drop,
+/config/system/mgmt/iptables-rule/pub-drop/version,ipv4
+/config/system/mgmt/iptables-rule/pub-drop/table,filter
+/config/system/mgmt/iptables-rule/pub-drop/priority,0
+/config/system/mgmt/iptables-rule/pub-drop/rule,-I INPUT -i vrf-pub -j DROP
+/config/system/mgmt/iptables-rule/pub-state,
+/config/system/mgmt/iptables-rule/pub-state/version,ipv4
+/config/system/mgmt/iptables-rule/pub-state/table,filter
+/config/system/mgmt/iptables-rule/pub-state/priority,10
+/config/system/mgmt/iptables-rule/pub-state/rule,-I INPUT -i vrf-pub -m state --state RELATED,ESTABLISHED -j ACCEPT
+/config/system/mgmt/iptables-rule/pub-icmp,
+/config/system/mgmt/iptables-rule/pub-icmp/version,ipv4
+/config/system/mgmt/iptables-rule/pub-icmp/table,filter
+/config/system/mgmt/iptables-rule/pub-icmp/priority,10
+/config/system/mgmt/iptables-rule/pub-icmp/rule,-I INPUT -i vrf-pub -p icmp -j ACCEPT
+/config/system/misc/datetime/ntp-enabled,true
+/config/system/misc/datetime/ntp-server-v2/0.pool.ntp.org,
+/config/system/misc/datetime/ntp-server-v2/0.pool.ntp.org/key,0
+/config/system/misc/datetime/ntp-server-v2/0.pool.ntp.org/version,4
+/config/system/misc/datetime/ntp-server-v2/1.pool.ntp.org,
+/config/system/misc/datetime/ntp-server-v2/1.pool.ntp.org/key,0
+/config/system/misc/datetime/ntp-server-v2/1.pool.ntp.org/version,4
+/config/system/misc/datetime/ntp-server-v2/2.pool.ntp.org,
+/config/system/misc/datetime/ntp-server-v2/2.pool.ntp.org/key,0
+/config/system/misc/datetime/ntp-server-v2/2.pool.ntp.org/version,4
+/config/system/misc/datetime/ntp-server-v2/3.pool.ntp.org,
+/config/system/misc/datetime/ntp-server-v2/3.pool.ntp.org/key,0
+/config/system/misc/datetime/ntp-server-v2/3.pool.ntp.org/version,4

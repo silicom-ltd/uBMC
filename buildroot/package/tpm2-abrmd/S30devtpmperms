@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# Set the permissions of /dev/tpm[0-9]*
+#
+
+check_device() {
+	ls -1 /dev/tpm[0-9]* > /dev/null 2>&1 || {
+		echo "device driver not loaded, skipping."
+		exit 0
+	}
+}
+
+start() {
+	printf "Setting the ownership and permissions of /dev/tpm: "
+	check_device
+	chown tss:tss /dev/tpm[0-9]* && chmod 600 /dev/tpm* \
+	&& echo "OK" || echo "FAIL"
+}
+
+stop() {
+	printf "Restoring the ownership and permissions of /dev/tpm: "
+	check_device
+	chown root:root /dev/tpm[0-9]* && chmod 600 /dev/tpm \
+	&& echo "OK" || echo "FAIL"
+}
+
+case "$1" in
+  start|restart|reload)
+      start
+	;;
+  stop)
+      stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac

@@ -1,0 +1,293 @@
+--- uboot-custom-orig/.project	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/.project	2018-08-04 21:16:32.277348560 +0800
+@@ -0,0 +1,110 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>uboot-custom</name>
++	<comment></comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.cdt.managedbuilder.core.genmakebuilder</name>
++			<triggers>clean,full,incremental,</triggers>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.cdt.managedbuilder.core.ScannerConfigBuilder</name>
++			<triggers>full,incremental,</triggers>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.cdt.core.cnature</nature>
++		<nature>org.eclipse.cdt.core.ccnature</nature>
++		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
++		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1522915188174</id>
++			<name>arch</name>
++			<type>26</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-true-avr32|m68k|arc|nds32|nios2|microblaze|sparc|blackfin|openrisc|mips|sh|x86|xtensa|sandbox|powerpc</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1524371233134</id>
++			<name>board</name>
++			<type>9</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-true-ti|silicom|myirtech</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1522915246635</id>
++			<name>arch/arm</name>
++			<type>9</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-true-cpu|dts|include|lib|mach-omap2</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1533046855864</id>
++			<name>include/configs</name>
++			<type>13</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-false-ubmc335x.h</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1533046855864</id>
++			<name>include/configs</name>
++			<type>5</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-false-ti_am335x_common.h</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1533046855865</id>
++			<name>include/configs</name>
++			<type>5</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-false-ti_armv7_omap.h</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1533046855866</id>
++			<name>include/configs</name>
++			<type>5</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-false-my*</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1533046855867</id>
++			<name>include/configs</name>
++			<type>5</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-false-ubmc_eval.h</arguments>
++			</matcher>
++		</filter>
++		<filter>
++			<id>1533046855868</id>
++			<name>include/configs</name>
++			<type>5</type>
++			<matcher>
++				<id>org.eclipse.ui.ide.multiFilter</id>
++				<arguments>1.0-name-matches-false-false-ti_armv7_common.h</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+--- uboot-custom-orig/.cproject	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/.cproject	2018-08-04 21:16:32.277348560 +0800
+@@ -0,0 +1,86 @@
++<?xml version="1.0" encoding="UTF-8" standalone="no"?>
++<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
++	<storageModule moduleId="org.eclipse.cdt.core.settings">
++		<cconfiguration id="0.1332635310">
++			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="0.1332635310" moduleId="org.eclipse.cdt.core.settings" name="Default">
++				<externalSettings/>
++				<extensions>
++					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.VCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++				</extensions>
++			</storageModule>
++			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
++				<configuration artifactName="${ProjName}" buildProperties="" description="" id="0.1332635310" name="Default" parent="org.eclipse.cdt.build.core.prefbase.cfg">
++					<folderInfo id="0.1332635310." name="/" resourcePath="">
++						<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.398956481" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
++							<targetPlatform id="org.eclipse.cdt.build.core.prefbase.toolchain.398956481.1114843243" name=""/>
++							<builder id="org.eclipse.cdt.build.core.settings.default.builder.1602895858" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.libs.291648817" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.1320747108" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1578602369" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.836639492" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.68288524" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.497521834" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
++								<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.863562930" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
++									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/uboot-custom/arch/arm/include}&quot;"/>
++								</option>
++								<option id="org.eclipse.cdt.build.core.settings.holder.symbols.1011458842" name="Symbols" superClass="org.eclipse.cdt.build.core.settings.holder.symbols" valueType="definedSymbols">
++									<listOptionValue builtIn="false" value="CONFIG_SPL_BUILD"/>
++									<listOptionValue builtIn="false" value="CONFIG_AM33XX"/>
++									<listOptionValue builtIn="false" value="__maybe_unused"/>
++									<listOptionValue builtIn="false" value="section(a)"/>
++									<listOptionValue builtIn="false" value="__aligned(v)"/>
++								</option>
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.905542950" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++						</toolChain>
++					</folderInfo>
++					<folderInfo id="0.1332635310.779930188" name="/" resourcePath="include/configs">
++						<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.1364054229" name="No ToolChain" superClass="org.eclipse.cdt.build.core.prefbase.toolchain" unusedChildren="">
++							<tool id="org.eclipse.cdt.build.core.settings.holder.libs.271863755" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs.291648817"/>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.1489531073" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder.1320747108">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1586123953" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.681332545" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder.836639492">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.558338439" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.179615230" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder.497521834">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.584455734" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++						</toolChain>
++					</folderInfo>
++				</configuration>
++			</storageModule>
++			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
++		</cconfiguration>
++	</storageModule>
++	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
++		<project id="uboot-custom.null.232883454" name="uboot-custom"/>
++	</storageModule>
++	<storageModule moduleId="scannerConfiguration">
++		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.1585310863;cdt.managedbuild.toolchain.gnu.cross.base.1585310863.1009267796;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1135535303;cdt.managedbuild.tool.gnu.cpp.compiler.input.1967292603">
++			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		</scannerConfigBuildInfo>
++		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.1585310863;cdt.managedbuild.toolchain.gnu.cross.base.1585310863.1009267796;cdt.managedbuild.tool.gnu.c.compiler.base.793973128;cdt.managedbuild.tool.gnu.c.compiler.input.1149453231">
++			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		</scannerConfigBuildInfo>
++		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.1585310863;cdt.managedbuild.toolchain.gnu.cross.base.1585310863.1009267796;cdt.managedbuild.tool.gnu.cpp.compiler.base.383595617;cdt.managedbuild.tool.gnu.cpp.compiler.input.1787854957">
++			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		</scannerConfigBuildInfo>
++		<scannerConfigBuildInfo instanceId="0.1332635310">
++			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		</scannerConfigBuildInfo>
++		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.1585310863;cdt.managedbuild.toolchain.gnu.cross.base.1585310863.1009267796;cdt.managedbuild.tool.gnu.cross.c.compiler.1481584722;cdt.managedbuild.tool.gnu.c.compiler.input.1087484440">
++			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		</scannerConfigBuildInfo>
++	</storageModule>
++	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
++	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
++</cproject>
+diff -uNr uboot-custom-orig/.settings/language.settings.xml uboot-custom-silicom/.settings/language.settings.xml
+--- uboot-custom-orig/.settings/language.settings.xml	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/.settings/language.settings.xml	2018-08-04 21:16:32.277348560 +0800
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8" standalone="no"?>
++<project>
++	<configuration id="0.1332635310" name="Default">
++		<extension point="org.eclipse.cdt.core.LanguageSettingsProvider">
++			<provider class="org.eclipse.cdt.core.language.settings.providers.LanguageSettingsGenericProvider" id="org.eclipse.cdt.ui.UserLanguageSettingsProvider" name="CDT User Setting Entries" prefer-non-shared="true"/>
++			<provider-reference id="org.eclipse.cdt.core.ReferencedProjectsLanguageSettingsProvider" ref="shared-provider"/>
++			<provider-reference id="org.eclipse.cdt.managedbuilder.core.MBSLanguageSettingsProvider" ref="shared-provider"/>
++		</extension>
++	</configuration>
++</project>
+diff -uNr uboot-custom-orig/.settings/org.eclipse.cdt.codan.core.prefs uboot-custom-silicom/.settings/org.eclipse.cdt.codan.core.prefs
+--- uboot-custom-orig/.settings/org.eclipse.cdt.codan.core.prefs	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/.settings/org.eclipse.cdt.codan.core.prefs	2018-08-04 21:16:32.277348560 +0800
+@@ -0,0 +1,73 @@
++eclipse.preferences.version=1
++org.eclipse.cdt.codan.checkers.errnoreturn=Warning
++org.eclipse.cdt.codan.checkers.errnoreturn.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"No return\\")",implicit\=>false}
++org.eclipse.cdt.codan.checkers.errreturnvalue=Error
++org.eclipse.cdt.codan.checkers.errreturnvalue.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Unused return value\\")"}
++org.eclipse.cdt.codan.checkers.nocommentinside=-Error
++org.eclipse.cdt.codan.checkers.nocommentinside.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Nesting comments\\")"}
++org.eclipse.cdt.codan.checkers.nolinecomment=-Error
++org.eclipse.cdt.codan.checkers.nolinecomment.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Line comments\\")"}
++org.eclipse.cdt.codan.checkers.noreturn=Error
++org.eclipse.cdt.codan.checkers.noreturn.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"No return value\\")",implicit\=>false}
++org.eclipse.cdt.codan.internal.checkers.AbstractClassCreation=Error
++org.eclipse.cdt.codan.internal.checkers.AbstractClassCreation.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Abstract class cannot be instantiated\\")"}
++org.eclipse.cdt.codan.internal.checkers.AmbiguousProblem=Error
++org.eclipse.cdt.codan.internal.checkers.AmbiguousProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Ambiguous problem\\")"}
++org.eclipse.cdt.codan.internal.checkers.AssignmentInConditionProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.AssignmentInConditionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Assignment in condition\\")"}
++org.eclipse.cdt.codan.internal.checkers.AssignmentToItselfProblem=Error
++org.eclipse.cdt.codan.internal.checkers.AssignmentToItselfProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Assignment to itself\\")"}
++org.eclipse.cdt.codan.internal.checkers.CaseBreakProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.CaseBreakProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"No break at end of case\\")",no_break_comment\=>"no break",last_case_param\=>false,empty_case_param\=>false,enable_fallthrough_quickfix_param\=>false}
++org.eclipse.cdt.codan.internal.checkers.CatchByReference=Warning
++org.eclipse.cdt.codan.internal.checkers.CatchByReference.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Catching by reference is recommended\\")",unknown\=>false,exceptions\=>()}
++org.eclipse.cdt.codan.internal.checkers.CircularReferenceProblem=Error
++org.eclipse.cdt.codan.internal.checkers.CircularReferenceProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Circular inheritance\\")"}
++org.eclipse.cdt.codan.internal.checkers.ClassMembersInitialization=Warning
++org.eclipse.cdt.codan.internal.checkers.ClassMembersInitialization.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Class members should be properly initialized\\")",skip\=>true}
++org.eclipse.cdt.codan.internal.checkers.DecltypeAutoProblem=Error
++org.eclipse.cdt.codan.internal.checkers.DecltypeAutoProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Invalid 'decltype(auto)' specifier\\")"}
++org.eclipse.cdt.codan.internal.checkers.FieldResolutionProblem=Error
++org.eclipse.cdt.codan.internal.checkers.FieldResolutionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Field cannot be resolved\\")"}
++org.eclipse.cdt.codan.internal.checkers.FunctionResolutionProblem=Error
++org.eclipse.cdt.codan.internal.checkers.FunctionResolutionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Function cannot be resolved\\")"}
++org.eclipse.cdt.codan.internal.checkers.InvalidArguments=Error
++org.eclipse.cdt.codan.internal.checkers.InvalidArguments.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Invalid arguments\\")"}
++org.eclipse.cdt.codan.internal.checkers.InvalidTemplateArgumentsProblem=Error
++org.eclipse.cdt.codan.internal.checkers.InvalidTemplateArgumentsProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Invalid template argument\\")"}
++org.eclipse.cdt.codan.internal.checkers.LabelStatementNotFoundProblem=Error
++org.eclipse.cdt.codan.internal.checkers.LabelStatementNotFoundProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Label statement not found\\")"}
++org.eclipse.cdt.codan.internal.checkers.MemberDeclarationNotFoundProblem=Error
++org.eclipse.cdt.codan.internal.checkers.MemberDeclarationNotFoundProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Member declaration not found\\")"}
++org.eclipse.cdt.codan.internal.checkers.MethodResolutionProblem=Error
++org.eclipse.cdt.codan.internal.checkers.MethodResolutionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Method cannot be resolved\\")"}
++org.eclipse.cdt.codan.internal.checkers.NamingConventionFunctionChecker=-Info
++org.eclipse.cdt.codan.internal.checkers.NamingConventionFunctionChecker.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Name convention for function\\")",pattern\=>"^[a-z]",macro\=>true,exceptions\=>()}
++org.eclipse.cdt.codan.internal.checkers.NonVirtualDestructorProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.NonVirtualDestructorProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Class has a virtual method and non-virtual destructor\\")"}
++org.eclipse.cdt.codan.internal.checkers.OverloadProblem=Error
++org.eclipse.cdt.codan.internal.checkers.OverloadProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Invalid overload\\")"}
++org.eclipse.cdt.codan.internal.checkers.RedeclarationProblem=Error
++org.eclipse.cdt.codan.internal.checkers.RedeclarationProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Invalid redeclaration\\")"}
++org.eclipse.cdt.codan.internal.checkers.RedefinitionProblem=Error
++org.eclipse.cdt.codan.internal.checkers.RedefinitionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Invalid redefinition\\")"}
++org.eclipse.cdt.codan.internal.checkers.ReturnStyleProblem=-Warning
++org.eclipse.cdt.codan.internal.checkers.ReturnStyleProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Return with parenthesis\\")"}
++org.eclipse.cdt.codan.internal.checkers.ScanfFormatStringSecurityProblem=-Warning
++org.eclipse.cdt.codan.internal.checkers.ScanfFormatStringSecurityProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Format String Vulnerability\\")"}
++org.eclipse.cdt.codan.internal.checkers.StatementHasNoEffectProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.StatementHasNoEffectProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Statement has no effect\\")",macro\=>true,exceptions\=>()}
++org.eclipse.cdt.codan.internal.checkers.SuggestedParenthesisProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.SuggestedParenthesisProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Suggested parenthesis around expression\\")",paramNot\=>false}
++org.eclipse.cdt.codan.internal.checkers.SuspiciousSemicolonProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.SuspiciousSemicolonProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Suspicious semicolon\\")",else\=>false,afterelse\=>false}
++org.eclipse.cdt.codan.internal.checkers.TypeResolutionProblem=Error
++org.eclipse.cdt.codan.internal.checkers.TypeResolutionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Type cannot be resolved\\")"}
++org.eclipse.cdt.codan.internal.checkers.UnusedFunctionDeclarationProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.UnusedFunctionDeclarationProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Unused function declaration\\")",macro\=>true}
++org.eclipse.cdt.codan.internal.checkers.UnusedStaticFunctionProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.UnusedStaticFunctionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Unused static function\\")",macro\=>true}
++org.eclipse.cdt.codan.internal.checkers.UnusedVariableDeclarationProblem=Warning
++org.eclipse.cdt.codan.internal.checkers.UnusedVariableDeclarationProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Unused variable declaration in file scope\\")",macro\=>true,exceptions\=>("@(\#)","$Id")}
++org.eclipse.cdt.codan.internal.checkers.VariableResolutionProblem=Error
++org.eclipse.cdt.codan.internal.checkers.VariableResolutionProblem.params={launchModes\=>{RUN_ON_FULL_BUILD\=>true,RUN_ON_INC_BUILD\=>true,RUN_ON_FILE_OPEN\=>false,RUN_ON_FILE_SAVE\=>false,RUN_AS_YOU_TYPE\=>true,RUN_ON_DEMAND\=>true},suppression_comment\=>"@suppress(\\"Symbol is not resolved\\")"}

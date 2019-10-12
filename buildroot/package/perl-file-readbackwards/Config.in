@@ -1,0 +1,6 @@
+config BR2_PACKAGE_PERL_FILE_READBACKWARDS
+	bool "perl-file-readbackwards"
+	help
+	  Module to  Read a file backwards by lines
+
+	  https://metacpan.org/release/File-ReadBackwards

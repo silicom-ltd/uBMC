@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# dying gasp        Starts dying_gasp.
+#
+
+umask 077
+
+start() {
+	echo -n "Starting dying_gasp: "
+	vrf_cmd=""
+	if [ -e /tmp/dying-gasp.vrf ]; then
+		vrf=$(cat /tmp/dying-gasp.vrf)
+		if [ "" != "${vrf}" ]; then
+			echo -n "(vrf=${vrf}) "
+			vrf_cmd="ip vrf exec ${vrf}"
+		fi
+	fi
+	${vrf_cmd} /usr/bin/dying_gasp &
+    echo "OK"
+}
+
+stop() {
+	echo -n "Stopping dying_gasp: "
+	killall dying_gasp
+	echo "OK"
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?
+

@@ -1,0 +1,10 @@
+config BR2_PACKAGE_SILC_MGMTD
+	bool "silc_mgmtd"
+	default y
+	select BR2_SILC_PRODUCT
+	select BR2_PACKAGE_NETSNMP
+	select BR2_PACKAGE_SILC_COMMON
+	select BR2_PACKAGE_SILC_LIBEDIT
+	help
+	    Silicom management daemon.
+

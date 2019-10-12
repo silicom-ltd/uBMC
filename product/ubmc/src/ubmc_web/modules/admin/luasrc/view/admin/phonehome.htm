@@ -1,0 +1,56 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+
+<%+header%>
+
+<h2><a id="content" name="content"><%:Phone Home%></a></h2>
+<% if err then %>
+<p><span style='color: red'><%="Error: "..err%></span></p>
+<% elseif msg then %>
+<p><span style='color: green'><%=msg%></span></p>
+<% end %>
+
+<form method="post" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+
+	<fieldset class="cbi-section" id="cbi-dumpfile-table">
+		<legend><%:State%></legend>
+		<div>
+			<div>
+				<div class="cbi-value">
+					<label class="cbi-value-title"><%=status%></label>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+
+	<br />
+
+	<fieldset class="cbi-section" id="cbi-dumpfile-table">
+		<legend><%:Action%></legend>
+		<div>
+			<div>
+				<div class="cbi-value" style="margin-left: 135px;">
+<% if status == 'Running' then %>
+					<input class="cbi-button cbi-button-apply" type="submit" value="<%:Stop%>" name="action" />
+<% else %>
+					<input class="cbi-button cbi-button-apply" type="submit" value="<%:Start%>" name="action" />
+<% end %>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+
+</form>
+<%+footer%>

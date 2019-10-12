@@ -1,0 +1,5 @@
+<%+cbi/valueheader%>
+	<textarea class="cbi-input-textarea" style="overflow:hidden;font-family:Courier;width:<%=self.size or "75"%>%;height:<%=self.height or "50px"%>;" onchange="cbi_d_update(this.id)"<%= attr("name", cbid) .. attr("id", cbid) .. ifattr(self.rows, "rows") .. ifattr(self.wrap, "wrap")  .. ifattr(self.readonly, "readonly") .. ifattr(self.readonly, "disabled", "disabled")%>>
+	<%-=pcdata(self:cfgvalue(section) or self.default)-%>
+	</textarea>
+<%+cbi/valuefooter%>

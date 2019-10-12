@@ -1,0 +1,9 @@
+
+	source "../base/package/silc_product/Config.in"
+	source "../base/package/is_web/Config.in"
+	source "../base/package/silc_common/Config.in"
+	source "../base/package/silc_libedit/Config.in"
+	source "../base/package/silc_mgmtd/Config.in"
+	source "../base/package/silc_web/Config.in"
+	source "../base/package/pam_radius/Config.in"
+	source "../base/package/pam_tacplus/Config.in"

@@ -1,0 +1,71 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+<%+header%>
+<h2><a id="content" name="content"><%:Reboot / Reset%></a></h2>
+<p><%:Reboot the device.%></p>
+<%-
+if not action then 
+	local mgmtdclient = require "mgmtdclient"
+	ret, saved = mgmtdclient.query("/status/system/config-saved", {})
+	if ret == "OK" and saved == "false" then
+-%>
+	<p class="warning"><span style='color: red'>
+	<%:Warning: There are unsaved changes that will be lost after powering off!%>
+	</span></p> 
+<%-
+	end
+-%>
+<form id="bootform" method="post" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+			<input type="hidden" name="act" value="" id="bootact" />
+			<input class="cbi-button cbi-button-apply" type="submit" value="<%:Reboot%>" onclick="systemCheck(this, 'reboot');return false;" />
+			<br />
+			<br />
+			<input class="cbi-button cbi-button-apply" type="submit" value="<%:Reset%>" onclick="systemCheck(this, 'reset');return false;" />
+			<span style='color: blue'>Reset the device to factory setting and clear all configurations and logs.</span>
+</form>
+<script type="text/javascript">
+function systemCheck(btn, word) {
+	btn.style.visibility = 'hidden';
+	var apply_xhr = new XHR();
+	apply_xhr.get("<%=controller%>/admin/system/syscheck", "", function(x, data) {
+		//alert(data);
+		var comment = '';
+		var act = btn.value.toLowerCase();
+		btn.style.visibility = 'visible';
+		document.getElementById('bootact').value = act;
+
+		if (act == 'reset')
+			comment = 'Warning! This will clear all configurations and logs and reboot the device! Continue?';
+		else if (data['config-saved'] === 'true') 
+			comment = 'Do you really want to reboot the system?';
+		else 
+			comment = 'There are unsaved configuration changes, do you really want to reboot the system?\nAll unsaved configuration changes will be lost!';
+
+		if (confirm(comment)) 
+			document.forms["bootform"].submit();
+		else
+			document.getElementById('bootact').value = '';
+	});
+}
+</script>
+<%- elseif action == "reboot" then -%>
+<p><%:The system is rebooting, please wait......%></p>
+<script type="text/javascript">setTimeout("location='<%=controller%>'", 80000)</script>
+<%- elseif action == "halt" then -%>
+<p><%:The system is shutting down.%></p>
+<%- elseif action == "reset" then -%>
+<p><%:The system will format the flash and reboot and the web service has stopped, please wait and don't power off the device now.%></p>
+<%- end -%>
+<%+footer%>

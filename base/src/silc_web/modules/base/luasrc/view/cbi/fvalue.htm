@@ -1,0 +1,9 @@
+<%+cbi/valueheader%>
+	<input type="hidden" value="1"<%=
+		attr("name", "cbi.cbe." .. self.config .. "." .. section .. "." .. self.option) .. ifattr(self.readonly, "disabled", "disabled") 
+	%> />
+	<input class="cbi-input-checkbox" onclick="cbi_d_update(this.id)" onchange="cbi_d_update(this.id)" type="checkbox"<%=
+		attr("id", cbid) .. attr("name", cbid) .. attr("value", self.enabled or 1) .. ifattr(self.readonly, "disabled", "disabled") .. ifattr(self.readonly, "style", "background-color:#BEBEBE") .. 
+		ifattr((self:cfgvalue(section) or self.default) == self.enabled, "checked", "checked")
+	%> />
+<%+cbi/valuefooter%>

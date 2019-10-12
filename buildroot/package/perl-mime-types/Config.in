@@ -1,0 +1,10 @@
+config BR2_PACKAGE_PERL_MIME_TYPES
+	bool "perl-mime-types"
+	depends on !BR2_STATIC_LIBS
+	help
+	  Definition of MIME types
+
+	  https://metacpan.org/release/MIME-Types
+
+comment "perl-mime-types needs a toolchain w/ dynamic library"
+	depends on BR2_STATIC_LIBS

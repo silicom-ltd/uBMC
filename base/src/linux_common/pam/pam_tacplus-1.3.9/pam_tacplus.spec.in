@@ -1,0 +1,69 @@
+#
+# spec file for package 'name' (version 'v')
+#
+# The following software is released as specified below.
+# This spec file is released to the public domain.
+# (c) Lincom Software Team
+
+# Basic Information
+Name: pam_tacplus
+Version: @VERSION@
+Release: 1%{?dist}
+Summary: PAM Tacacs+ module
+Group: System
+License: GPL
+URL: http://tacplus.sourceforge.net/
+
+# Packager Information
+Packager: NRB
+
+# Build Information
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+# Source Information
+Source0: https://github.com/jeroennijhof/pam_tacplus/archive/@VERSION@.tar.gz
+
+# Dependency Information
+BuildRequires: gcc binutils pam-devel
+Requires: pam
+
+%description
+PAM Tacacs+ module based on code produced by Pawel Krawczyk <pawel.krawczyk@hush.com> and Jeroen Nijhof <jeroen@jeroennijhof.nl>
+
+%prep
+%setup -q -a 0
+
+%build
+autoreconf -i
+./configure
+make
+
+%install
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/etc/pam.d
+mkdir -p $RPM_BUILD_ROOT/%{_lib}/security
+
+install -m 755 .libs/pam_tacplus.so \
+               $RPM_BUILD_ROOT/%{_lib}/security/
+
+install -m 644 sample.pam $RPM_BUILD_ROOT/etc/pam.d/tacacs
+
+chmod 755 $RPM_BUILD_ROOT/%{_lib}/security/*.so*
+
+%clean
+[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-,root,root)
+%attr(0755,root,root) /%{_lib}/security/*.so*
+%attr(0644,root,root) %config(noreplace) /etc/pam.d/tacacs
+%doc AUTHORS COPYING README ChangeLog
+
+%changelog
+* Thu Feb  2 2012 - Jeroen <jeroen@jeroennijhof.nl>
+- Path changed for pam_tacplus.so
+- Not using static library path anymore
+
+* Mon Mar 17 2010 - beNDon <benoit.donneaux@gmail.com>
+- Autotools aware
+- spec file added for RPM building

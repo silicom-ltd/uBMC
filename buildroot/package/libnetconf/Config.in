@@ -1,0 +1,10 @@
+config BR2_PACKAGE_LIBNETCONF
+	bool "libnetconf"
+	select BR2_PACKAGE_PYANG
+	select BR2_PACKAGE_LIBXML2
+	select BR2_PACKAGE_LIBXSLT
+	select BR2_PACKAGE_LIBSSH
+	help
+	  libnetconf is a NETCONF library in C intended for building NETCONF clients and servers.
+
+

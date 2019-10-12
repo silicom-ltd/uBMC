@@ -1,0 +1,575 @@
+-- SILICOM-UBMC-MIB { iso org(3) dod(6) internet(1) private(4)
+--    enterprises(1) silicom(15694) }
+
+SILICOM-UBMC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter64,
+    NOTIFICATION-TYPE, enterprises, IpAddress
+                                        FROM SNMPv2-SMI
+    SnmpAdminString                     FROM SNMP-FRAMEWORK-MIB
+    OBJECT-GROUP, NOTIFICATION-GROUP    FROM SNMPv2-CONF
+    silicom                             FROM SILICOM-MIB;
+
+ubmc MODULE-IDENTITY
+    LAST-UPDATED "201510150000Z"
+    ORGANIZATION "http://www.silicom-usa.com"
+    CONTACT-INFO "email:    support@silicom.co.il"
+    DESCRIPTION  "Initial revision."
+    REVISION     "201510150000Z"
+    DESCRIPTION	 "Micro BMC system."
+    ::= { silicom 5 }
+
+systemStatus                 OBJECT IDENTIFIER ::=  { ubmc 1 }
+systemStatictis              OBJECT IDENTIFIER ::=  { ubmc 2 }
+systemConfig                 OBJECT IDENTIFIER ::=  { ubmc 3 }
+
+trap                         OBJECT IDENTIFIER ::=  { ubmc 11 }
+trapObject                   OBJECT IDENTIFIER ::=  { trap 0 }
+
+-- systemStatus
+--
+deviceType OBJECT-TYPE
+    SYNTAX	INTEGER {
+			unknown(0),
+			ubmc-xs(1),
+			ubmc-small(2),
+			ubmc-medium(3),
+			ubmc-large(4)
+		}
+    MAX-ACCESS	read-only
+    STATUS      current
+    DESCRIPTION "Get device type."
+    ::= { systemStatus 1 }
+
+deviceSerialNumber OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Get product device serial number."
+    ::= { systemStatus 2 }
+
+hardwareVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Get hardware version."
+    ::= { systemStatus 3 }
+
+firmwareVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Get firmware version."
+    ::= { systemStatus 4 }
+
+softwareVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Get software version."
+    ::= { systemStatus 5 }
+
+ubootVersion OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Get Uboot version."
+    ::= { systemStatus 6 }
+
+systemUptime OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Get system uptime."
+    ::= { systemStatus 7 }
+
+-- Table: hostFan
+hostFanTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF HostFanEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"Get fan list."
+    ::= { systemStatus 10 }
+
+hostFanEntry OBJECT-TYPE
+    SYNTAX	HostFanEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"A row of fan."
+    INDEX       { hostFanID }
+    ::= { hostFanTable 1 }
+
+HostFanEntry ::= SEQUENCE {
+        hostFanID  INTEGER,
+        hostFanName  OCTET STRING,
+        hostFanFault  INTEGER,
+        hostFanWarning INTEGER,
+        hostFanStatus  INTEGER,
+        hostFanSpeed  INTEGER,
+        hostFanRuntime  INTEGER
+}
+
+hostFanID OBJECT-TYPE
+    SYNTAX	INTEGER (1..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan ID."
+    ::= { hostFanEntry 1 }
+
+hostFanName OBJECT-TYPE
+    SYNTAX	OCTET STRING (SIZE(1..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan name."
+    ::= { hostFanEntry 2 }
+
+hostFanFault OBJECT-TYPE
+    SYNTAX	INTEGER {
+			no(0),
+			yes(1)
+		}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan fault status."
+    ::= { hostFanEntry 3 }
+
+hostFanWarning OBJECT-TYPE
+    SYNTAX	INTEGER {
+			no(0),
+			yes(1)
+		}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan warning status."
+    ::= { hostFanEntry 4 }
+
+hostFanStatus OBJECT-TYPE
+    SYNTAX	INTEGER {
+		unknown(0),
+		green(1),
+            	yellow(2),
+            	orange(4),
+            	red(8)
+		}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan status."
+    ::= { hostFanEntry 5 }
+
+hostFanSpeed OBJECT-TYPE
+    SYNTAX	INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan speed."
+    ::= { hostFanEntry 6 }
+
+hostFanRuntime OBJECT-TYPE
+    SYNTAX	INTEGER
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Fan run time."
+    ::= { hostFanEntry 7 }
+    
+
+-- Table: hostSensor
+hostSensorTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF HostSensorEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"Get sensor list."
+    ::= { systemStatus 11 }
+
+hostSensorEntry OBJECT-TYPE
+    SYNTAX	HostSensorEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"A row of sensor."
+    INDEX       { hostSensorID }
+    ::= { hostSensorTable 1 }
+
+HostSensorEntry ::= SEQUENCE {
+    hostSensorID  INTEGER,
+    hostSensorName  OCTET STRING,
+    hostSensorTemperature OCTET STRING,
+    hostSensorPeak  OCTET STRING
+}
+
+hostSensorID OBJECT-TYPE
+    SYNTAX	INTEGER (1..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Sensor ID."
+    ::= { hostSensorEntry 1 }
+
+hostSensorName OBJECT-TYPE
+    SYNTAX	OCTET STRING (SIZE(1..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Sensor name."
+    ::= { hostSensorEntry 2 }
+
+hostSensorTemperature OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Sensor temperature."
+    ::= { hostSensorEntry 3 }
+
+hostSensorPeak OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Sensor temperature peak."
+    ::= { hostSensorEntry 4 }
+
+-- Table: hostVoltage
+hostVoltageTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF HostVoltageEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"Get sensor list."
+    ::= { systemStatus 12 }
+
+hostVoltageEntry OBJECT-TYPE
+    SYNTAX	HostVoltageEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"A row of votage."
+    INDEX       { hostVoltageID }
+    ::= { hostVoltageTable 1 }
+
+HostVoltageEntry ::= SEQUENCE {
+    hostVoltageID  INTEGER,
+    hostVoltageName  OCTET STRING,
+    hostVoltage OCTET STRING
+}
+
+hostVoltageID OBJECT-TYPE
+    SYNTAX	INTEGER (1..100)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Voltage ID."
+    ::= { hostVoltageEntry 1 }
+
+hostVoltageName OBJECT-TYPE
+    SYNTAX	OCTET STRING (SIZE(1..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Voltage name."
+    ::= { hostVoltageEntry 2 }
+
+hostVoltage OBJECT-TYPE
+    SYNTAX	OCTET STRING
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Voltage value."
+    ::= { hostVoltageEntry 3 }
+
+-- Table: interface
+interfaceTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF InterfaceEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"Get interface list."
+    ::= { systemStatus 13 }
+
+interfaceEntry OBJECT-TYPE
+    SYNTAX	InterfaceEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"A row of interface."
+    INDEX       { interfaceName }
+    ::= { interfaceTable 1 }
+
+InterfaceEntry ::= SEQUENCE {
+    interfaceName  OCTET STRING,
+    interfaceLinkStatus  INTEGER
+}
+
+interfaceName OBJECT-TYPE
+    SYNTAX	OCTET STRING (SIZE(1..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Interface Name."
+    ::= { interfaceEntry 1 }
+
+interfaceLinkStatus OBJECT-TYPE
+    SYNTAX	INTEGER {
+			down(0),
+			up(1)
+		}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Interface link status."
+    ::= { interfaceEntry 2 }
+
+-- infStats
+--
+-- Table: Interface Statistics
+infStatisticsTable OBJECT-TYPE
+    SYNTAX	SEQUENCE OF InfStatisticsEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"Get interface statistics list."
+    ::= { systemStatictis 1 }
+
+infStatisticsEntry OBJECT-TYPE
+    SYNTAX	InfStatisticsEntry
+    MAX-ACCESS	not-accessible
+    STATUS      current
+    DESCRIPTION	"A row of interface statistics."
+    INDEX       { infName }
+    ::= { infStatisticsTable 1 }
+
+InfStatisticsEntry ::= SEQUENCE {
+        infName OCTET STRING,
+        infRxPkts  Counter64,
+        infRxErrors  Counter64,
+        infRxDrops  Counter64,
+        infRxBytes  Counter64,
+        infTxPkts  Counter64,
+        infTxErrors  Counter64,
+        infTxDrops  Counter64,
+        infTxBytes  Counter64
+}
+
+infName OBJECT-TYPE
+    SYNTAX	OCTET STRING (SIZE(1..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Interface name."
+    ::= { infStatisticsEntry 1 }
+
+infRxPkts OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RX packets count."
+    ::= { infStatisticsEntry 2 }
+
+infRxErrors OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RX packets error count."
+    ::= { infStatisticsEntry 3 }
+
+infRxDrops OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RX packets dropped count."
+    ::= { infStatisticsEntry 4 }
+
+infRxBytes OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "RX bytes count."
+    ::= { infStatisticsEntry 5 }
+
+infTxPkts OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TX packets count."
+    ::= { infStatisticsEntry 6 }
+
+infTxErrors OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TX packets error count."
+    ::= { infStatisticsEntry 7 }
+
+infTxDrops OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TX packets dropped count."
+    ::= { infStatisticsEntry 8 }
+
+infTxBytes OBJECT-TYPE
+    SYNTAX	Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "TX bytes count."
+    ::= { infStatisticsEntry 9 }
+
+-- trap
+--
+trapModule OBJECT-TYPE
+    SYNTAX	OCTET STRING (SIZE(1..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Trap moudle name."
+    ::= { trapObject 1 }
+
+trapEvent OBJECT-TYPE
+    SYNTAX	INTEGER {
+		normal(0),
+		warning(1),
+		fault(2),
+		recover(3),
+		up(4),
+		down(5),
+		on(6),
+		off(7),
+		connect(8),
+		disconnect(9),
+		enable(10),
+		disable(11),
+		timeout(12),
+		restore(13),
+		reset(14)
+	}
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Trap event."
+    ::= { trapObject 2 }
+
+trapSystem NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"Trap about system."
+    ::= { trap 1 }
+
+trapApplication NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about application."
+    ::= { trap 2 }
+
+trapTerminal NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about terminal."
+    ::= { trap 3 }
+
+trapPower NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about power."
+    ::= { trap 4 }
+
+trapSensor NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about sensor."
+    ::= { trap 5 }
+
+trapFan NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about fan."
+    ::= { trap 6 }
+
+trapColdStart NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about uBMC boot up."
+    ::= { trap 7 }
+
+trapDyingGasp NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about general power failure."
+    ::= { trap 8 }
+
+trapFanSpeedLowCR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about fan speed crossed low critical threshold."
+    ::= { trap 9 }
+
+trapFanSpeedLowNR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about fan speed crossed low non recoverable  threshold."
+    ::= { trap 10 }
+
+trapFanSpeedHighCR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about fan speed crossed high critical threshold."
+    ::= { trap 11 }
+
+trapFanSpeedHighNR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about fan speed crossed high non recoverable threshold."
+    ::= { trap 12 }
+
+trapVoltageLowCR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about voltage crossed low critical threshold."
+    ::= { trap 13 }
+
+trapVoltageLowNR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about voltage crossed low non recoverable threshold."
+    ::= { trap 14 }
+
+trapVoltageHighCR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about voltage crossed high critical threshold."
+    ::= { trap 15 }
+
+trapVoltageHighNR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about voltage crossed high non recoverable threshold."
+    ::= { trap 16 }
+
+trapTemperatureLowCR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about temperature crossed low critical threshold."
+    ::= { trap 17 }
+
+trapTemperatureLowNR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about temperature crossed low non recoverable threshold."
+    ::= { trap 18 }
+
+trapTemperatureHighCR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about temperature crossed high critical threshold."
+    ::= { trap 19 }
+
+trapTemperatureHighNR NOTIFICATION-TYPE
+    OBJECTS  { trapModule trapEvent }
+    STATUS   current
+    DESCRIPTION
+   	"trap about temperature crossed high non recoverable threshold."
+    ::= { trap 20 }
+
+--
+-- trap
+
+END

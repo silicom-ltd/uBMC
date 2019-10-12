@@ -1,0 +1,2 @@
+board/silicom/ubmc335x
+arch/arm/dts/ubmc335x.dts

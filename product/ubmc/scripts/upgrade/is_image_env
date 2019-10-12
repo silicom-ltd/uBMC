@@ -1,0 +1,69 @@
+
+SPLIT_ROOTFS=0
+MAX_ROOTFS_SIZE=$((0x4000000))
+
+infos[0]="software"
+infos[1]="software"
+infos[2]="software"
+infos[3]="uboot   "
+if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
+infos[4]="MLO-spi "
+else
+infos[4]="MLO     "
+fi
+infos[5]="boot0   "
+infos[6]="boot1   "
+infos[7]="vendor    "
+infos[8]="vendor_old"
+
+src_fnames[0]="${path_image_output}/zImage"
+src_fnames[1]="${path_image_output}/rootfs.cpio.uboot"
+src_fnames[2]="${path_image_uboot}/dt.dtb"
+src_fnames[3]="${path_image_uboot}/u-boot.img"
+if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
+src_fnames[4]="${path_image_uboot}/MLO.byteswap"
+else
+src_fnames[4]="${path_image_uboot}/MLO"
+fi
+src_fnames[5]="${path_image_uboot}/boot0.scr"
+src_fnames[6]="${path_image_uboot}/boot1.scr"
+src_fnames[7]="${path_image_output}/vendor.txt"
+src_fnames[8]="${path_image_output}/vendor_old.txt"
+
+dst_fnames[0]="zImage"
+dst_fnames[1]="rootfs.cpio.uboot"
+dst_fnames[2]="dt.dtb"
+dst_fnames[3]="u-boot.img"
+if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
+dst__fnames[4]="MLO.byteswap"
+else
+dst_fnames[4]="MLO"
+fi
+dst_fnames[5]="boot0.scr"
+dst_fnames[6]="boot1.scr"
+dst_fnames[7]="vendor.txt"
+dst_fnames[8]="vendor_old.txt"
+
+split_size="2097152"
+
+version_files[0]="software_version.txt"
+version_files[1]="firmware_version.txt"
+version_files[2]="dtb_version.txt"
+version_files[3]="uboot_version.txt"
+version_files[4]="uboot_version.txt"
+version_files[5]="uboot_version.txt"
+version_files[6]="uboot_version.txt"
+
+enabled[0]="1"
+enabled[1]="1"
+enabled[2]="1"
+enabled[3]="0"
+enabled[4]="0"
+enabled[5]="0"
+enabled[6]="0"
+enabled[7]="0"
+enabled[8]="0"
+
+img_idx_max=6
+vendor_idx=7
+vendor_old_idx=8

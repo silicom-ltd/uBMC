@@ -1,0 +1,11 @@
+
+config BR2_PACKAGE_SILC_PRODUCT_NAME
+    string "Product name"
+    default UBMC
+
+	source "../product/ubmc/package/ubmc_mgmtd/Config.in"
+	source "../product/ubmc/package/ubmc_netconf/Config.in"
+	source "../product/ubmc/package/ubmc_web/Config.in"
+	source "../product/ubmc/package/is_console_manager/Config.in"
+	source "../product/ubmc/package/is_ubmc_ipmi/Config.in"
+	source "../product/ubmc/package/dying_gasp/Config.in"

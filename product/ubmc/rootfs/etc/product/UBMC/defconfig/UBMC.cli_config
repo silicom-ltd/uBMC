@@ -1,0 +1,46 @@
+privileged_exec clear bypass=0
+privileged_exec clear afo=0
+
+privileged_exec show bypass=0
+privileged_exec show afo=0
+
+configure bypass=0
+configure afo=0
+
+configure clear bypass=0
+configure clear afo=0
+
+configure debug bcm-shell=0
+configure debug bsl=0
+configure debug simulate=0
+
+configure halt=0
+
+configure management eth-if=0
+configure management whoami=0
+configure management permitted=0
+
+configure manufacture=0
+
+configure no management eth-if=0
+configure no management permitted=0
+
+configure no snmp enable=0
+configure no snmp community=0
+configure no snmp user=0
+configure no snmp trap=0
+
+configure snmp enable=0
+configure snmp community=0
+configure snmp user=0
+configure snmp trap=0
+configure snmp threshold=0
+
+configure show bypass=0
+configure show afo=0
+
+configure test=0
+
+configure phonehome=0
+configure show phonehome=0
+

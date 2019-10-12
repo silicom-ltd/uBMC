@@ -1,0 +1,3 @@
+/drivers/hwmon/pmbus/ucd9000.c
+/drivers/hwmon/pmbus/Kconfig
+/drivers/hwmon/pmbus/Makefile

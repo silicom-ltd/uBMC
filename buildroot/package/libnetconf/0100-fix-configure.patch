@@ -1,0 +1,241 @@
+--- libnetconf-master-orig/configure	2017-06-29 20:21:40.000000000 +0800
++++ libnetconf-master-silicom/configure	2018-03-22 14:44:39.578896406 +0800
+@@ -652,8 +652,8 @@
+ SETUSER
+ SETBIT
+ NCNTF_STREAMS_PATH
+-NC_SESSIONFILE_PATH
+ NCNTF_STREAMS_MAX_SIZE_IN_MB
++NC_SESSIONFILE_PATH
+ NC_WORKINGDIR_PATH
+ DISTRO
+ PROVIDES
+@@ -1467,6 +1467,9 @@
+   --with-sessionfiledir=path
+                           Path to a session file directory of libnetconf, the
+                           default value is inside libnetconf working directory
++  --with-maxnotificationfilesize=size
++                          Maximum size for the notification stream files, if
++                          not specified the file can grow indefinitely
+   --with-streamsdir=path  Path to the events streams, the default value is
+                           streams subdirectory of libnetconf working directory
+   --with-suid=user        When creating files or directories using libnetconf,
+@@ -3001,8 +3004,10 @@
+ 		if test "$XSLT_CONFIG" != "no"; then
+ 			as_fn_error $? "Missing xslt-config to get XSLT flags for compilation." "$LINENO" 5
+ 		fi
+-		CFLAGS="`$withval/xslt-config --cflags` $CFLAGS"
+-		LIBS="`$withval/xslt-config --libs` $LIBS"
++		#CFLAGS="`$withval/xslt-config --cflags` $CFLAGS"
++		CFLAGS="`$PKG_CONFIG --cflags "libxslt" 2>/dev/null` $CFLAGS"
++		#LIBS="`$withval/xslt-config --libs` $LIBS"
++		LIBS="`$PKG_CONFIG --libs "libxslt" 2>/dev/null` $LIBS"
+ 		WITH_LIBXSLT="$withval"
+ 		CONFIGURE_PARAMS="--with-libxslt=$withval $CONFIGURE_PARAMS"
+ 
+@@ -5325,8 +5330,7 @@
+     ;;
+   *)
+     lt_cv_sys_max_cmd_len=`(getconf ARG_MAX) 2> /dev/null`
+-    if test -n "$lt_cv_sys_max_cmd_len" && \
+-	test undefined != "$lt_cv_sys_max_cmd_len"; then
++    if test -n "$lt_cv_sys_max_cmd_len"; then
+       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \/ 4`
+       lt_cv_sys_max_cmd_len=`expr $lt_cv_sys_max_cmd_len \* 3`
+     else
+@@ -5727,6 +5731,10 @@
+   fi
+   ;;
+ 
++gnu*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ haiku*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+@@ -5765,11 +5773,11 @@
+   ;;
+ 
+ # This must be glibc/ELF.
+-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
++linux* | k*bsd*-gnu | kopensolaris*-gnu)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
+-netbsd* | netbsdelf*-gnu)
++netbsd*)
+   if echo __ELF__ | $CC -E - | $GREP __ELF__ > /dev/null; then
+     lt_cv_deplibs_check_method='match_pattern /lib[^/]+(\.so\.[0-9]+\.[0-9]+|_pic\.a)$'
+   else
+@@ -6889,7 +6897,7 @@
+   rm -rf conftest*
+   ;;
+ 
+-x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*| \
++x86_64-*kfreebsd*-gnu|x86_64-*linux*|ppc*-*linux*|powerpc*-*linux*| \
+ s390*-*linux*|s390*-*tpf*|sparc*-*linux*)
+   # Find out which ABI we are using.
+   echo 'int i;' > conftest.$ac_ext
+@@ -6905,19 +6913,9 @@
+ 	    LD="${LD-ld} -m elf_i386_fbsd"
+ 	    ;;
+ 	  x86_64-*linux*)
+-	    case `/usr/bin/file conftest.o` in
+-	      *x86-64*)
+-		LD="${LD-ld} -m elf32_x86_64"
+-		;;
+-	      *)
+-		LD="${LD-ld} -m elf_i386"
+-		;;
+-	    esac
+-	    ;;
+-	  powerpc64le-*)
+-	    LD="${LD-ld} -m elf32lppclinux"
++	    LD="${LD-ld} -m elf_i386"
+ 	    ;;
+-	  powerpc64-*)
++	  ppc64-*linux*|powerpc64-*linux*)
+ 	    LD="${LD-ld} -m elf32ppclinux"
+ 	    ;;
+ 	  s390x-*linux*)
+@@ -6936,10 +6934,7 @@
+ 	  x86_64-*linux*)
+ 	    LD="${LD-ld} -m elf_x86_64"
+ 	    ;;
+-	  powerpcle-*)
+-	    LD="${LD-ld} -m elf64lppc"
+-	    ;;
+-	  powerpc-*)
++	  ppc*-*linux*|powerpc*-*linux*)
+ 	    LD="${LD-ld} -m elf64ppc"
+ 	    ;;
+ 	  s390*-*linux*|s390*-*tpf*)
+@@ -8606,7 +8601,7 @@
+       lt_prog_compiler_static='-non_shared'
+       ;;
+ 
+-    linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
++    linux* | k*bsd*-gnu | kopensolaris*-gnu)
+       case $cc_basename in
+       # old Intel for x86_64 which still supported -KPIC.
+       ecc*)
+@@ -9084,9 +9079,6 @@
+   openbsd*)
+     with_gnu_ld=no
+     ;;
+-  linux* | k*bsd*-gnu | gnu*)
+-    link_all_deplibs=no
+-    ;;
+   esac
+ 
+   ld_shlibs=yes
+@@ -9308,7 +9300,7 @@
+       fi
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
+ 	archive_cmds='$LD -Bshareable $libobjs $deplibs $linker_flags -o $lib'
+ 	wlarc=
+@@ -9485,7 +9477,6 @@
+ 	if test "$aix_use_runtimelinking" = yes; then
+ 	  shared_flag="$shared_flag "'${wl}-G'
+ 	fi
+-	link_all_deplibs=no
+       else
+ 	# not using gcc
+ 	if test "$host_cpu" = ia64; then
+@@ -9939,7 +9930,7 @@
+       link_all_deplibs=yes
+       ;;
+ 
+-    netbsd* | netbsdelf*-gnu)
++    netbsd*)
+       if echo __ELF__ | $CC -E - | $GREP __ELF__ >/dev/null; then
+ 	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'  # a.out
+       else
+@@ -10776,6 +10767,17 @@
+   esac
+   ;;
+ 
++gnu*)
++  version_type=linux # correct to gnu/linux during the next big refactor
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=no
++  hardcode_into_libs=yes
++  ;;
++
+ haiku*)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+@@ -10892,7 +10894,7 @@
+   ;;
+ 
+ # This must be glibc/ELF.
+-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
++linux* | k*bsd*-gnu | kopensolaris*-gnu)
+   version_type=linux # correct to gnu/linux during the next big refactor
+   need_lib_prefix=no
+   need_version=no
+@@ -10941,10 +10943,14 @@
+   # before this can be enabled.
+   hardcode_into_libs=yes
+ 
++  # Add ABI-specific directories to the system library path.
++  sys_lib_dlsearch_path_spec="/lib64 /usr/lib64 /lib /usr/lib"
++
+   # Append ld.so.conf contents to the search path
+   if test -f /etc/ld.so.conf; then
+     lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \$2)); skip = 1; } { if (!skip) print \$0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;/^[	 ]*hwcap[	 ]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;s/"//g;/^$/d' | tr '\n' ' '`
+-    sys_lib_dlsearch_path_spec="/lib /usr/lib $lt_ld_extra"
++    sys_lib_dlsearch_path_spec="$sys_lib_dlsearch_path_spec $lt_ld_extra"
++
+   fi
+ 
+   # We used to test for /lib/ld.so.1 and disable shared libraries on
+@@ -10956,18 +10962,6 @@
+   dynamic_linker='GNU/Linux ld.so'
+   ;;
+ 
+-netbsdelf*-gnu)
+-  version_type=linux
+-  need_lib_prefix=no
+-  need_version=no
+-  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major ${libname}${shared_ext}'
+-  soname_spec='${libname}${release}${shared_ext}$major'
+-  shlibpath_var=LD_LIBRARY_PATH
+-  shlibpath_overrides_runpath=no
+-  hardcode_into_libs=yes
+-  dynamic_linker='NetBSD ld.elf_so'
+-  ;;
+-
+ netbsd*)
+   version_type=sunos
+   need_lib_prefix=no
+@@ -12121,8 +12115,10 @@
+ 
+ 
+ 		if test "$XSLT_CONFIG" != "no"; then
+-			CFLAGS="`xslt-config --cflags` $CFLAGS"
+-			LIBS="`xslt-config --libs` $LIBS"
++			#CFLAGS="`xslt-config --cflags` $CFLAGS"
++			CFLAGS="`$PKG_CONFIG --cflags "libxslt" 2>/dev/null` $CFLAGS"
++			#LIBS="`xslt-config --libs` $LIBS"
++			LIBS="`$PKG_CONFIG --libs "libxslt" 2>/dev/null` $LIBS"
+ 		fi
+ 	fi
+ 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsltApplyStylesheet in -lxslt" >&5
+@@ -14173,6 +14169,7 @@
+ 
+ 
+ 
++
+ 
+ 
+ 

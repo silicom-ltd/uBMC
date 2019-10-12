@@ -1,0 +1,72 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+
+<%+header%>
+
+<h2><a id="content" name="content"><%:Key And Cert%></a></h2>
+<p><%:Here you can upload the key and cert for ipsec settings.%></p>
+<% if err then %>
+<p><span style='color: red'><%="Error: "..err%></span></p>
+<% elseif msg then %>
+<p><span style='color: green'><%=msg%></span></p>
+<% end %>
+<br />
+
+<form method="post" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+<% c = 1 %>
+<fieldset class="cbi-section" id="cbi-ipsec-secret-table">
+	<legend><%:Key List%></legend><div class="cbi-section-descr"></div>
+	<div class="cbi-section-node">
+		<table class="cbi-section-table">
+			<tr class="cbi-section-table-titles"><th class="cbi-section-table-cell">Key-ID</th><th>&nbsp;</th></tr>
+	<% if type(key_list) == 'table' then %>
+		<% for k,v in pairs(key_list) do c = c + 1 %>
+			<tr class="cbi-section-table-row cbi-rowstyle-<%=c%>"><th><%=k%></th><th>&nbsp;</th></tr>
+		<%- end %>
+	<%- end %>
+		</table>
+	</div>
+</fieldset>
+<% c = 1 %>
+<fieldset class="cbi-section" id="cbi-ipsec-secret-table">
+	<legend><%:Cert List%></legend><div class="cbi-section-descr"></div>
+	<div class="cbi-section-node">
+		<table class="cbi-section-table">
+			<tr class="cbi-section-table-titles"><th class="cbi-section-table-cell">Cert-ID</th><th>&nbsp;</th></tr>
+	<% if type(cert_list) == 'table' then %>
+		<% for k,v in pairs(cert_list) do c = c + 1 %>
+			<tr class="cbi-section-table-row cbi-rowstyle-<%=c%>"><th><%=k%></th><th>&nbsp;</th></tr>
+		<%- end %>
+	<%- end %>
+		</table>
+	</div>
+</fieldset>
+
+<fieldset class="cbi-section" id="cbi-ipsec-secret-table">
+	<legend><%:Upload a relative file%></legend><div class="cbi-section-descr"></div>
+	<div class="cbi-value-field">
+			<label><input type="radio" name="mode" checked value=0 />key</label>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<label><input type="radio" name="mode" value="1" />cert</label>
+			<br />
+			<br />
+			<input type="file" size="30" name="upload_file" />
+			<br />
+			<br />
+			<br />
+			<input class="cbi-button cbi-button-apply" type="submit" name="upload" value="<%:Upload%>" />
+	</div>
+</fieldset>
+</form>

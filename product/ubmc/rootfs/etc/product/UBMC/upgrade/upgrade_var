@@ -1,0 +1,78 @@
+#!/bin/sh
+set -e
+IS_UPGRADE_IMG_SIZE=50
+uimage_name="zImage"
+rootfs_name="rootfs.cpio.uboot"
+dtb_name="dt.dtb"
+uboot_name="u-boot.img"
+uboot0scr_name="boot0.scr"
+uboot1scr_name="boot1.scr"
+if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
+mlo_name="MLO.byteswap"
+else
+mlo_name="MLO"
+fi
+vendor_name="vendor.txt"
+vendor_old_name="vendor_old.txt"
+
+sw_ver_name="software_version.txt"
+uboot_ver_name="uboot_version.txt"
+vendor_ver_name="vendor.txt"
+
+sw_info="software"
+uimage_info="kernel"
+rootfs_info="rootfs"
+sw_ver_info="version"
+uboot_info="uboot"
+mlo_info="uboot"
+uboot_ver_info="uboot"
+uboot0scr_info="uboot"
+uboot1scr_info="uboot"
+dtb_info="dtb"
+vendor_info="vendor"
+
+#install location
+sys_mmc_dev=/dev/mmcblk0
+if [ ! -b ${sys_mmc_dev} ]; then
+	sys_mmc_dev=/dev/mmcblk1
+fi
+
+
+software_boot_flag_addr=MMCDEV/0x10000
+software_upgrade_flag_addr=MMCDEV/0x11000
+
+uboot_ver_addr=FIRMWARE/${uboot_ver_name}
+uboot_addr=FIRMWARE/${uboot_name}
+uboot0scr_addr=FIRMWARE/${uboot0scr_name}
+uboot1scr_addr=FIRMWARE/${uboot1scr_name}
+vendor_addr=FIRMWARE/${vendor_name}
+if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
+mlo_addr=mtd0
+else
+mlo_addr=FIRMWARE/${mlo_name}
+fi
+
+#bank0
+uimage_bank0_addr=SYSTEM1/${uimage_name}
+rootfs_bank0_addr=SYSTEM1/${rootfs_name}
+dtb_bank0_addr=SYSTEM1/${dtb_name}
+sw_bank0_ver_addr=SYSTEM1/${sw_ver_name}
+#bank1
+uimage_bank1_addr=SYSTEM2/${uimage_name}
+rootfs_bank1_addr=SYSTEM2/${rootfs_name}
+dtb_bank1_addr=SYSTEM2/${dtb_name}
+sw_bank1_ver_addr=SYSTEM2/${sw_ver_name}
+#We default everything to bank0, and switch to bank1 if needed
+uimage_addr=${uimage_bank0_addr}
+rootfs_addr=${rootfs_bank0_addr}
+dtb_addr=${dtb_bank0_addr}
+sw_ver_addr=${sw_bank0_ver_addr}
+
+#flash write load factor
+uimage_load=12
+rootfs_load=73
+uboot_load=3
+
+upgrade_parts="uimage rootfs dtb sw_ver mlo uboot uboot_ver uboot0scr uboot1scr vendor"
+firmware_parts="uboot"
+package_parts="sw uboot vendor"

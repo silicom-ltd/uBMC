@@ -1,0 +1,51 @@
+--- linux-custom-orig/drivers/hwmon/pmbus/ucd9000.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/pmbus/ucd9000.c	2019-01-29 11:50:40.404184100 +0800
+@@ -158,21 +158,21 @@
+ 	const struct i2c_device_id *mid;
+ 	enum chips chip;
+ 	int i, ret;
+-
++/*
+ 	if (!i2c_check_functionality(client->adapter,
+ 				     I2C_FUNC_SMBUS_BYTE_DATA |
+ 				     I2C_FUNC_SMBUS_BLOCK_DATA))
+ 		return -ENODEV;
+-
+-	ret = i2c_smbus_read_block_data(client, UCD9000_DEVICE_ID,
+-					block_buffer);
++*/
++	//ret = i2c_smbus_read_block_data(client, UCD9000_DEVICE_ID,block_buffer);	//AM335x does not support smbus block read functionlity
++	ret = i2c_smbus_read_i2c_block_data_or_emulated(client,UCD9000_DEVICE_ID, 32,block_buffer); //use emulated
+ 	if (ret < 0) {
+ 		dev_err(&client->dev, "Failed to read device ID\n");
+ 		return ret;
+ 	}
+ 	block_buffer[ret] = '\0';
+ 	dev_info(&client->dev, "Device ID %s\n", block_buffer);
+-
++/*
+ 	for (mid = ucd9000_id; mid->name[0]; mid++) {
+ 		if (!strncasecmp(mid->name, block_buffer, strlen(mid->name)))
+ 			break;
+@@ -181,7 +181,8 @@
+ 		dev_err(&client->dev, "Unsupported device\n");
+ 		return -ENODEV;
+ 	}
+-
++*/
++	mid = &ucd9000_id[3];
+ 	if (client->dev.of_node)
+ 		chip = (enum chips)of_device_get_match_data(&client->dev);
+ 	else
+@@ -214,8 +215,9 @@
+ 	info->func[0] = PMBUS_HAVE_TEMP;
+ 
+ 	/* Everything else is configurable */
+-	ret = i2c_smbus_read_block_data(client, UCD9000_MONITOR_CONFIG,
+-					block_buffer);
++/*	ret = i2c_smbus_read_block_data(client, UCD9000_MONITOR_CONFIG,
++					block_buffer);*/
++	ret = i2c_smbus_read_i2c_block_data_or_emulated(client,UCD9000_MONITOR_CONFIG, 16,block_buffer);
+ 	if (ret <= 0) {
+ 		dev_err(&client->dev, "Failed to read configuration data\n");
+ 		return -ENODEV;

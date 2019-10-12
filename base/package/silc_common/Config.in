@@ -1,0 +1,5 @@
+config BR2_PACKAGE_SILC_COMMON
+	bool "silc_common"
+	default y
+	help
+	    Silicom common OS wrapper C lib.

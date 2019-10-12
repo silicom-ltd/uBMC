@@ -1,0 +1,136 @@
+<style type="text/css">
+.cbi-value-field div {
+	visibility: hidden;
+}
+</style>
+
+<% if not self.embedded then %>
+<!--<form method="post" enctype="multipart/form-data" action="<%=REQUEST_URI%>"> -->
+<% end %>
+	<div class="cbi-map" id="cbi-<%=self.config%>">
+		<% if self.title and #self.title > 0 then %><h2><a id="content" name="content"><%=self.title%></a></h2><% end %>
+		<% if self.description and #self.description > 0 then %><div class="cbi-map-descr"><%=self.description%></div><% end %>
+		<% self:render_children() %>
+		<br />
+	</div>
+<%- if self.message then %>
+	<div><span style='color: green'><%=self.message%></span></div>
+<%- else %>
+	<script type="text/javascript">
+		var keyList = document.getElementById('cbi-key-list-table');
+		var list = keyList.getElementsByClassName('cbi-section-table-row');
+		for (loop in list) {
+			var children = list[loop].childNodes;
+			var keyId = '';
+
+			for (i in children) {
+				var elem = children[i];
+				console.log(elem.tagName);
+				if (elem.tagName != undefined && elem.tagName.toLowerCase() == 'th') {
+					keyId = elem.innerHTML.trim();
+					break;
+				}
+			}
+
+			if (keyId != '') {
+			var path = document.getElementById('cbid.key-list.'+keyId+'.key-path');
+			if (path.value === '') {
+				var component = document.getElementById('cbi-key-list-'+keyId+'-key-content');
+				if (component) {
+					component.style.visibility = 'visible';
+				}
+			}
+			}
+		}
+
+		var certList = document.getElementById('cbi-cert-list-table');
+		list = certList.getElementsByClassName('cbi-section-table-row');
+		for (loop in list) {
+			var children = list[loop].childNodes;
+			var keyId = '';
+
+			for (i in children) {
+				var elem = children[i];
+				console.log(elem.tagName);
+				if (elem.tagName != undefined && elem.tagName.toLowerCase() == 'th') {
+					keyId = elem.innerHTML.trim();
+					break;
+				}
+			}
+
+			if (keyId != '') {
+			var path = document.getElementById('cbid.cert-list.'+keyId+'.cert-path');
+			if (path.value === '') {
+				var component = document.getElementById('cbi-cert-list-'+keyId+'-cert-content');
+				if (component) {
+					component.style.visibility = 'visible';
+				}
+			}
+			}
+		}
+	</script>
+<%- end %>
+<%- if self.errmessage then %>
+	<div class="error"><span style='color: red'><%=self.errmessage%></span></div>
+	<script type="text/javascript">
+	updateValue = false;
+	</script>
+<%- end %>
+<% if not self.embedded then %>
+	<div class="cbi-page-actions">
+	<div style="float: left;width: 70%;text-align: left;line-height: 16px;">
+		<%:* If changes are made, commit will apply to current session. To save beyond system reboot, click Commit button but also Save config on Save tab.%>
+	</div>
+<%-
+	if type(self.hidden) == "table" then
+		for k, v in pairs(self.hidden) do
+-%>
+	<input type="hidden" id="<%=k%>" name="<%=k%>" value="<%=pcdata(v)%>" />
+<%-
+		end
+	end
+%>
+<% if redirect then %>
+	<div style="float:left">
+		<input class="cbi-button cbi-button-link" type="button" value="<%:Back to Overview%>" onclick="location.href='<%=pcdata(redirect)%>'" />
+	</div>
+<% end %>
+<%- if self.flow and self.flow.skip then %>
+	<input class="cbi-button cbi-button-skip" type="submit" name="cbi.skip" value="<%:Skip%>" />
+<% end %>
+<%
+	local params = ""
+	for i, v in pairs(luci.dispatcher.context.requestpath) do
+		params = params .. v .. "/"
+	end
+%>
+<%- if self.flow and self.flow.skip then %>
+        <input class="cbi-button cbi-button-skip" type="submit" name="cbi.skip" value="<%:Skip%>" />
+<% end %>
+<%
+	local params = ""
+	for i, v in pairs(luci.dispatcher.context.requestpath) do
+		params = params .. v .. "/"
+	end
+%>
+<%- if self.submit ~= false then %>
+        <input class="cbi-button cbi-button-save" type="submit" name="cbi.commit" value="
+                <%- if not self.submit then -%><%-:Commit-%><%-else-%><%=self.submit%><%end-%>
+        " />
+<% end %>
+<%- if self.reset ~= false then %>
+        <input class="cbi-button cbi-button-reset" type="reset" name="cbi.reset" value="
+                <%- if not self.reset then -%><%-:Reset-%><%-else-%><%=self.reset%><%end-%>
+        " />
+<% end %>
+<%- if self.cancel ~= false and self.on_cancel then %>
+        <input class="cbi-button cbi-button-reset" type="submit" name="cbi.cancel" value="
+                <%- if not self.cancel then -%><%-:Cancel-%><%-else-%><%=self.cancel%><%end-%>
+        " />
+<% end %>
+<!--input class="cbi-button cbi-button-reset" type="button" id="realtime-button" value="Real time"/>-->
+
+		<script type="text/javascript">cbi_d_update();</script>
+	</div>
+<!--</form> -->
+<% end %>

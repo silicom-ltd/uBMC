@@ -1,0 +1,32 @@
+#MLO=${BR2_ROOT}/ti/uboot-script/sd/MLO
+MLO=${IMGDIR_UBOOT}/MLO
+UBOOTBIN=${IMGDIR_UBOOT}/u-boot.img
+UBOOTSCR=${IMGDIR_UBOOT}/boot.scr
+UIMAGE=${IMGDIR}/zImage
+DTB=${IMGDIR_UBOOT}/dt.dtb
+ROOTFS=${IMGDIR}/rootfs.cpio.uboot
+
+INSTALL_SRC_NAMES="MLO UBOOTBIN UBOOTSCR UIMAGE DTB ROOTFS"
+INSTALL_CP_SRC_NAMES="${INSTALL_SRC_NAMES}"
+
+
+is_sd_partition()
+{
+  SDCARD=$1
+  echo "--> Zero out first 1MB"
+  sudo dd if=/dev/zero of=${SDCARD} bs=1M count=1 || error_quit "Failed to zero out 1M on ${SDCARD}"
+  echo "--> repartitioning ${SDCARD}"
+  sudo blockdev --rereadpt ${SDCARD}
+  sudo parted -s ${SDCARD} mklabel msdos
+  sudo parted -s ${SDCARD} mkpart primary fat16 1MiB 1025MiB || error_quit "Failed to create partition on ${SDCARD}"
+  sudo parted -s ${SDCARD} set 1 boot on
+  sudo parted -s ${SDCARD} set 1 lba on
+
+  sudo mkfs.fat ${SDCARD}1 || error_quit "Failed to create vfat on ${SDCARD}1"
+  
+}
+
+is_sd_get_img_part()
+{
+  echo "1"
+}

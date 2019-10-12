@@ -1,0 +1,4 @@
+config BR2_PACKAGE_PAM_RADIUS
+	bool "pam_radius"
+	help
+	  PAM RADIUS authentication module.

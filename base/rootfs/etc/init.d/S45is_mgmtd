@@ -1,0 +1,150 @@
+#!/bin/sh
+#
+# Start/stop is_mgmtd
+#
+
+ADM_GID=2000
+DRYRUN=0
+
+#for ipsec keys and certs
+mkdir -p /data/keys
+mkdir -p /data/certs
+
+product=$(cat /etc/product.txt)
+vendor=$(cat /etc/product/vendor)
+
+mgmtd_conf=/config/is_mgmtd.conf
+mgmtd_conf_cs=/config/is_mgmtd.conf.sha1sum
+
+mgmtd_conf_bk=/config/is_mgmtd.conf.backup
+mgmtd_conf_bk_cs=/config/is_mgmtd.conf.backup.sha1sum
+
+mgmtd_started=/tmp/mgmtd_started
+
+log_sys_evt()
+{
+	logger -s "${1}"
+	echo $(date '+%Y%m%d %H:%M:%S')": ${1}" >> /var/log/message-sys-event
+}
+
+validate_conf()
+{
+	if [ -e "${mgmtd_conf_bk}" ] && [ -e "${mgmtd_conf_bk_cs}" ]; then
+		sha1sum -c ${mgmtd_conf_bk_cs}
+		if [ $? != 0 ]; then
+			log_sys_evt "is_mgmtd backup config file is corrupted"
+			rm -rf ${mgmtd_conf_bk} ${mgmtd_conf_bk_cs}
+		fi
+	fi
+
+	if [ -e "${mgmtd_conf}" ] && [ -e "${mgmtd_conf_cs}" ]; then
+		sha1sum -c ${mgmtd_conf_cs}
+		if [ $? != 0 ]; then
+			rm -rf ${mgmtd_conf} ${mgmtd_conf_cs}
+			if [ -e "${mgmtd_conf_bk}" ]; then
+				mv ${mgmtd_conf_bk} ${mgmtd_conf}
+				rm -rf ${mgmtd_conf_bk_cs}
+				sha1sum ${mgmtd_conf} > ${mgmtd_conf_cs}
+				log_sys_evt "is_mgmtd config file is corrupted, use the last good configuration"
+			else
+				log_sys_evt "is_mgmtd config file is corrupted, use the default configuration"
+			fi
+		fi
+	fi
+}
+
+mgmtd_enable_root()
+{
+#	echo "enable root"
+	sed -i 's/\/root:\/sbin\/nologin/\/root:\/bin\/sh/' /etc/passwd
+}
+
+mgmtd_disable_root()
+{
+#	echo "disable root"
+	sed -i 's/\/root:\/bin\/sh/\/root:\/sbin\/nologin/' /etc/passwd 
+}
+
+admin_is_exist()
+{
+	grep ":${ADM_GID}:" /etc/passwd | while read line
+	do
+		admin=`echo $line |cut -d : -f1`
+		gid=`echo $line |cut -d : -f4`
+		if [ "${gid}" == "${ADM_GID}" ]; then
+			echo "Admin ${admin} is found in passwd"
+			grep -q "^${admin}:" /etc/shadow
+			if [ $? == 0 ]; then
+				echo "Admin ${admin} is found in shadow"
+				return 0
+			fi
+		fi
+	done
+	echo "Default admin is not found"
+	return 1
+}
+
+wait_mgmtd_up()
+{
+	TIMEOUT=0
+	while [ true ]; do 
+		if [ -e "${mgmtd_started}" ]; then
+			echo "is_mgmtd is ready";
+			return;
+		fi
+		sleep 1;
+		kill -s 0 $MGMTD_PID &>/dev/null
+		if [ ! $? ]; then
+			echo "is_mgmtd has quit";
+			break
+		fi
+		TIMEOUT=$(($TIMEOUT+1))
+		if [ $TIMEOUT == 120 ]; then
+			echo "is_mgmtd has hung";
+			break
+		fi
+	done
+
+	#is_mgmtd fail to start
+	#if backup exists, use it to retry
+	if [ -e "${mgmtd_conf_bk}" ]; then
+		mv ${mgmtd_conf_bk} ${mgmtd_conf}
+		rm -rf ${mgmtd_conf_bk_cs}
+		sha1sum ${mgmtd_conf} > ${mgmtd_conf_cs}
+		log_sys_evt "is_mgmtd fails to start, restart the device with the last good configuration"
+	else
+		rm -rf ${mgmtd_conf} ${mgmtd_conf_cs}
+		log_sys_evt "is_mgmtd fails to start, restart the device with the default configuration"
+	fi
+	sync
+	reboot
+}
+
+case "$1" in
+  start)
+        echo "Starting is_mgmtd..."
+		#mgmtd_enable_root
+		addgroup -g ${ADM_GID} is_admin
+		rm -rf ${mgmtd_started}
+		validate_conf
+		/usr/bin/is_mgmtd &
+        MGMTD_PID=$!
+        wait_mgmtd_up
+        ;;
+  stop)
+        echo "Stopping is_mgmtd..."
+        killall -q is_mgmtd
+        ;;
+  check)
+        echo "Checking default admin..."
+        admin_is_exist                                                                                  
+        ;;
+  restart|reload)
+        "$0" stop
+        "$0" start
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

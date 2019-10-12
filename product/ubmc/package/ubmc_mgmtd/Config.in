@@ -1,0 +1,5 @@
+config BR2_PACKAGE_UBMC_MGMTD
+	bool "ubmc_mgmtd"
+	help
+	  Silicom uBMC management module
+

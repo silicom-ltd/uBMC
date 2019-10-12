@@ -1,0 +1,5 @@
+config BR2_PACKAGE_IS_CONSOLE_MANAGER
+	bool "is_console_manager"
+	help
+	  Silicom IS Console Manager Application
+

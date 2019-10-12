@@ -1,0 +1,433 @@
+--- linux-custom-orig/drivers/hwmon/silc_pac1014a.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/hwmon/silc_pac1014a.c	2019-03-13 15:54:17.956261188 +0800
+@@ -0,0 +1,430 @@
++#include <linux/module.h>    // included for all kernel modules
++#include <linux/init.h>      // included for __init and __exit macros
++//#include <linux/slab.h>
++#include <linux/jiffies.h>
++#include <linux/i2c.h>
++#include <linux/hwmon-sysfs.h>
++#include <linux/hwmon.h>
++#include <linux/err.h>
++#include <linux/mutex.h>
++#include <linux/sysfs.h>
++#include <linux/types.h>
++
++#include <linux/kernel.h>    // included for KERN_INFO
++#include <linux/i2c-dev.h>
++#include <linux/delay.h>
++#include <asm/uaccess.h>
++#include <linux/fs.h>
++#include <linux/proc_fs.h>
++#include <linux/seq_file.h>
++
++#define DEVICE_ADR 0x48
++/*
++ * Addresses to scan
++ */
++static const unsigned short normal_i2c[] = { DEVICE_ADR, I2C_CLIENT_END };
++
++#define PAC1014A_REG_ADC_VAL_LOW		0X07
++#define PAC1014A_REG_ADC_VAL_HIGH		0X08
++#define PAC1014A_REG_ADC_MUX			0X09
++
++#define PAC1014A_ADC_MUX_VMON1			0x0
++#define PAC1014A_ADC_MUX_VMON2			0x1
++#define PAC1014A_ADC_MUX_VMON3			0x2
++#define PAC1014A_ADC_MUX_VMON4			0x3
++#define PAC1014A_ADC_MUX_VMON5			0x4
++#define PAC1014A_ADC_MUX_VMON6			0x5
++#define PAC1014A_ADC_MUX_VMON7			0x6
++#define PAC1014A_ADC_MUX_VMON8			0x7
++#define PAC1014A_ADC_MUX_VMON9			0x8
++#define PAC1014A_ADC_MUX_VMON10			0x9
++
++
++enum chips { pac1014a };
++enum chips_sub { pac1014a_null, pac1014a_ac1, pac1014a_ac2 };
++static unsigned int debug_info_enable = 0;
++#define debug_info_cnt 10
++struct pac1014a_data{
++	struct device *hwmon_dev;
++	struct mutex update_lock;
++	enum chips kind;
++	enum chips_sub sub_kind;
++};
++
++static int pac1014a_i2c_read(struct i2c_client *client, uint8_t reg, uint8_t* data)
++{
++	if(1 != i2c_master_send(client, &reg, 1))
++	{
++		if(debug_info_enable ++ <= debug_info_cnt) printk(KERN_ERR "silc pac read send failed!reg %#x client %p\n", reg, client);
++		return -1;
++	}
++	msleep(10);
++	if(1 != i2c_master_recv(client, data, 1))
++	{
++		if(debug_info_enable ++ <= debug_info_cnt) printk(KERN_ERR "silc pac read recv failed!\n");
++		return -1;
++	}
++	//printk("read reg %#x %#x\n", reg, *data);
++	return 0;
++}
++
++static int pac1014a_i2c_write(struct i2c_client *client, uint8_t reg, uint8_t data)
++{
++	unsigned char buffer[2];
++	buffer[0] = reg;
++	buffer[1] = data;
++	if(2 != i2c_master_send(client, buffer, 2))
++	{
++		if(debug_info_enable ++ <= debug_info_cnt) printk(KERN_ERR "silc pac write send failed!\n");
++		return -1;
++	}
++	//printk("write reg %#x %#x\n", reg, data);
++	return 0;
++}
++
++#define PAC1014A_FUNC_RUN(func, client, args...)	\
++		do{ int ret = func(client,##args); if(ret != 0) goto ERROR; }while(0)
++
++static int pac1014a_wait_conversion(struct i2c_client *client)
++{
++	u8 data;
++	int i=0;
++	//printk("pac1014a_wait_conversion \n");
++	while(i++<100)
++	{
++		msleep(10);
++		if(pac1014a_i2c_read(client, PAC1014A_REG_ADC_VAL_LOW, &data))
++			return -1;
++		if(data&1)
++			return 0;
++	}
++	return -1;
++}
++
++static int pac1014a_get_ac1_vmon(struct i2c_client *client, u8 mux_id, u16 *vmon)
++{
++	u32 val;
++	u8 input;
++	u8 val_low, val_high;
++	//u8 atten_bits[] = { 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 };
++	u8 atten_bits[] = { 1, 1, 0, 0, 0, 0, 1, 0, 1, 1 };	//for uBMC S/M/L
++	struct pac1014a_data *data = i2c_get_clientdata(client);
++
++//	printk("%s in\n", __func__);
++	mutex_lock(&data->update_lock);
++	input = 0xe0|mux_id|(atten_bits[mux_id]<<4);
++	PAC1014A_FUNC_RUN(pac1014a_wait_conversion, client);
++	PAC1014A_FUNC_RUN(pac1014a_i2c_write, client, PAC1014A_REG_ADC_MUX, input);
++
++	PAC1014A_FUNC_RUN(pac1014a_wait_conversion, client);
++	PAC1014A_FUNC_RUN(pac1014a_i2c_read, client, PAC1014A_REG_ADC_VAL_LOW, &val_low);
++	PAC1014A_FUNC_RUN(pac1014a_i2c_read, client, PAC1014A_REG_ADC_VAL_HIGH, &val_high);
++	val = val_low>>4|val_high<<4;
++
++	if(mux_id == PAC1014A_ADC_MUX_VMON2 || mux_id == PAC1014A_ADC_MUX_VMON7 || mux_id == PAC1014A_ADC_MUX_VMON10)
++		val = val*2;
++	else
++		val *= 2;
++	*vmon = val;
++	mutex_unlock(&data->update_lock);
++	return 0;
++ERROR:
++	if(debug_info_enable ++ <= debug_info_cnt) printk("pac1014a_get_ac1_vmon ERROR \n");
++	mutex_unlock(&data->update_lock);
++	return -1;
++}
++
++static int pac1014a_get_ac2_vmon(struct i2c_client *client, u8 mux_id, u16 *vmon)
++{
++	u32 val;
++	u8 input;
++	u8 val_low, val_high;
++	u8 atten_bits[] = { 1, 0, 0, 0, 0, 0, 0, 0, 1, 1 };
++	struct pac1014a_data *data = i2c_get_clientdata(client);
++
++//	printk("%s in\n", __func__);
++	mutex_lock(&data->update_lock);
++	input = 0xe0|mux_id|(atten_bits[mux_id]<<4);
++	PAC1014A_FUNC_RUN(pac1014a_wait_conversion, client);
++	PAC1014A_FUNC_RUN(pac1014a_i2c_write, client, PAC1014A_REG_ADC_MUX, input);
++
++	PAC1014A_FUNC_RUN(pac1014a_wait_conversion, client);
++	PAC1014A_FUNC_RUN(pac1014a_i2c_read, client, PAC1014A_REG_ADC_VAL_LOW, &val_low);
++	PAC1014A_FUNC_RUN(pac1014a_i2c_read, client, PAC1014A_REG_ADC_VAL_HIGH, &val_high);
++	val = val_low>>4|val_high<<4;
++	if(mux_id == PAC1014A_ADC_MUX_VMON10)
++		val = val*2*376/100;
++	else
++		val *= 2;
++	*vmon = val;
++	mutex_unlock(&data->update_lock);
++	return 0;
++ERROR:
++	mutex_unlock(&data->update_lock);
++	return -1;
++}
++
++
++static int pac1014a_get_vmon(struct device *dev, u8 mux_id, u16 *vmon)
++{
++	struct i2c_client *client = to_i2c_client(dev);
++	struct pac1014a_data *data = i2c_get_clientdata(client);
++	//if(data->sub_kind == pac1014a_ac1)
++		return pac1014a_get_ac1_vmon(client, mux_id, vmon);
++/*	else if(data->sub_kind == pac1014a_ac2)
++		return pac1014a_get_ac2_vmon(client, mux_id, vmon);
++	else
++		return -1;
++		*/
++}
++
++static char pac1014a_failstr[] = "Read failed";
++static ssize_t pac_show_vmon1(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON1, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon2(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON2, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon3(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON3, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon4(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON4, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon5(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON5, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon6(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON6, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon7(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON7, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon8(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON8, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon9(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON9, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static ssize_t pac_show_vmon10(struct device *dev, struct device_attribute *devattr, char *buf)
++{
++	u16 data;
++	if(pac1014a_get_vmon(dev, PAC1014A_ADC_MUX_VMON10, &data) != 0)
++		return sprintf(buf, "%s\n", pac1014a_failstr);
++	else
++		return sprintf(buf, "%d\n", data);
++}
++
++static SENSOR_DEVICE_ATTR(vmon1, S_IRUGO, pac_show_vmon1, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon2, S_IRUGO, pac_show_vmon2, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon3, S_IRUGO, pac_show_vmon3, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon4, S_IRUGO, pac_show_vmon4, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon5, S_IRUGO, pac_show_vmon5, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon6, S_IRUGO, pac_show_vmon6, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon7, S_IRUGO, pac_show_vmon7, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon8, S_IRUGO, pac_show_vmon8, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon9, S_IRUGO, pac_show_vmon9, NULL, 0);
++static SENSOR_DEVICE_ATTR(vmon10, S_IRUGO, pac_show_vmon10, NULL, 0);
++//static SENSOR_DEVICE_ATTR(vmon_all, S_IRUGO, pac_show_all, NULL, 0);
++
++static struct attribute *pac1014a_attributes[] = {
++        &sensor_dev_attr_vmon1.dev_attr.attr,
++        &sensor_dev_attr_vmon2.dev_attr.attr,
++        &sensor_dev_attr_vmon3.dev_attr.attr,
++        &sensor_dev_attr_vmon4.dev_attr.attr,
++        &sensor_dev_attr_vmon5.dev_attr.attr,
++        &sensor_dev_attr_vmon6.dev_attr.attr,
++        &sensor_dev_attr_vmon7.dev_attr.attr,
++        &sensor_dev_attr_vmon8.dev_attr.attr,
++        &sensor_dev_attr_vmon9.dev_attr.attr,
++        &sensor_dev_attr_vmon10.dev_attr.attr,
++//		&sensor_dev_attr_vmon_all.dev_attr.attr,
++		NULL
++};
++
++static umode_t pac1014a_attribute_mode(struct kobject *kobj,
++                                   struct attribute *attr, int index)
++{
++	return attr->mode | S_IWUSR;
++}
++
++static const struct attribute_group pac1014a_group = {
++        .is_visible = pac1014a_attribute_mode,
++        .attrs = pac1014a_attributes,
++};
++
++static int pac1014a_detect(struct i2c_client *client,
++                       struct i2c_board_info *info)
++{
++	struct i2c_adapter *adapter = client->adapter;
++//	u8 man_id, chip_id;
++	int address = client->addr;
++
++    if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
++            return -ENODEV;
++//    man_id = i2c_smbus_read_byte_data(client, LM63_REG_MAN_ID);
++//    chip_id = i2c_smbus_read_byte_data(client, LM63_REG_CHIP_ID);
++
++    if(address == DEVICE_ADR)
++    {
++    	strlcpy(info->type, "pac1014a", I2C_NAME_SIZE);
++        printk("detect pac from i2c %s\n", client->name);
++    }
++    else
++    	return -ENODEV;
++
++    return 0;
++}
++
++static void pac1014a_init_client(struct i2c_client *client)
++{
++//	struct lm63_data *data = i2c_get_clientdata(client);
++	return;
++}
++
++static int pac1014a_get_subkind(struct i2c_client *client, enum chips_sub* subkind)
++{
++	u8 data;
++
++	if(pac1014a_i2c_read(client, 0xa, &data) != 0)
++		return -1;
++	if(data == 0x1)
++		*subkind = pac1014a_ac1;
++	else if(data == 0x2)
++		*subkind = pac1014a_ac2;
++	else
++		return -1;
++	return 0;
++}
++
++static int pac1014a_probe(struct i2c_client *client,
++                      const struct i2c_device_id *id)
++{
++    struct pac1014a_data *data;
++    int err;
++    data = devm_kzalloc(&client->dev, sizeof(struct pac1014a_data), GFP_KERNEL);
++    if (!data)
++            return -ENOMEM;
++
++    i2c_set_clientdata(client, data);
++//    data->valid = 0;
++    mutex_init(&data->update_lock);
++
++    /* Initialize chip */
++    pac1014a_init_client(client);
++
++    /* Register sysfs hooks */
++    err = sysfs_create_group(&client->dev.kobj, &pac1014a_group);
++    if (err)
++            return err;
++
++    data->hwmon_dev = hwmon_device_register(&client->dev);
++    if (IS_ERR(data->hwmon_dev)) {
++            err = PTR_ERR(data->hwmon_dev);
++            goto exit_remove_files;
++    }
++    /* Set the device type */
++    data->kind = pac1014a;
++    data->sub_kind = pac1014a_null;
++    /*
++    if(pac1014a_get_subkind(client, &data->sub_kind) != 0)
++    {
++    	printk(KERN_ERR "Can not get PAC1014a sub kind!!\n");
++    	goto exit_remove_files;
++    }
++    printk("get sub kind %d\n", data->sub_kind);
++*/
++    return 0;
++exit_remove_files:
++	sysfs_remove_group(&client->dev.kobj, &pac1014a_group);
++	return err;
++}
++
++static int pac1014a_remove(struct i2c_client *client)
++{
++	struct pac1014a_data *data = i2c_get_clientdata(client);
++
++	hwmon_device_unregister(data->hwmon_dev);
++	sysfs_remove_group(&client->dev.kobj, &pac1014a_group);
++	return 0;
++}
++
++static const struct i2c_device_id pac1014a_id[] = {
++        { "pac1014a", pac1014a },
++        { }
++};
++MODULE_DEVICE_TABLE(i2c, pac1014a_id);
++
++static struct i2c_driver pac1014a_driver = {
++        .class          = I2C_CLASS_HWMON,
++        .driver = {
++                .name   = "pac1014a",
++        },
++        .probe          = pac1014a_probe,
++        .remove         = pac1014a_remove,
++        .id_table       = pac1014a_id,
++ //       .detect         = pac1014a_detect,
++        .address_list   = normal_i2c,
++};
++
++module_i2c_driver(pac1014a_driver);
++
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Silicom");
++MODULE_DESCRIPTION("A driver for lattic PAC1014A");
++
++

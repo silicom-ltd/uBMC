@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Start/stop is_sysdump_init
+#
+
+set +e
+#set -x
+
+
+case "$1" in
+  start)
+		echo "|/usr/sbin/is_coredump.sh coredump-%e-%p-%t-%s" > /proc/sys/kernel/core_pattern
+		echo "10" > /proc/sys/kernel/core_pipe_limit
+		mkdir -p /var/log/dump
+        ;;
+  stop)
+        ;;
+  restart|reload)
+        ;;
+  *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+

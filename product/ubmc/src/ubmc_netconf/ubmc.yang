@@ -1,0 +1,1433 @@
+module ubmc {
+  namespace "urn:silicom:params:xml:ns:yang:ubmc";
+  prefix "ubmc-sys";
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+
+  organization
+    "Silicom Ltd.";
+
+  contact
+    "Editor:   Julian Zhu
+               <mailto:julian.zhu@silicom.co.il>";
+
+  description
+    "This module contains a collection of YANG definitions for the
+     configuration and identification of some common system
+     properties within a device containing a NETCONF server.  This
+     includes data node definitions for system identification,
+     time-of-day management, user management, DNS resolver
+     configuration, and some protocol operations for system
+     management.";
+
+  revision 2018-09-20 {
+    description
+      "Initial revision.";
+  }
+
+ /*
+  * Typedefs
+  */
+
+  typedef timezone-name {
+    type string;
+    description
+      "A time zone name as used by the Time Zone Database,
+       sometimes referred to as the 'Olson Database'.
+
+       The exact set of valid values is an implementation-specific
+       matter.  Client discovery of the exact set of time zone names
+       for a particular server is out of scope.";
+    reference
+      "RFC 6557: Procedures for Maintaining the Time Zone Database";
+   }
+
+  typedef ip-origin {
+    type enumeration {
+      enum static { description "Static IP address mode"; }
+      enum dhcp { description "DHCP mode"; }
+    }
+    description "type define of IP origin";
+  }
+
+  typedef auth-protocol-type {
+    type enumeration {
+      enum ikev1 { // not supported by model
+        description "Authentication protocol based on IKEv1";
+      }
+      enum ikev2 {
+        description "Authentication protocol based on IKEv2";
+      }
+    }
+    description "IPSEC authentication protocols";
+  }
+
+  typedef ipsec-mode {
+    type enumeration {
+      enum tunnel { description "Tunnel mode"; }
+      enum transport { description "Transport mode"; }
+    }
+    description "type define of ipsec mode";
+  }
+
+  typedef auth-method-type {
+    /* Most implementations also provide XAUTH protocol, others used are: BLISS, P12, NTLM, PIN */
+    type enumeration {
+      enum psk {
+        description "Select pre-shared key message as the authentication method";
+      }
+
+      enum pubkey {
+        description "Select public key encryption (RSA/ECDSA) as the authentication method";
+      }
+
+      enum eap {
+        description "Select EAP as the authentication method";
+      }
+      enum eap-aka;
+      enum eap-gtc;
+      enum eap-md5;
+      enum eap-mschapv2;
+      enum eap-peap;
+
+      enum xauth {
+        description "Select the IKEv1 eXtended Authentication as the authentication method";
+      }
+      enum xauth-generic;
+      enum xauth-eap;
+    }
+
+    description "IPSEC authentication method";
+  }
+
+  typedef secret-type {
+    type enumeration {
+      enum RSA { description "defines an RSA private key"; }
+      enum ECDSA { description "defines an ECDSA private key"; }
+      enum BLISS { description "defines a BLISS Private key"; }
+      enum P12 { description "defines a PKCS#12 container"; }
+      enum PSK { description "defines a pre-shared key"; }
+      enum EAP { description "defines EAP credentials"; }
+      enum NTLM { description "defines NTLM credentials"; }
+      enum XAUTH { description "defines XAUTH credentials"; }
+      enum PIN { description "defines a smartcard PIN"; }
+    }
+    description "IPSEC secret type";
+  }
+
+  typedef syslog-severity {
+    type enumeration {
+      enum EMERGENCY {
+        description
+          "Emergency: system is unusable (0)";
+      }
+      enum ALERT {
+        description
+          "Alert: action must be taken immediately (1)";
+      }
+      enum CRITICAL {
+        description
+          "Critical: critical conditions (2)";
+      }
+      enum ERROR {
+        description
+          "Error: error conditions (3)";
+      }
+      enum WARNING {
+        description
+          "Warning: warning conditions (4)";
+      }
+      enum NOTICE {
+        description
+          "Notice: normal but significant  condition(5)";
+      }
+      enum INFORMATIONAL {
+        description
+          "Informational: informational messages (6)";
+      }
+      enum DEBUG {
+        description
+          "Debug: debug-level messages (7)";
+      }
+    }
+    description
+      "Syslog message severities";
+    reference
+      "IETF RFC 5424 - The Syslog Protocol";
+  }
+
+  typedef snmp-version {
+    type enumeration {
+      enum v1 { description "SNMPv1"; }
+      enum v2c { description "SNMPv2c"; }
+      enum v3 { description "SNMPv3"; }
+    }
+    description "typef define of SNMP version";
+  }
+
+  typedef snmp-hash {
+    type enumeration {
+      enum md5 { description "MD5"; }
+      enum sha { description "SHA"; }
+    }
+    description "type define of SNMP hash algorithm";
+  }
+
+  /*
+   * Features
+   */
+
+  /*
+   * Identities
+   */
+
+  /*
+   * Configuration data nodes
+   */
+
+  container system-config {
+    description
+      "System configuration.";
+
+  container general {
+    description
+      "System general configuration.";
+
+    leaf hostname {
+      type inet:domain-name;
+      description
+        "The name of the host.  This name can be a single domain
+        label or the fully qualified domain name of the host.";
+    }
+
+    container clock {
+      description
+        "Configuration of the system date and time properties.";
+
+      leaf timezone-name {
+        type timezone-name;
+        description
+          "The TZ database name to use for the system, such
+           as 'Europe/Stockholm'.";
+      }
+    }
+
+    container ntp {
+      description
+        "Configuration of the NTP client.";
+
+      leaf enabled {
+        type boolean;
+        description
+          "Indicates that the system should attempt to
+           synchronize the system clock with an NTP server
+           from the 'ntp/server' list.";
+      }
+      list server {
+        key address;
+        description
+          "List of NTP servers to use for system clock
+           synchronization.  If '/system/ntp/enabled'
+           is 'true', then the system will attempt to
+           contact and utilize the specified NTP servers.";
+
+        leaf address {
+          type inet:host;
+          mandatory true;
+          description
+            "The address of the DNS server.";
+        }
+      }
+    }
+
+    container syslog {
+      description
+        "Configuration of the syslog.";
+
+      leaf severity {
+        type syslog-severity;
+        description
+          "Specifies that only messages of the given severity (or
+          greater severity) for the corresonding facility are logged";
+      }
+
+      leaf max-file-size {
+        type uint16;
+        units "megabytes";
+        description
+          "This leaf specifies the maximum log file size.";
+      }
+
+      container remote {
+        description
+          "This container describes the configuration parameters for 
+           remote logging.";
+
+        leaf enabled {
+          type boolean;
+          description
+            "Indicates that the system should attempt to
+            send logs to remote server in the destination list.";
+        }
+        list destination {
+          key "address";
+          ordered-by user;
+          description
+            "This list describes a collection of remote logging 
+             destinations.";
+          leaf address {
+            type inet:host;
+            mandatory true;
+            description
+              "The address of the remote logging server.";
+          }
+          leaf port {
+            type inet:port-number;
+            default 514;
+            description
+              "This leaf specifies the port number used to 
+               deliver messages to the remote server.";
+          }
+        }
+      }
+    }
+  }
+
+  container management {
+    description
+      "System management configuration.";
+
+    container session {
+      description
+        "Configuration of the system session management.";
+
+      leaf idle-timeout {
+        type uint32;
+        units "seconds";
+        default 600;
+        description
+          "The amount of time the server will wait for a request on a session 
+          before disconnecting it, 0 means disable.";
+      }
+    }
+
+    list vrf {
+      key name;
+      description
+        "List of the VRFs.";
+
+      leaf name {
+        type string;
+        description
+          "The identifier of the VRF.";
+      }
+      leaf table {
+        type uint32;
+        description
+          "The table ID of the VRF.";
+      }
+    }
+
+    list vrf-process {
+      key name;
+      description
+        "List of the bindings of processes and VRFs.";
+
+      leaf name {
+        type string;
+        description
+          "The identifier of the binding.";
+      }
+      leaf process {
+        type enumeration {
+          enum ipsec;
+          enum netconf;
+          enum ssh;
+          enum web;
+          enum dying-gasp;
+          enum ntp;
+          enum syslog;
+        }
+        description
+          "The process which may run on VRF.";
+      }
+      leaf vrf {
+        type string;
+        description
+          "The VRF name which can be empty string for no VRF.";
+      }
+    }
+
+    list interface {
+      key "name";
+      description
+        "The list of the interfaces.";
+
+      leaf name {
+        type string;
+        description
+          "The identifier of the interface.";
+      }
+
+      leaf description {
+        type string;
+        description
+          "A textual description of the interface.";
+      }
+
+      leaf enabled {
+        type boolean;
+        default true;
+        description
+          "This leaf contains the configured, desired state of the
+           interface.";
+      }
+
+      leaf mtu {
+        type uint16 {
+          range "68..max";
+        }
+        units octets;
+        default 1500;
+        description
+          "The size, in octets, of the largest IPv4 packet that the
+           interface will send and receive.";
+        reference
+          "RFC 791: Internet Protocol";
+      }
+
+      leaf dev {
+        type string;
+        description
+          "The network device of the interface [eth0/eth1].";
+      }
+
+      leaf master {
+        type string;
+        default "";
+        description
+          "The master VRF of the interface, empty string for no VRF.";
+      }
+
+      leaf vlan {
+        type uint16 {
+          range "0..4094";
+        }
+        default 0;
+        description
+          "The vlan id for the interface, and 0 means no vlan.";
+      }
+
+      leaf dhcp-sendname {
+        type boolean;
+        default true;
+        description
+          "Enable sending hostname when DHCP.";
+      }
+
+      container ipv4 {
+        presence
+          "Enables IPv4 unless the 'enabled' leaf
+          (which defaults to 'true') is set to 'false'";
+        description
+          "Parameters for the IPv4 address family.";
+
+        leaf enabled {
+          type boolean;
+          default true;
+          description
+            "Controls whether IPv4 is enabled or disabled on this
+            interface.  When IPv4 is enabled, this interface is
+            connected to an IPv4 stack, and the interface can send
+            and receive IPv4 packets.";
+        }
+        container address {
+          description
+            "The configured IPv4 addresses on the interface.";
+
+          leaf origin {
+            type ip-origin;
+            description
+              "The IPv4 addresses orignation.";
+          }
+
+          container static {
+            leaf ip {
+              type inet:ipv4-address;
+              description
+                "The IPv4 address on the interface.";
+            }
+            leaf ip-prefix-length {
+              type uint8 {
+                range "0..32";
+              }
+              description
+                "The IPv4 address prefix.";
+            }
+          }
+        }
+      }
+
+      container ipv6 {
+        presence
+          "Enables IPv6 unless the 'enabled' leaf
+          (which defaults to 'true') is set to 'false'";
+        description
+          "Parameters for the IPv6 address family.";
+
+        leaf enabled {
+          type boolean;
+          default true;
+          description
+            "Controls whether IPv6 is enabled or disabled on this
+            interface.  When IPv6 is enabled, this interface is
+            connected to an IPv6 stack, and the interface can send
+            and receive IPv6 packets.";
+        }
+        container address {
+          description
+            "The configured IPv6 addresses on the interface.";
+
+          leaf origin {
+            type ip-origin;
+            description
+              "The IPv6 addresses orignation.";
+          }
+
+          container static {
+            leaf ip {
+              type inet:ipv6-address;
+              description
+                "The IPv6 address on the interface.";
+            }
+            leaf ip-prefix-length {
+              type uint8 {
+                range "0..128";
+              }
+              description
+                "The IPv6 address prefix.";
+            }
+          }
+        }
+      }
+    }
+
+    list interface-address {
+      key name;
+      description
+        "List of the interface IP addresses.";
+
+      leaf name {
+        type string;
+        description
+          "The identifier of the address.";
+      }
+      leaf address {
+        type inet:ip-address;
+        description
+          "The IP address.";
+      }
+      leaf ip-prefix-length {
+        type uint8 {
+          range "0..128";
+        }
+        description
+          "The IP address prefix.";
+      }
+      leaf interface {
+        type string;
+        description
+          "The interface where this address is on.";
+      }
+    }
+
+    list ip-route {
+      key name;
+      description
+        "List of the IP routes.";
+
+      leaf name {
+        type string;
+        description
+          "The identifier of the route.";
+      }
+      leaf dest {
+        type string;
+        description
+          "The route dest: [default |<ip>/<prefixlen>].";
+      }
+      leaf via {
+        type string;
+        default "";
+        description
+          "The route via.";
+      }
+      leaf table {
+        type string;
+        default "";
+        description
+          "The route table.";
+      }
+      leaf dev {
+        type string;
+        default "";
+        description
+          "The route device.";
+      }
+      leaf metric {
+        type string;
+        default "";
+        description
+          "The route metric.";
+      }
+    }
+
+    container ipsec {
+      description
+        "Configuration of the IPSEC.";
+
+      leaf enabled {
+        type boolean;
+        description
+          "Indicates that the system should start IPSEC service.";
+      }
+
+      list private-key {
+        key name;
+        description
+          "List of the private keys.";
+
+        leaf name {
+          type string;
+          description
+            "The identifier of the private key.";
+        }
+        leaf content {
+          type string;
+          description
+            "The content of the private key.";
+        }
+      }
+
+      list certificate {
+        key name;
+        description
+          "List of the certificates.";
+
+        leaf name {
+          type string;
+          description
+            "The identifier of the certificate.";
+        }
+        leaf content {
+          type string;
+          description
+            "The content of the certificate.";
+        }
+      }
+
+      list connection {
+        key name;
+        description
+          "List of the IPSEC connections.";
+
+        leaf name {
+          type string;
+          description
+            "The identifier of the connection.";
+        }
+        leaf mode {
+          type ipsec-mode;
+          default tunnel;
+          description
+            "The mode of the connection.";
+        }
+        leaf protocol {
+          type auth-protocol-type;
+          default ikev2;
+          description
+            "The auth protocl of the connection.";
+        }
+        leaf tries {
+          type string;
+          description
+            "Attempts to negotiate (a positive integer or %forever).";
+        }
+        leaf ike {
+          type string;
+          description
+            "Comma-separated list of IKE/ISAKMP SA encryption/authentication algorithms to be used.";
+        }
+        leaf esp {
+          type string;
+          description
+            "Comma-separated list of ESP encryption/authentication algorithms to be used for the connection.";
+        }
+        leaf compress {
+          type enumeration {
+            enum yes;
+            enum no;
+          }
+          default no;
+          description
+            "Whether IPComp compression of content is proposed on the connection.";
+        }
+        leaf replay-window {
+          type int32;
+          default 0;
+          description
+            "The IPsec replay window size for this connection.";
+        }
+        leaf dpdaction {
+          type enumeration {
+            enum none;
+            enum clear;
+            enum hold;
+            enum restart;
+          }
+          default none;
+          description
+            "Controls the use of the Dead Peer Detection protocol.";
+        }
+        leaf dpddelay {
+          type string;
+          default "30s";
+          description
+            "Defines the period time interval with which R_U_THERE messages/INFORMATIONAL exchanges are sent to the peer.";
+        }
+        leaf dpdtimeout {
+          type string;
+          default "150s";
+          description
+            "Defines the timeout interval, after which all connections to a peer are deleted in case of inactivity.";
+        }
+        leaf ikelifetime {
+          type string;
+          default "3h";
+          description
+            "How long the keying channel of a connection (ISAKMP or IKE SA) should last before being renegotiated.";
+        }
+        leaf lifetime {
+          type string;
+          default "1h";
+          description
+            "how long a particular instance of a connection should last, from successful negotiation to expiry.";
+        }
+
+        leaf local-ip {
+          type string;
+          description
+            "Local IP address of the public-network interface or one of several magic values.";
+        }
+        leaf local-src-ip {
+          type string;
+          description
+            "Local virtual IP.";
+        }
+        leaf local-subnet {
+          type string;
+          description
+            "Local private subnet.";
+        }
+        leaf local-auth {
+          type auth-method-type;
+          default psk;
+          description
+            "Local authentication methord.";
+        }
+        leaf local-auth2 {
+          type string;
+          description
+            "Local additional authentication methord, which can be null if not present.";
+        }
+        leaf local-id {
+          type string;
+          description
+            "Local ID for authentication.";
+        }
+        leaf local-id2 {
+          type string;
+          description
+            "Local additional ID for authentication.";
+        }
+        leaf local-cert {
+          type string;
+          description
+            "Local certificate reference to the name in list certificate for pubkey authentication.";
+        }
+        leaf local-cert2 {
+          type string;
+          description
+            "Local additional certificate reference to the name in list certificate for pubkey authentication.";
+        }
+
+
+        leaf peer-ip {
+          type string;
+          description
+            "Peer IP address of the public-network interface or one of several magic values.";
+        }
+        leaf peer-src-ip {
+          type string;
+          description
+            "Peer virtual IP.";
+        }
+        leaf peer-subnet {
+          type string;
+          description
+            "Peer private subnet.";
+        }
+        leaf peer-auth {
+          type auth-method-type;
+          default psk;
+          description
+            "Peer authentication methord.";
+        }
+        leaf peer-auth2 {
+          type string;
+          description
+            "Peer additional authentication methord, which can be null if not present.";
+        }
+        leaf peer-id {
+          type string;
+          description
+            "Peer ID for authentication.";
+        }
+        leaf peer-id2 {
+          type string;
+          description
+            "Peer additional ID for authentication.";
+        }
+        leaf peer-cert {
+          type string;
+          description
+            "Peer certificate reference to the name in list certificate for pubkey authentication.";
+        }
+        leaf peer-cert2 {
+          type string;
+          description
+            "Peer additional certificate reference to the name in list certificate for pubkey authentication.";
+        }
+      }
+
+      list secret {
+        key name;
+        description
+          "List of the IPSEC secrets.";
+
+        leaf name {
+          type string;
+          description
+            "The identifier of the secret.";
+        }
+        leaf host {
+          type string;
+          default "";
+          description
+            "Host ID for authentication.";
+        }
+        leaf peer {
+          type string;
+          default "";
+          description
+            "Peer ID for authentication.";
+        }
+        leaf type {
+          type secret-type;
+          default PSK;
+          description
+            "Peer private subnet.";
+        }
+        leaf key {
+          type string;
+          description
+            "The key or credential string if PSK/EAP/NTLM/XAUTH.";
+        }
+        leaf key-ref {
+          type string;
+          description
+            "The private-key reference to name in list private-key if RSA/ECDSA/BLISS.";
+        }
+        leaf passphrase {
+          type string;
+          description
+            "The passphrase for encrypted key.";
+        }
+      }
+
+      list ca {
+        key name;
+        description
+          "List of the IPSEC CA.";
+
+        leaf name {
+          type string;
+          description
+            "The identifier of the CA.";
+        }
+        leaf cacert {
+          type string;
+          description
+            "The certificate reference to the name in list certificate for pubkey authentication.";
+        }
+        leaf ocspuri {
+          type string;
+          description
+            "An OCSP URI.";
+        }
+        leaf crluri {
+          type string;
+          description
+            "A CRL distribution point (ldap, http, or file URI).";
+        }
+        leaf certuribase {
+          type string;
+          description
+            "The base URI for the Hash and URL feature supported by IKEv2.";
+        }
+      }
+    }
+
+    container dns-resolver {
+      description
+        "Configuration of the DNS resolver.";
+
+      list server {
+        key address;
+        ordered-by user;
+        description
+          "List of the DNS servers that the resolver should query.";
+
+        leaf address {
+          type inet:ip-address;
+          mandatory true;
+          description
+            "The address of the DNS server.";
+        }
+      }
+    }
+
+    list iptables-rule {
+      key name;
+      description
+        "List of iptables rule.";
+
+      leaf name {
+        type string;
+        description
+          "The identifier of the binding.";
+      }
+      leaf version {
+        type enumeration {
+          enum ipv4;
+          enum ipv6;
+        }
+        description
+          "The rule ip version.";
+      }
+      leaf table {
+        type enumeration {
+          enum filter;
+        }
+        description
+          "The iptables table name.";
+      }
+      leaf priority {
+        type uint32;
+        description
+          "The rule priority, 0 means the lowest.";
+      }
+      leaf rule {
+        type string;
+        description
+          "The rule specification.";
+      }
+    }
+
+  }
+
+  container service {
+    description
+      "System service configuration.";
+
+    container console {
+      description
+        "Configuration of the serial console service.";
+
+      leaf speed {
+        type enumeration {
+          enum 9600;
+          enum 38400;
+          enum 115200;
+        }
+        default 115200;
+        description
+          "The console speed.";
+      }
+      leaf terminal {
+        type enumeration {
+          enum vt100;
+          enum vt102;
+          enum vt200;
+          enum vt220;
+          enum xterm;
+          enum ansi;
+          enum linux;
+        }
+        default vt100;
+        description
+          "The console terminal type.";
+      }
+    }
+
+    container ssh {
+      description
+        "Configuration of the SSH server.";
+
+      leaf port {
+        type inet:port-number;
+        default 22;
+        description
+          "The port number used to listen for incoming SSH connection.";
+      }
+    }
+
+    container web {
+      description
+        "Configuration of the web server.";
+
+      leaf idle-timeout {
+        type uint32 {
+          range "60..3600";
+        }
+        units seconds;
+        default 900;
+        description
+          "The amount of time the server will wait for a
+           request from a client before requesting a re-login.";
+      }
+
+      container http {
+        leaf enabled {
+          type boolean;
+          default true;
+          description
+            "Enable the HTTP service";
+        }
+        leaf port {
+          type inet:port-number;
+          default 80;
+          description
+            "The port number used to listen for incoming http connection.";
+        }
+      }
+
+      container https {
+        leaf enabled {
+          type boolean;
+          default true;
+          description
+            "Enable the HTTPS service";
+        }
+        leaf port {
+          type inet:port-number;
+          default 443;
+          description
+            "The port number used to listen for incoming https connection.";
+        }
+      }
+    }
+  }
+
+    container radius {
+      description
+        "Configuration of the RADIUS.";
+
+      leaf enabled {
+        type boolean;
+        description
+          "Enable the RADIUS authentication";
+      }
+
+      leaf retry {
+        type uint16;
+        default 1;
+        description
+          "Set the retry on no response from the RADUIS server";
+      }
+
+      list server {
+        key address;
+        ordered-by user;
+        description
+          "List of the TACACS+ servers.";
+
+        leaf address {
+          type inet:ip-address;
+          mandatory true;
+          description
+            "The address of the TACACS+ server.";
+        }
+		leaf port {
+		  type inet:port-number;
+		  default 49;
+		  description
+		    "The port number on which to contact the RADUIS server";
+		}
+		leaf secret-key {
+		  type string;
+		  description
+		    "The unencrypted shared key used between the authentication
+		    server and the device.";
+		}
+		leaf timeout {
+		  type uint16;
+		  units seconds;
+		  description
+		    "Set the timeout in seconds on responses from the RADUIS server";
+		}
+      }
+    }
+
+    container tacacs {
+      description
+        "Configuration of the TACACS+.";
+
+      leaf enabled {
+        type boolean;
+        description
+          "Enable the TACACS+ authentication";
+      }
+
+      leaf timeout {
+        type uint16;
+        units seconds;
+        default 5;
+        description
+          "Set the timeout in seconds on responses from the TACACS+ server";
+      }
+
+      leaf service-tag {
+        type string;
+        description
+          "The service tag to specify the user privilege.";
+      }
+
+      list server {
+        key id;
+        ordered-by user;
+        description
+          "List of the TACACS+ servers.";
+
+		leaf id {
+		  type uint32;
+		  description
+		    "The ID of the TACACS+ server.";
+		}
+        leaf address {
+          type inet:ip-address;
+          mandatory true;
+          description
+            "The address of the TACACS+ server.";
+        }
+		leaf port {
+		  type inet:port-number;
+		  default 49;
+		  description
+		    "The port number on which to contact the TACACS+ server";
+		}
+		leaf secret-key {
+		  type string;
+		  description
+		    "The unencrypted shared key used between the authentication
+		    server and the device.";
+		}
+      }
+    }
+
+    container snmp {
+      description
+        "Configuration of the SNMP agent service.";
+
+      leaf enabled {
+        type boolean;
+		default false;
+        description
+          "Enable the SNMP agent";
+      }
+
+      list user {
+        key name;
+        ordered-by user;
+        description
+          "List of the SNMPv3 users.";
+
+		leaf name {
+		  type string;
+		  description
+		    "The ID of user.";
+		}
+		leaf enabled {
+		  type boolean;
+		  description
+		    "Enable the user.";
+		}
+		leaf hash {
+		  type snmp-hash;
+		  description
+		    "The user password hash algorithm.";
+		}
+		leaf pass {
+		  type string;
+		  description
+		    "The user passowrd.";
+		}
+		leaf write-enabled {
+		  type boolean;
+		  description
+		    "Enable the user write access.";
+		}
+      }
+
+      list trap-host {
+        key address;
+        ordered-by user;
+        description
+          "List of the SNMP trap hosts.";
+
+		leaf address {
+		  type inet:ip-address;
+		  description
+		    "The IP of trap host.";
+		}
+		leaf enabled {
+		  type boolean;
+		  description
+		    "Enable the trap host.";
+		}
+		leaf version {
+		  type snmp-version;
+		  description
+		    "The SNMP version of trap host.";
+		}
+		leaf access-id {
+		  type string;
+		  description
+		    "The authentication ID to access trap host (community for snmpv1/v2c and user name for snmpv3).";
+		}
+		leaf hash {
+		  type snmp-hash;
+		  description
+		    "The snmpv3 user password hash algorithm.";
+		}
+		leaf pass {
+		  type string;
+		  description
+		    "The snmpv3 user passowrd.";
+		}
+      }
+    }
+
+    container bmc {
+      description
+        "BMC configuration.";
+
+      container console {
+        description
+          "Configuration of the serial console service.";
+
+        leaf speed {
+          type enumeration {
+            enum 9600;
+            enum 38400;
+            enum 115200;
+          }
+          default 115200;
+          description
+            "The console speed.";
+        }
+        leaf data {
+          type enumeration {
+            enum 5;
+            enum 6;
+            enum 7;
+            enum 8;
+          }
+          default 8;
+          description
+            "The console data.";
+        }
+        leaf parity {
+          type enumeration {
+            enum none;
+            enum even;
+            enum odd;
+            enum mark;
+            enum space;
+          }
+          default none;
+          description
+            "The console parity.";
+        }
+        leaf stopbits {
+          type enumeration {
+            enum 1;
+            enum 2;
+          }
+          default 1;
+          description
+            "The console stopbits.";
+        }
+		leaf hw-flowctrl {
+		  type boolean;
+          default true;
+		  description
+		    "Enable hardware flow control.";
+		}
+		leaf sw-flowctrl {
+		  type boolean;
+          default false;
+		  description
+		    "Enable software flow control.";
+		}
+      }
+
+      container log {
+        description
+          "Configuration of the console log.";
+
+		leaf to-file {
+		  type boolean;
+          default true;
+		  description
+		    "Enable writing log to file.";
+		}
+        leaf rotate-num {
+          type uint32 {
+            range "1..50";
+          }
+          default 20;
+          description
+          "The max number of log rotate files.";
+        }
+        leaf rotate-size {
+          type uint32 {
+            range "1..10";
+          }
+          units MB;
+          default 5;
+          description
+          "The size size of log rotate file.";
+        }
+      }
+    }
+
+  }
+
+  /*
+   * Operational state data nodes
+   */
+  container system-state {
+    config false;
+    description
+      "System group operational state.";
+
+    container platform {
+      description
+        "Contains vendor-specific information for
+         identifying the system platform.";
+
+      leaf device-name {
+        type string;
+        description
+          "The type of the device.";
+      }
+      leaf device-id {
+        type string;
+        description
+          "The id of the device (serial number).";
+      }
+      leaf hardware-version {
+        type string;
+        description
+          "The version of the hardware.";
+      }
+      leaf software-version {
+        type string;
+        description
+          "The version of the software.";
+      }
+      leaf uboot-version {
+        type string;
+        description
+          "The version of the U-Boot.";
+      }
+    }
+
+    container clock {
+      description
+        "Monitoring of the system date and time properties.";
+
+      leaf current-datetime {
+        type yang:date-and-time;
+        description
+          "The current system date and time.";
+      }
+
+      leaf uptime {
+        type string;
+        description
+          "The uptime of system.";
+      }
+    }
+  }
+
+  rpc set-current-datetime {
+    description
+      "Set the /system-state/clock/current-datetime leaf
+       to the specified value.
+
+       If the system is using NTP (i.e., /system/ntp/enabled
+       is set to 'true'), then this operation will fail with
+       error-tag 'operation-failed' and error-app-tag value of
+       'ntp-active'.";
+    input {
+      leaf current-datetime {
+        type yang:date-and-time;
+        mandatory true;
+        description
+          "The current system date and time.";
+      }
+    }
+  }
+
+  rpc system-restart {
+    description
+      "Request that the entire system be restarted immediately.
+       A server SHOULD send an rpc reply to the client before
+       restarting the system.";
+  }
+
+  rpc system-shutdown {
+    description
+      "Request that the entire system be shut down immediately.
+       A server SHOULD send an rpc reply to the client before
+       shutting down the system.";
+  }
+
+  rpc config-save {
+    description
+      "Request to save the entire system configuration to disk as startup configuration.";
+  }
+
+  rpc snmp-apply {
+    description
+      "Request to apply the SNMP configuration.";
+  }
+}

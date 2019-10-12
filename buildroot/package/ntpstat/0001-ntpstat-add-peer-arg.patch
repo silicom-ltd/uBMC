@@ -1,0 +1,80 @@
+--- ntpstat/ntpstat.c.old	2019-07-02 09:25:08.240236585 +0800
++++ ntpstat/ntpstat.c	2019-07-02 09:41:03.707529048 +0800
+@@ -11,6 +11,7 @@
+ #include <arpa/inet.h>
+ #include <sys/time.h>
+ #include <error.h>
++#include <unistd.h>
+ #define NTP_PORT  123
+ 
+ /* This program uses an NTP mode 6 control message, which is the
+@@ -45,8 +46,18 @@
+   fprintf (stderr,"%s\n",msg);
+   exit (2);
+ }
++void usage(char * prog)
++{
++	fprintf(stderr,
++			"usage: %s [-p <peer>] (deafult peer is 127.0.0.1)\n \
++            -h : this help \n \
++            -p :set peer to 0.0.0.0 \n \
++			%s -p \n",\
++			prog,prog);
++}
++char peer_flag = 0;
+ /*-------------------------------------------------------------------------*/
+-int main (void) {
++int main (int argc, char *argv[]) {
+   int                   rc;        //  return code
+   struct sockaddr_in    sock;
+   struct in_addr        address;
+@@ -95,15 +106,48 @@
+   const char STRATUM[] = "stratum=";
+   const char POLL[] = "tc=";
+   const char REFID[] = "refid=";
++  char * prog;
++  int opt;
++	/*
++	 *record if there is arguments or not
++	 */
++	int arg_flag = 0;
++	prog = argv[0];
++	while ((opt = getopt(argc, argv, "ph?")) != -1)
++	{
++		arg_flag++;
++		switch (opt)
++		{
++		case 'p':
++				peer_flag = 1; //means peer is 0.0.0.0
++			//printf("t case optarg is %s interv is %d \n",optarg,fan_setting.interv);
++			break;
++		case '?':
++		case 'h':
++		default:
++			usage(prog);
++			arg_flag = 0;
++			break;
++		}
+ 
++	}
+   /* initialise timeout value */
+   tv.tv_sec = 1;
+   tv.tv_usec = 0;
+ 
+   /* initialise file descriptor set */
+   FD_ZERO(&fds);
++  if(peer_flag == 1)
++  {
++	  inet_aton("0.0.0.0", &address);
++	  //printf("ntp is 0.0.0.0");
++  }
++  else
++  {
++	  inet_aton("127.0.0.1", &address);
++	  //printf("ntp is 127.0.0.1");
++  }
+ 
+-  inet_aton("127.0.0.1", &address);
+   sock.sin_family = AF_INET;
+   sock.sin_addr = address;
+   sock.sin_port = htons(NTP_PORT);

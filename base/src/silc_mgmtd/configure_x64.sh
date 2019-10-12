@@ -1,0 +1,5 @@
+#!/bin/sh
+
+./configure CFLAGS="-DSILC_MGMTD_LOCAL_DEBUG -DSWITCH_SIMULATE"
+
+

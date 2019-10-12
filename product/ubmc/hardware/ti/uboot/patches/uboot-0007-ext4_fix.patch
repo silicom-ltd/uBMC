@@ -1,0 +1,206 @@
+diff -uNr uboot-custom-orig/fs/ext4/ext4_common.c uboot-custom-silicom/fs/ext4/ext4_common.c
+--- uboot-custom-orig/fs/ext4/ext4_common.c	2017-09-27 06:20:58.000000000 +0800
++++ uboot-custom-silicom/fs/ext4/ext4_common.c	2018-07-23 22:42:52.956237082 +0800
+@@ -1601,7 +1601,23 @@
+ 	return 1;
+ }
+ 
++#ifndef NO_SILC_MOD
++//This function maybe called many times for ext4 extent, however each time
++//it will read teh extent from the hardware again, causing very low performance when reading a slightly larger file, 
++//in our case a 40+M rootfs file. 
++//Add a fast version of this API, which allow the extent to be returned, and passed into the function again.
++//much like the strtok_r function
++//this improves reading performance from 1MB/s to 9MB/s
++long int read_allocated_block_fast(struct ext2_inode *inode, int fileblock, struct ext4_extent_header** pp_ext_blk, char** buf_to_free);
++#endif
+ long int read_allocated_block(struct ext2_inode *inode, int fileblock)
++#ifndef NO_SILC_MOD
++{
++	return read_allocated_block_fast(inode, fileblock, NULL, NULL);
++}
++
++long int read_allocated_block_fast(struct ext2_inode *inode, int fileblock, struct ext4_extent_header** pp_ext_blk, char** buf_to_free)
++#endif
+ {
+ 	long int blknr;
+ 	int blksz;
+@@ -1618,12 +1634,23 @@
+ 
+ 	if (le32_to_cpu(inode->flags) & EXT4_EXTENTS_FL) {
+ 		long int startblock, endblock;
++#ifdef NO_SILC_MOD
+ 		char *buf = zalloc(blksz);
+ 		if (!buf)
+ 			return -ENOMEM;
++#else
++		char *buf = NULL;
++#endif
+ 		struct ext4_extent_header *ext_block;
+ 		struct ext4_extent *extent;
+ 		int i;
++#ifndef NO_SILC_MOD
++		if(pp_ext_blk == NULL || *pp_ext_blk ==NULL)
++		{//only allocate buf when need to
++			buf = zalloc(blksz);
++			if (!buf)
++				return -ENOMEM;
++#endif
+ 		ext_block =
+ 			ext4fs_get_extent_block(ext4fs_root, buf,
+ 						(struct ext4_extent_header *)
+@@ -1634,6 +1661,19 @@
+ 			free(buf);
+ 			return -EINVAL;
+ 		}
++#ifndef NO_SILC_MOD
++			if(pp_ext_blk)
++			{
++				*pp_ext_blk = ext_block;
++				*buf_to_free = buf;
++				//we are returning the buffer back to the caller, 
++				//so we can't free buf in this function in this case
++				buf = NULL;
++			}
++		} else {
++			ext_block = *pp_ext_blk;
++		}
++#endif
+ 
+ 		extent = (struct ext4_extent *)(ext_block + 1);
+ 
+@@ -1643,6 +1683,9 @@
+ 
+ 			if (startblock > fileblock) {
+ 				/* Sparse file */
++#ifndef NO_SILC_MOD
++				if(buf)
++#endif
+ 				free(buf);
+ 				return 0;
+ 
+@@ -1650,11 +1693,17 @@
+ 				start = le16_to_cpu(extent[i].ee_start_hi);
+ 				start = (start << 32) +
+ 					le32_to_cpu(extent[i].ee_start_lo);
++#ifndef NO_SILC_MOD
++				if(buf)
++#endif
+ 				free(buf);
+ 				return (fileblock - startblock) + start;
+ 			}
+ 		}
+ 
++#ifndef NO_SILC_MOD
++		if(buf)
++#endif
+ 		free(buf);
+ 		return 0;
+ 	}
+diff -uNr uboot-custom-orig/fs/ext4/ext4_common.h uboot-custom-silicom/fs/ext4/ext4_common.h
+--- uboot-custom-orig/fs/ext4/ext4_common.h	2017-09-27 06:20:58.000000000 +0800
++++ uboot-custom-silicom/fs/ext4/ext4_common.h	2018-07-23 22:42:52.956237082 +0800
+@@ -88,3 +88,4 @@
+ 	const struct ext_filesystem *fs);
+ #endif
+ #endif
++
+diff -uNr uboot-custom-orig/fs/ext4/ext4fs.c uboot-custom-silicom/fs/ext4/ext4fs.c
+--- uboot-custom-orig/fs/ext4/ext4fs.c	2017-09-27 06:20:58.000000000 +0800
++++ uboot-custom-silicom/fs/ext4/ext4fs.c	2018-07-23 22:42:52.956237082 +0800
+@@ -70,15 +70,30 @@
+ 
+ 	blockcnt = lldiv(((len + pos) + blocksize - 1), blocksize);
+ 
++#ifndef NO_SILC_MOD
++	struct ext4_extent_header* p_ext_blk = NULL;
++	char* ext_blk_buf = NULL;
++#endif
+ 	for (i = lldiv(pos, blocksize); i < blockcnt; i++) {
+ 		long int blknr;
+ 		int blockoff = pos - (blocksize * i);
+ 		int blockend = blocksize;
+ 		int skipfirst = 0;
++#ifndef NO_SILC_MOD
++
++		blknr = read_allocated_block_fast(&(node->inode), i, &p_ext_blk, &ext_blk_buf);
++#else
+ 		blknr = read_allocated_block(&(node->inode), i);
++#endif
+ 		if (blknr < 0)
++#ifndef NO_SILC_MOD
++		{
++			if(p_ext_blk) free(p_ext_blk);
++#endif
+ 			return -1;
+-
++#ifndef NO_SILC_MOD
++		}
++#endif
+ 		blknr = blknr << log2_fs_blocksize;
+ 
+ 		/* Last block.  */
+@@ -108,7 +123,14 @@
+ 							delayed_extent,
+ 							delayed_buf);
+ 					if (status == 0)
++#ifndef NO_SILC_MOD
++					{
++						if(ext_blk_buf) free(ext_blk_buf);
++#endif
+ 						return -1;
++#ifndef NO_SILC_MOD
++					}
++#endif
+ 					previous_block_number = blknr;
+ 					delayed_start = blknr;
+ 					delayed_extent = blockend;
+@@ -134,7 +156,14 @@
+ 							delayed_extent,
+ 							delayed_buf);
+ 				if (status == 0)
++#ifndef NO_SILC_MOD
++				{
++					if(ext_blk_buf) free(ext_blk_buf);
++#endif
+ 					return -1;
++#ifndef NO_SILC_MOD
++				}
++#endif
+ 				previous_block_number = -1;
+ 			}
+ 			memset(buf, 0, blocksize - skipfirst);
+@@ -147,11 +176,21 @@
+ 					delayed_skipfirst, delayed_extent,
+ 					delayed_buf);
+ 		if (status == 0)
++#ifndef NO_SILC_MOD
++		{
++			if(ext_blk_buf) free(ext_blk_buf);
++#endif
+ 			return -1;
++#ifndef NO_SILC_MOD
++		}
++#endif
+ 		previous_block_number = -1;
+ 	}
+ 
+ 	*actread  = len;
++#ifndef NO_SILC_MOD
++	if(ext_blk_buf) free(ext_blk_buf);
++#endif
+ 	return 0;
+ }
+ 
+--- uboot-custom-orig/include/ext4fs.h	2017-09-27 06:20:59.000000000 +0800
++++ uboot-custom-silicom/include/ext4fs.h	2018-07-23 22:42:52.957237072 +0800
+@@ -146,6 +146,9 @@
+ int ext4fs_devread(lbaint_t sector, int byte_offset, int byte_len, char *buf);
+ void ext4fs_set_blk_dev(struct blk_desc *rbdd, disk_partition_t *info);
+ long int read_allocated_block(struct ext2_inode *inode, int fileblock);
++#ifndef NO_SILC_MOD
++long int read_allocated_block_fast(struct ext2_inode *inode, int fileblock, struct ext4_extent_header** pp_ext_blk, char** buf_to_free);
++#endif
+ int ext4fs_probe(struct blk_desc *fs_dev_desc,
+ 		 disk_partition_t *fs_partition);
+ int ext4_read_file(const char *filename, void *buf, loff_t offset, loff_t len,

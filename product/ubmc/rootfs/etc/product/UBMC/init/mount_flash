@@ -1,0 +1,20 @@
+#!/bin/sh
+
+mkdir -p /var/log
+fsck.ext4 -p /dev/disk/by-label/VAR
+mount -t ext4 LABEL=VAR /var/log
+
+mkdir -p /config
+fsck.ext4 -p /dev/disk/by-label/CONFIG
+mount -t ext4 LABEL=CONFIG /config
+
+mkdir -p /var/images
+fsck.ext4 -p /dev/disk/by-label/IMG
+mount -t ext4 LABEL=IMG /var/images
+#To allow is_admin upload images to it
+chmod -R 770 /var/images
+
+product_sub=$(cat /etc/product_sub.txt 2>/dev/null)
+if [ "${product_sub}" == "UBMC_EVAL" ]; then
+	modprobe m25p80
+fi

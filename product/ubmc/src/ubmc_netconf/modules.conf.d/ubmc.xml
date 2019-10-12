@@ -1,0 +1,1 @@
+<?xml version="1.0" ?><device><name>ubmc</name><data-models><model-main><path>/etc/netopeer/ubmc/ubmc.yin</path><transapi>/usr/lib/ubmc-nc.so</transapi></model-main></data-models><repo><type>file</type><path>/etc/netopeer/ubmc/datastore.xml</path></repo></device>

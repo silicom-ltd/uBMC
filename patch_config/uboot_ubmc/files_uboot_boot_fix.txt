@@ -1,0 +1,3 @@
+drivers/mmc
+common/spl
+board/silicom/silicom_autoboot.c

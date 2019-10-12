@@ -1,0 +1,3208 @@
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/board.c uboot-custom-silicom/board/myirtech/myd_j335x/board.c
+--- uboot-custom-orig/board/myirtech/myd_j335x/board.c	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/board.c	2018-08-05 13:36:38.553459612 +0800
+@@ -0,0 +1,1273 @@
++/*
++ * board.c
++ *
++ * Board functions for TI AM335X based boards
++ *
++ * Copyright (C) 2011, Texas Instruments, Incorporated - http://www.ti.com/
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <common.h>
++#include <errno.h>
++#include <spl.h>
++#include <serial.h>
++#include <asm/arch/cpu.h>
++#include <asm/arch/hardware.h>
++#include <asm/arch/omap.h>
++#include <asm/arch/ddr_defs.h>
++#include <asm/arch/clock.h>
++#include <asm/arch/clk_synthesizer.h>
++#include <asm/arch/gpio.h>
++#include <asm/arch/mmc_host_def.h>
++#include <asm/arch/sys_proto.h>
++#include <asm/arch/mem.h>
++#include <asm/io.h>
++#include <asm/emif.h>
++#include <asm/gpio.h>
++#include <asm/omap_sec_common.h>
++#include <i2c.h>
++#include <miiphy.h>
++#include <cpsw.h>
++#include <power/tps65217.h>
++#include <power/tps65910.h>
++#include <environment.h>
++#include <watchdog.h>
++#include <environment.h>
++#include <libfdt.h>
++#include <fdt_support.h>
++
++#include "mmc.h"
++#include "malloc.h"
++#include "board_detect.h"
++#include "board.h"
++
++DECLARE_GLOBAL_DATA_PTR;
++
++/* GPIO that controls power to DDR on EVM-SK */
++#define GPIO_TO_PIN(bank, gpio)		(32 * (bank) + (gpio))
++#define GPIO_DDR_VTT_EN		GPIO_TO_PIN(0, 7)
++#define ICE_GPIO_DDR_VTT_EN	GPIO_TO_PIN(0, 18)
++#define GPIO_PR1_MII_CTRL	GPIO_TO_PIN(3, 4)
++#define GPIO_MUX_MII_CTRL	GPIO_TO_PIN(3, 10)
++#define GPIO_FET_SWITCH_CTRL	GPIO_TO_PIN(0, 7)
++#define GPIO_PHY_RESET		GPIO_TO_PIN(2, 5)
++#define GPIO_ETH0_MODE		GPIO_TO_PIN(0, 11)
++#define GPIO_ETH1_MODE		GPIO_TO_PIN(1, 26)
++
++static struct ctrl_dev *cdev = (struct ctrl_dev *)CTRL_DEVICE_BASE;
++
++#define GPIO0_RISINGDETECT	(AM33XX_GPIO0_BASE + OMAP_GPIO_RISINGDETECT)
++#define GPIO1_RISINGDETECT	(AM33XX_GPIO1_BASE + OMAP_GPIO_RISINGDETECT)
++
++#define GPIO0_IRQSTATUS1	(AM33XX_GPIO0_BASE + OMAP_GPIO_IRQSTATUS1)
++#define GPIO1_IRQSTATUS1	(AM33XX_GPIO1_BASE + OMAP_GPIO_IRQSTATUS1)
++
++#define GPIO0_IRQSTATUSRAW	(AM33XX_GPIO0_BASE + 0x024)
++#define GPIO1_IRQSTATUSRAW	(AM33XX_GPIO1_BASE + 0x024)
++
++/*
++ * Read header information from EEPROM into global structure.
++ */
++#ifdef CONFIG_TI_I2C_BOARD_DETECT
++void do_board_detect(void)
++{
++	enable_i2c0_pin_mux();
++	i2c_init(CONFIG_SYS_OMAP24_I2C_SPEED, CONFIG_SYS_OMAP24_I2C_SLAVE);
++
++	if (ti_i2c_eeprom_am_get(-1, CONFIG_SYS_I2C_EEPROM_ADDR))
++		printf("ti_i2c_eeprom_init failed\n");
++}
++#endif
++
++#ifndef CONFIG_DM_SERIAL
++struct serial_device *default_serial_console(void)
++{
++		return &eserial1_device;
++}
++#endif
++
++#ifndef CONFIG_SKIP_LOWLEVEL_INIT
++static const struct ddr_data ddr2_data = {
++	.datardsratio0 = MT47H128M16RT25E_RD_DQS,
++	.datafwsratio0 = MT47H128M16RT25E_PHY_FIFO_WE,
++	.datawrsratio0 = MT47H128M16RT25E_PHY_WR_DATA,
++};
++
++static const struct cmd_control ddr2_cmd_ctrl_data = {
++	.cmd0csratio = MT47H128M16RT25E_RATIO,
++
++	.cmd1csratio = MT47H128M16RT25E_RATIO,
++
++	.cmd2csratio = MT47H128M16RT25E_RATIO,
++};
++
++static const struct emif_regs ddr2_emif_reg_data = {
++	.sdram_config = MT47H128M16RT25E_EMIF_SDCFG,
++	.ref_ctrl = MT47H128M16RT25E_EMIF_SDREF,
++	.sdram_tim1 = MT47H128M16RT25E_EMIF_TIM1,
++	.sdram_tim2 = MT47H128M16RT25E_EMIF_TIM2,
++	.sdram_tim3 = MT47H128M16RT25E_EMIF_TIM3,
++	.emif_ddr_phy_ctlr_1 = MT47H128M16RT25E_EMIF_READ_LATENCY,
++};
++
++static const struct emif_regs ddr2_evm_emif_reg_data = {
++	.sdram_config = MT47H128M16RT25E_EMIF_SDCFG,
++	.ref_ctrl = MT47H128M16RT25E_EMIF_SDREF,
++	.sdram_tim1 = MT47H128M16RT25E_EMIF_TIM1,
++	.sdram_tim2 = MT47H128M16RT25E_EMIF_TIM2,
++	.sdram_tim3 = MT47H128M16RT25E_EMIF_TIM3,
++	.ocp_config = EMIF_OCP_CONFIG_AM335X_EVM,
++	.emif_ddr_phy_ctlr_1 = MT47H128M16RT25E_EMIF_READ_LATENCY,
++};
++
++static const struct ddr_data ddr3_data = {
++	.datardsratio0 = MT41J128MJT125_RD_DQS,
++	.datawdsratio0 = MT41J128MJT125_WR_DQS,
++	.datafwsratio0 = MT41J128MJT125_PHY_FIFO_WE,
++	.datawrsratio0 = MT41J128MJT125_PHY_WR_DATA,
++};
++
++static const struct ddr_data ddr3_beagleblack_data = {
++	.datardsratio0 = MT41K256M16HA125E_RD_DQS,
++	.datawdsratio0 = MT41K256M16HA125E_WR_DQS,
++	.datafwsratio0 = MT41K256M16HA125E_PHY_FIFO_WE,
++	.datawrsratio0 = MT41K256M16HA125E_PHY_WR_DATA,
++};
++
++static const struct ddr_data ddr3_evm_data = {
++	.datardsratio0 = MT41J512M8RH125_RD_DQS,
++	.datawdsratio0 = MT41J512M8RH125_WR_DQS,
++	.datafwsratio0 = MT41J512M8RH125_PHY_FIFO_WE,
++	.datawrsratio0 = MT41J512M8RH125_PHY_WR_DATA,
++};
++
++static const struct ddr_data ddr3_icev2_data = {
++	.datardsratio0 = MT41J128MJT125_RD_DQS_400MHz,
++	.datawdsratio0 = MT41J128MJT125_WR_DQS_400MHz,
++	.datafwsratio0 = MT41J128MJT125_PHY_FIFO_WE_400MHz,
++	.datawrsratio0 = MT41J128MJT125_PHY_WR_DATA_400MHz,
++};
++
++static const struct cmd_control ddr3_cmd_ctrl_data = {
++	.cmd0csratio = MT41J128MJT125_RATIO,
++	.cmd0iclkout = MT41J128MJT125_INVERT_CLKOUT,
++
++	.cmd1csratio = MT41J128MJT125_RATIO,
++	.cmd1iclkout = MT41J128MJT125_INVERT_CLKOUT,
++
++	.cmd2csratio = MT41J128MJT125_RATIO,
++	.cmd2iclkout = MT41J128MJT125_INVERT_CLKOUT,
++};
++
++static const struct cmd_control ddr3_beagleblack_cmd_ctrl_data = {
++	.cmd0csratio = MT41K256M16HA125E_RATIO,
++	.cmd0iclkout = MT41K256M16HA125E_INVERT_CLKOUT,
++
++	.cmd1csratio = MT41K256M16HA125E_RATIO,
++	.cmd1iclkout = MT41K256M16HA125E_INVERT_CLKOUT,
++
++	.cmd2csratio = MT41K256M16HA125E_RATIO,
++	.cmd2iclkout = MT41K256M16HA125E_INVERT_CLKOUT,
++};
++
++static const struct cmd_control ddr3_evm_cmd_ctrl_data = {
++	.cmd0csratio = MT41J512M8RH125_RATIO,
++	.cmd0iclkout = MT41J512M8RH125_INVERT_CLKOUT,
++
++	.cmd1csratio = MT41J512M8RH125_RATIO,
++	.cmd1iclkout = MT41J512M8RH125_INVERT_CLKOUT,
++
++	.cmd2csratio = MT41J512M8RH125_RATIO,
++	.cmd2iclkout = MT41J512M8RH125_INVERT_CLKOUT,
++};
++
++static const struct cmd_control ddr3_icev2_cmd_ctrl_data = {
++	.cmd0csratio = MT41J128MJT125_RATIO_400MHz,
++	.cmd0iclkout = MT41J128MJT125_INVERT_CLKOUT_400MHz,
++
++	.cmd1csratio = MT41J128MJT125_RATIO_400MHz,
++	.cmd1iclkout = MT41J128MJT125_INVERT_CLKOUT_400MHz,
++
++	.cmd2csratio = MT41J128MJT125_RATIO_400MHz,
++	.cmd2iclkout = MT41J128MJT125_INVERT_CLKOUT_400MHz,
++};
++
++static struct emif_regs ddr3_emif_reg_data = {
++	.sdram_config = MT41J128MJT125_EMIF_SDCFG,
++	.ref_ctrl = MT41J128MJT125_EMIF_SDREF,
++	.sdram_tim1 = MT41J128MJT125_EMIF_TIM1,
++	.sdram_tim2 = MT41J128MJT125_EMIF_TIM2,
++	.sdram_tim3 = MT41J128MJT125_EMIF_TIM3,
++	.zq_config = MT41J128MJT125_ZQ_CFG,
++	.emif_ddr_phy_ctlr_1 = MT41J128MJT125_EMIF_READ_LATENCY |
++				PHY_EN_DYN_PWRDN,
++};
++
++static struct emif_regs ddr3_beagleblack_emif_reg_data = {
++	.sdram_config = MT41K256M16HA125E_EMIF_SDCFG,
++	.ref_ctrl = MT41K256M16HA125E_EMIF_SDREF,
++	.sdram_tim1 = MT41K256M16HA125E_EMIF_TIM1,
++	.sdram_tim2 = MT41K256M16HA125E_EMIF_TIM2,
++	.sdram_tim3 = MT41K256M16HA125E_EMIF_TIM3,
++	.ocp_config = EMIF_OCP_CONFIG_BEAGLEBONE_BLACK,
++	.zq_config = MT41K256M16HA125E_ZQ_CFG,
++	.emif_ddr_phy_ctlr_1 = MT41K256M16HA125E_EMIF_READ_LATENCY,
++};
++
++static struct emif_regs ddr3_evm_emif_reg_data = {
++	.sdram_config = MT41J512M8RH125_EMIF_SDCFG,
++	.ref_ctrl = MT41J512M8RH125_EMIF_SDREF,
++	.sdram_tim1 = MT41J512M8RH125_EMIF_TIM1,
++	.sdram_tim2 = MT41J512M8RH125_EMIF_TIM2,
++	.sdram_tim3 = MT41J512M8RH125_EMIF_TIM3,
++	.ocp_config = EMIF_OCP_CONFIG_AM335X_EVM,
++	.zq_config = MT41J512M8RH125_ZQ_CFG,
++	.emif_ddr_phy_ctlr_1 = MT41J512M8RH125_EMIF_READ_LATENCY |
++				PHY_EN_DYN_PWRDN,
++};
++
++static struct emif_regs ddr3_icev2_emif_reg_data = {
++	.sdram_config = MT41J128MJT125_EMIF_SDCFG_400MHz,
++	.ref_ctrl = MT41J128MJT125_EMIF_SDREF_400MHz,
++	.sdram_tim1 = MT41J128MJT125_EMIF_TIM1_400MHz,
++	.sdram_tim2 = MT41J128MJT125_EMIF_TIM2_400MHz,
++	.sdram_tim3 = MT41J128MJT125_EMIF_TIM3_400MHz,
++	.zq_config = MT41J128MJT125_ZQ_CFG_400MHz,
++	.emif_ddr_phy_ctlr_1 = MT41J128MJT125_EMIF_READ_LATENCY_400MHz |
++				PHY_EN_DYN_PWRDN,
++};
++
++#ifdef CONFIG_SPL_OS_BOOT
++int spl_start_uboot(void)
++{
++	/* break into full u-boot on 'c' */
++	if (serial_tstc() && serial_getc() == 'c')
++		return 1;
++
++#ifdef CONFIG_SPL_ENV_SUPPORT
++	env_init();
++	env_relocate_spec();
++	if (getenv_yesno("boot_os") != 1)
++		return 1;
++#endif
++
++	return 0;
++}
++#endif
++
++const struct dpll_params *get_dpll_ddr_params(void)
++{
++	int ind = get_sys_clk_index();
++
++	if (board_is_evm_sk())
++		return &dpll_ddr3_303MHz[ind];
++	else if (board_is_bone_lt() || board_is_icev2())
++		return &dpll_ddr3_400MHz[ind];
++	else if (board_is_evm_15_or_later())
++		return &dpll_ddr3_303MHz[ind];
++	else
++		return &dpll_ddr2_266MHz[ind];
++}
++
++static u8 bone_not_connected_to_ac_power(void)
++{
++	if (board_is_bone()) {
++		uchar pmic_status_reg;
++		if (tps65217_reg_read(TPS65217_STATUS,
++				      &pmic_status_reg))
++			return 1;
++		if (!(pmic_status_reg & TPS65217_PWR_SRC_AC_BITMASK)) {
++			puts("No AC power, switching to default OPP\n");
++			return 1;
++		}
++	}
++	return 0;
++}
++
++const struct dpll_params *get_dpll_mpu_params(void)
++{
++	int ind = get_sys_clk_index();
++	int freq = am335x_get_efuse_mpu_max_freq(cdev);
++
++	if (bone_not_connected_to_ac_power())
++		freq = MPUPLL_M_600;
++
++	if (board_is_bone_lt())
++		freq = MPUPLL_M_1000;
++
++	switch (freq) {
++	case MPUPLL_M_1000:
++		return &dpll_mpu_opp[ind][5];
++	case MPUPLL_M_800:
++		return &dpll_mpu_opp[ind][4];
++	case MPUPLL_M_720:
++		return &dpll_mpu_opp[ind][3];
++	case MPUPLL_M_600:
++		return &dpll_mpu_opp[ind][2];
++	case MPUPLL_M_500:
++		return &dpll_mpu_opp100;
++	case MPUPLL_M_300:
++		return &dpll_mpu_opp[ind][0];
++	}
++
++	return &dpll_mpu_opp[ind][0];
++}
++
++#ifdef NO_SILC_MOD
++static void scale_vcores_bone(int freq)
++{
++	int usb_cur_lim, mpu_vdd;
++
++	/*
++	 * Only perform PMIC configurations if board rev > A1
++	 * on Beaglebone White
++	 */
++	if (board_is_bone() && !strncmp(board_ti_get_rev(), "00A1", 4))
++		return;
++
++	if (i2c_probe(TPS65217_CHIP_PM))
++		return;
++
++	/*
++	 * On Beaglebone White we need to ensure we have AC power
++	 * before increasing the frequency.
++	 */
++	if (bone_not_connected_to_ac_power())
++		freq = MPUPLL_M_600;
++
++	/*
++	 * Override what we have detected since we know if we have
++	 * a Beaglebone Black it supports 1GHz.
++	 */
++	if (board_is_bone_lt())
++		freq = MPUPLL_M_1000;
++
++	switch (freq) {
++	case MPUPLL_M_1000:
++		mpu_vdd = TPS65217_DCDC_VOLT_SEL_1325MV;
++		usb_cur_lim = TPS65217_USB_INPUT_CUR_LIMIT_1800MA;
++		break;
++	case MPUPLL_M_800:
++		mpu_vdd = TPS65217_DCDC_VOLT_SEL_1275MV;
++		usb_cur_lim = TPS65217_USB_INPUT_CUR_LIMIT_1300MA;
++		break;
++	case MPUPLL_M_720:
++		mpu_vdd = TPS65217_DCDC_VOLT_SEL_1200MV;
++		usb_cur_lim = TPS65217_USB_INPUT_CUR_LIMIT_1300MA;
++		break;
++	case MPUPLL_M_600:
++	case MPUPLL_M_500:
++	case MPUPLL_M_300:
++	default:
++		mpu_vdd = TPS65217_DCDC_VOLT_SEL_1100MV;
++		usb_cur_lim = TPS65217_USB_INPUT_CUR_LIMIT_1300MA;
++		break;
++	}
++
++	if (tps65217_reg_write(TPS65217_PROT_LEVEL_NONE,
++			       TPS65217_POWER_PATH,
++			       usb_cur_lim,
++			       TPS65217_USB_INPUT_CUR_LIMIT_MASK))
++		puts("tps65217_reg_write failure\n");
++
++	/* Set DCDC3 (CORE) voltage to 1.10V */
++	if (tps65217_voltage_update(TPS65217_DEFDCDC3,
++				    TPS65217_DCDC_VOLT_SEL_1100MV)) {
++		puts("tps65217_voltage_update failure\n");
++		return;
++	}
++
++	/* Set DCDC2 (MPU) voltage */
++	if (tps65217_voltage_update(TPS65217_DEFDCDC2, mpu_vdd)) {
++		puts("tps65217_voltage_update failure\n");
++		return;
++	}
++
++	/*
++	 * Set LDO3, LDO4 output voltage to 3.3V for Beaglebone.
++	 * Set LDO3 to 1.8V and LDO4 to 3.3V for Beaglebone Black.
++	 */
++	if (board_is_bone()) {
++		if (tps65217_reg_write(TPS65217_PROT_LEVEL_2,
++				       TPS65217_DEFLS1,
++				       TPS65217_LDO_VOLTAGE_OUT_3_3,
++				       TPS65217_LDO_MASK))
++			puts("tps65217_reg_write failure\n");
++	} else {
++		if (tps65217_reg_write(TPS65217_PROT_LEVEL_2,
++				       TPS65217_DEFLS1,
++				       TPS65217_LDO_VOLTAGE_OUT_1_8,
++				       TPS65217_LDO_MASK))
++			puts("tps65217_reg_write failure\n");
++	}
++
++	if (tps65217_reg_write(TPS65217_PROT_LEVEL_2,
++			       TPS65217_DEFLS2,
++			       TPS65217_LDO_VOLTAGE_OUT_3_3,
++			       TPS65217_LDO_MASK))
++		puts("tps65217_reg_write failure\n");
++}
++#endif
++
++void scale_vcores_generic(int freq)
++{
++	int sil_rev, mpu_vdd;
++
++	/*
++	 * The GP EVM, IDK and EVM SK use a TPS65910 PMIC.  For all
++	 * MPU frequencies we support we use a CORE voltage of
++	 * 1.10V.  For MPU voltage we need to switch based on
++	 * the frequency we are running at.
++	 */
++	if (i2c_probe(TPS65910_CTRL_I2C_ADDR))
++		return;
++
++	/*
++	 * Depending on MPU clock and PG we will need a different
++	 * VDD to drive at that speed.
++	 */
++	sil_rev = readl(&cdev->deviceid) >> 28;
++	mpu_vdd = am335x_get_tps65910_mpu_vdd(sil_rev, freq);
++
++	/* Tell the TPS65910 to use i2c */
++	tps65910_set_i2c_control();
++
++	/* First update MPU voltage. */
++	if (tps65910_voltage_update(MPU, mpu_vdd))
++		return;
++
++	/* Second, update the CORE voltage. */
++	if (tps65910_voltage_update(CORE, TPS65910_OP_REG_SEL_1_1_0))
++		return;
++
++}
++
++void gpi2c_init(void)
++{
++	/* When needed to be invoked prior to BSS initialization */
++	static bool first_time = true;
++
++	if (first_time) {
++		enable_i2c0_pin_mux();
++		i2c_init(CONFIG_SYS_OMAP24_I2C_SPEED,
++			 CONFIG_SYS_OMAP24_I2C_SLAVE);
++		first_time = false;
++	}
++}
++
++void scale_vcores(void)
++{
++	int freq;
++
++	gpi2c_init();
++	freq = am335x_get_efuse_mpu_max_freq(cdev);
++#ifdef NO_SILC_MOD
++	if (board_is_beaglebonex())
++		scale_vcores_bone(freq);
++	else
++#endif
++		scale_vcores_generic(freq);
++}
++
++
++void set_uart_mux_conf(void)
++{
++	enable_uart0_pin_mux();
++	enable_uart2_pin_mux();
++}
++
++
++void set_mux_conf_regs(void)
++{
++	enable_board_pin_mux();
++}
++
++const struct ctrl_ioregs ioregs_evmsk = {
++	.cm0ioctl		= MT41J128MJT125_IOCTRL_VALUE,
++	.cm1ioctl		= MT41J128MJT125_IOCTRL_VALUE,
++	.cm2ioctl		= MT41J128MJT125_IOCTRL_VALUE,
++	.dt0ioctl		= MT41J128MJT125_IOCTRL_VALUE,
++	.dt1ioctl		= MT41J128MJT125_IOCTRL_VALUE,
++};
++
++const struct ctrl_ioregs ioregs_bonelt = {
++	.cm0ioctl		= MT41K256M16HA125E_IOCTRL_VALUE,
++	.cm1ioctl		= MT41K256M16HA125E_IOCTRL_VALUE,
++	.cm2ioctl		= MT41K256M16HA125E_IOCTRL_VALUE,
++	.dt0ioctl		= MT41K256M16HA125E_IOCTRL_VALUE,
++	.dt1ioctl		= MT41K256M16HA125E_IOCTRL_VALUE,
++};
++
++const struct ctrl_ioregs ioregs_evm15 = {
++	.cm0ioctl		= MT41J512M8RH125_IOCTRL_VALUE,
++	.cm1ioctl		= MT41J512M8RH125_IOCTRL_VALUE,
++	.cm2ioctl		= MT41J512M8RH125_IOCTRL_VALUE,
++	.dt0ioctl		= MT41J512M8RH125_IOCTRL_VALUE,
++	.dt1ioctl		= MT41J512M8RH125_IOCTRL_VALUE,
++};
++
++const struct ctrl_ioregs ioregs = {
++	.cm0ioctl		= MT47H128M16RT25E_IOCTRL_VALUE,
++	.cm1ioctl		= MT47H128M16RT25E_IOCTRL_VALUE,
++	.cm2ioctl		= MT47H128M16RT25E_IOCTRL_VALUE,
++	.dt0ioctl		= MT47H128M16RT25E_IOCTRL_VALUE,
++	.dt1ioctl		= MT47H128M16RT25E_IOCTRL_VALUE,
++};
++
++void sdram_init(void)
++{
++#ifdef NO_SILC_UBMC
++	if (board_is_evm_sk()) {
++		/*
++		 * EVM SK 1.2A and later use gpio0_7 to enable DDR3.
++		 * This is safe enough to do on older revs.
++		 */
++		gpio_request(GPIO_DDR_VTT_EN, "ddr_vtt_en");
++		gpio_direction_output(GPIO_DDR_VTT_EN, 1);
++	}
++
++	if (board_is_icev2()) {
++		printf("board_init am335x evm_sk\n")
++		gpio_request(ICE_GPIO_DDR_VTT_EN, "ddr_vtt_en");
++		gpio_direction_output(ICE_GPIO_DDR_VTT_EN, 1);
++	}
++
++	if (board_is_evm_sk())
++		config_ddr(303, &ioregs_evmsk, &ddr3_data,
++			   &ddr3_cmd_ctrl_data, &ddr3_emif_reg_data, 0);
++	else if (board_is_bone_lt())
++		config_ddr(400, &ioregs_bonelt,
++			   &ddr3_beagleblack_data,
++			   &ddr3_beagleblack_cmd_ctrl_data,
++			   &ddr3_beagleblack_emif_reg_data, 0);
++	else if (board_is_evm_15_or_later())
++		config_ddr(303, &ioregs_evm15, &ddr3_evm_data,
++			   &ddr3_evm_cmd_ctrl_data, &ddr3_evm_emif_reg_data, 0);
++	else if (board_is_icev2())
++		config_ddr(400, &ioregs_evmsk, &ddr3_icev2_data,
++			   &ddr3_icev2_cmd_ctrl_data, &ddr3_icev2_emif_reg_data,
++			   0);
++	else if (board_is_gp_evm())
++		config_ddr(266, &ioregs, &ddr2_data,
++			   &ddr2_cmd_ctrl_data, &ddr2_evm_emif_reg_data, 0);
++	else
++		config_ddr(266, &ioregs, &ddr2_data,
++			   &ddr2_cmd_ctrl_data, &ddr2_emif_reg_data, 0);
++#else
++	config_ddr(303, &ioregs_evm15, &ddr3_evm_data,
++		   &ddr3_evm_cmd_ctrl_data, &ddr3_evm_emif_reg_data, 0);
++#endif
++}
++#endif
++
++#if !defined(CONFIG_SPL_BUILD) || \
++	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD))
++static void request_and_set_gpio(int gpio, char *name, int val)
++{
++	int ret;
++
++	ret = gpio_request(gpio, name);
++	if (ret < 0) {
++		printf("%s: Unable to request %s\n", __func__, name);
++		return;
++	}
++
++	ret = gpio_direction_output(gpio, 0);
++	if (ret < 0) {
++		printf("%s: Unable to set %s  as output\n", __func__, name);
++		goto err_free_gpio;
++	}
++
++	gpio_set_value(gpio, val);
++
++	return;
++
++err_free_gpio:
++	gpio_free(gpio);
++}
++
++#define REQUEST_AND_SET_GPIO(N)	request_and_set_gpio(N, #N, 1);
++#define REQUEST_AND_CLR_GPIO(N)	request_and_set_gpio(N, #N, 0);
++
++/**
++ * RMII mode on ICEv2 board needs 50MHz clock. Given the clock
++ * synthesizer With a capacitor of 18pF, and 25MHz input clock cycle
++ * PLL1 gives an output of 100MHz. So, configuring the div2/3 as 2 to
++ * give 50MHz output for Eth0 and 1.
++ */
++static struct clk_synth cdce913_data = {
++	.id = 0x81,
++	.capacitor = 0x90,
++	.mux = 0x6d,
++	.pdiv2 = 0x2,
++	.pdiv3 = 0x2,
++};
++#endif
++
++#if !defined(CONFIG_SPL_BUILD) || \
++	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD)) || \
++	(defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP))
++
++static bool eth0_is_mii;
++static bool eth1_is_mii;
++#endif
++
++/*
++ * Basic board specific setup.  Pinmux has been handled already.
++ */
++int board_init(void)
++{
++#if defined(CONFIG_SPL_BUILD)
++	struct ctrl_dev *cdev = (struct ctrl_dev *)CTRL_DEVICE_BASE;
++	uchar pmic_status_reg;
++	int usb_cur_lim;
++	int mpu_vdd;
++#endif
++
++	printf("board_init myd_j335x\n");
++#if defined(CONFIG_HW_WATCHDOG)
++	hw_watchdog_init();
++#endif
++
++	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
++#if defined(CONFIG_NOR) || defined(CONFIG_NAND)
++	gpmc_init();
++#endif
++#if defined(CONFIG_SPL_BUILD)
++	dpll_mpu_opp100.m = am335x_get_efuse_mpu_max_freq(cdev);
++	i2c_set_bus_num(0);
++	if (i2c_probe(TPS65217_CHIP_PM))
++	{
++		puts("PMIC NOT DETECTED!\n");
++		return;
++	}
++
++	puts("PMIC DETECTED: TPS65217 \n");
++
++	if (tps65217_reg_read(TPS65217_STATUS,
++					      &pmic_status_reg))
++
++	{
++		return;
++	}
++
++	if (!(pmic_status_reg & TPS65217_PWR_SRC_AC_BITMASK)) {
++		puts("No AC power, disabling frequency switch\n");
++		return;
++	}
++	/*
++	 * Increase USB current limit to 1300mA or 1800mA and set
++	 * the MPU voltage controller as needed.
++	 */
++	if (dpll_mpu_opp100.m == MPUPLL_M_1000) {
++		usb_cur_lim = TPS65217_USB_INPUT_CUR_LIMIT_1800MA;
++		mpu_vdd = TPS65217_DCDC_VOLT_SEL_1325MV;
++	} else {
++		usb_cur_lim = TPS65217_USB_INPUT_CUR_LIMIT_1300MA;
++		mpu_vdd = TPS65217_DCDC_VOLT_SEL_1275MV;
++	}
++
++	if (tps65217_reg_write(TPS65217_PROT_LEVEL_NONE,
++				   TPS65217_POWER_PATH,
++				   usb_cur_lim,
++				   TPS65217_USB_INPUT_CUR_LIMIT_MASK))
++		puts("tps65217_reg_write failure\n");
++
++	/* Set DCDC3 (CORE) voltage to 1.125V */
++	if (tps65217_voltage_update(TPS65217_DEFDCDC3,
++					TPS65217_DCDC_VOLT_SEL_1125MV)) {
++		puts("tps65217_voltage_update failure\n");
++		return;
++	}
++
++	/* Set CORE Frequencies to OPP100 */
++	do_setup_dpll(&dpll_core_regs, &dpll_core_opp100);
++
++	/* Set DCDC2 (MPU) voltage */
++	if (tps65217_voltage_update(TPS65217_DEFDCDC2, mpu_vdd)) {
++		puts("tps65217_voltage_update failure\n");
++		return;
++	}
++	/*
++	 * Set LDO3 to 1.8V and LDO4 to 3.3V for MYD_J335X board.
++	 */
++	if (tps65217_reg_write(TPS65217_PROT_LEVEL_2,
++					   TPS65217_DEFLS1,
++					   TPS65217_LDO_VOLTAGE_OUT_1_8,
++					   TPS65217_LDO_MASK))
++	{
++		puts("tps65217_reg_write failure\n");
++	}
++
++	if (tps65217_reg_write(TPS65217_PROT_LEVEL_2,
++				   TPS65217_DEFLS2,
++				   TPS65217_LDO_VOLTAGE_OUT_3_3,
++				   TPS65217_LDO_MASK))
++	{
++		puts("tps65217_reg_write failure\n");
++	}
++
++	/* Set MPU Frequency to what we detected now that voltages are set */
++	do_setup_dpll(&dpll_mpu_regs, &dpll_mpu_opp100);
++#endif
++
++#if !defined(CONFIG_SPL_BUILD) || \
++	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD))
++	if (board_is_icev2()) {
++		int rv;
++		u32 reg;
++
++		/* factory default configuration */
++		eth0_is_mii = true;
++		eth1_is_mii = true;
++
++		REQUEST_AND_SET_GPIO(GPIO_PR1_MII_CTRL);
++		/* Make J19 status available on GPIO1_26 */
++		REQUEST_AND_CLR_GPIO(GPIO_MUX_MII_CTRL);
++
++		REQUEST_AND_SET_GPIO(GPIO_FET_SWITCH_CTRL);
++		/*
++		 * Both ports can be set as RMII-CPSW or MII-PRU-ETH using
++		 * jumpers near the port. Read the jumper value and set
++		 * the pinmux, external mux and PHY clock accordingly.
++		 * As jumper line is overridden by PHY RX_DV pin immediately
++		 * after bootstrap (power-up/reset), we need to sample
++		 * it during PHY reset using GPIO rising edge detection.
++		 */
++		REQUEST_AND_SET_GPIO(GPIO_PHY_RESET);
++		/* Enable rising edge IRQ on GPIO0_11 and GPIO 1_26 */
++		reg = readl(GPIO0_RISINGDETECT) | BIT(11);
++		writel(reg, GPIO0_RISINGDETECT);
++		reg = readl(GPIO1_RISINGDETECT) | BIT(26);
++		writel(reg, GPIO1_RISINGDETECT);
++		/* Reset PHYs to capture the Jumper setting */
++		gpio_set_value(GPIO_PHY_RESET, 0);
++		udelay(2);	/* PHY datasheet states 1uS min. */
++		gpio_set_value(GPIO_PHY_RESET, 1);
++
++		reg = readl(GPIO0_IRQSTATUSRAW) & BIT(11);
++		if (reg) {
++			writel(reg, GPIO0_IRQSTATUS1); /* clear irq */
++			/* RMII mode */
++			printf("ETH0, CPSW\n");
++			eth0_is_mii = false;
++		} else {
++			/* MII mode */
++			printf("ETH0, PRU\n");
++			cdce913_data.pdiv3 = 4;	/* 25MHz PHY clk */
++		}
++
++		reg = readl(GPIO1_IRQSTATUSRAW) & BIT(26);
++		if (reg) {
++			writel(reg, GPIO1_IRQSTATUS1); /* clear irq */
++			/* RMII mode */
++			printf("ETH1, CPSW\n");
++			gpio_set_value(GPIO_MUX_MII_CTRL, 1);
++			eth1_is_mii = false;
++		} else {
++			/* MII mode */
++			printf("ETH1, PRU\n");
++			cdce913_data.pdiv2 = 4;	/* 25MHz PHY clk */
++		}
++
++		/* disable rising edge IRQs */
++		reg = readl(GPIO0_RISINGDETECT) & ~BIT(11);
++		writel(reg, GPIO0_RISINGDETECT);
++		reg = readl(GPIO1_RISINGDETECT) & ~BIT(26);
++		writel(reg, GPIO1_RISINGDETECT);
++
++		rv = setup_clock_synthesizer(&cdce913_data);
++		if (rv) {
++			printf("Clock synthesizer setup failed %d\n", rv);
++			return rv;
++		}
++
++		/* reset PHYs */
++		gpio_set_value(GPIO_PHY_RESET, 0);
++		udelay(2);	/* PHY datasheet states 1uS min. */
++		gpio_set_value(GPIO_PHY_RESET, 1);
++	}
++#endif
++
++	return 0;
++}
++
++#if defined(CONFIG_GENERIC_MMC)
++#define boot_prn(fmt, ...)	printf("====\nBOOT:"fmt"\n====\n", ## __VA_ARGS__)
++int board_mmc_read_flag(struct blk_desc * mmc_blk_dev, unsigned long addr, char* ret_flag)
++{
++	unsigned long blksz=mmc_blk_dev->blksz;
++	unsigned long start_blk=addr/blksz;
++	char* tmp_buf;
++	int ret;
++	if ((start_blk*mmc_blk_dev->blksz) != addr)
++	{
++		boot_prn("Error: Unaligned mmc read, addr %lx, blksz %lx", addr, blksz);
++		return -EINVAL;
++	}
++	tmp_buf = malloc(mmc_blk_dev->blksz*2);
++	if(tmp_buf == NULL)
++	{
++		boot_prn("Error: not enough memory\n");
++		return -ENOMEM;
++	}
++	ret = blk_dread(mmc_blk_dev, start_blk, 1, tmp_buf);
++	if(ret!=1)
++	{
++		boot_prn("Error: MMC read returned %d, addr %lx, blksz %lx", ret, addr, blksz);
++		free(tmp_buf);
++		return -EINVAL;
++	}
++	*ret_flag = tmp_buf[0];
++	free(tmp_buf);
++	
++	return 0;
++}
++
++int board_mmc_write_flag(struct blk_desc * mmc_blk_dev, unsigned long addr, char wr_flag)
++{
++	unsigned long blksz=mmc_blk_dev->blksz;
++	unsigned long start_blk=addr/blksz;
++	int ret;
++	char* tmp_buf;
++	if ((start_blk*mmc_blk_dev->blksz) != addr)
++	{
++		boot_prn("Error: Unaligned mmc write, addr %lx, blksz %lx", addr, blksz);
++		return -EINVAL;
++	}
++	tmp_buf = malloc(mmc_blk_dev->blksz*2);
++	if(tmp_buf == NULL)
++	{
++		boot_prn("Error: not enough memory\n");
++		return -ENOMEM;
++	}
++	memset(tmp_buf, 0, blksz);
++	tmp_buf[0] = wr_flag;
++	ret = blk_dwrite(mmc_blk_dev, start_blk, 1, tmp_buf);
++	if(ret!=1)
++	{
++		boot_prn("Error: MMC write returned %d, addr %lx, blksz %lx", ret, addr, blksz);
++		free(tmp_buf);
++		return -EINVAL;
++	}
++	free(tmp_buf);
++	return 0;
++}
++
++
++#define SILC_FLAG_INDEX_BOOT     0
++#define SILC_FLAG_INDEX_UPGRADE  1
++
++#define UBMC_BOOT_FLAG_ADDR			0x10000
++#define UBMC_UPGRADE_FLAG_ADDR			0x11000
++static struct mmc *init_mmc_device(int dev, bool force_init)
++{
++	struct mmc *mmc;
++	mmc = find_mmc_device(dev);
++	if (!mmc) {
++		boot_prn("no mmc device at slot %x\n", dev);
++		return NULL;
++	}
++	boot_prn("mmc dev returned is %08x", mmc);
++
++	if (force_init)
++		mmc->has_init = 0;
++	if (mmc_init(mmc))
++		return NULL;
++	return mmc;
++}
++
++#include "../../silicom/silicom_autoboot.c"
++int board_get_boot_info(void)
++{
++	//ubmc eval has only one mmc device
++	return silicom_autoboot_mmc(0, 0);
++}
++
++#endif
++
++#ifdef CONFIG_BOARD_LATE_INIT
++int board_late_init(void)
++{
++#if !defined(CONFIG_SPL_BUILD)
++	uint8_t mac_addr[6];
++	uint32_t mac_hi, mac_lo;
++#endif
++
++#ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
++	char *name = NULL;
++
++	if (board_is_bbg1())
++		name = "BBG1";
++	set_board_info_env(name);
++
++	/*
++	 * Default FIT boot on HS devices. Non FIT images are not allowed
++	 * on HS devices.
++	 */
++	if (get_device_type() == HS_DEVICE)
++		setenv("boot_fit", "1");
++#endif
++
++#if !defined(CONFIG_SPL_BUILD)
++	/* try reading mac address from efuse */
++	mac_lo = readl(&cdev->macid0l);
++	mac_hi = readl(&cdev->macid0h);
++	mac_addr[0] = mac_hi & 0xFF;
++	mac_addr[1] = (mac_hi & 0xFF00) >> 8;
++	mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
++	mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
++	mac_addr[4] = mac_lo & 0xFF;
++	mac_addr[5] = (mac_lo & 0xFF00) >> 8;
++
++	if (!getenv("ethaddr")) {
++		printf("<ethaddr> not set. Validating first E-fuse MAC\n");
++
++		if (is_valid_ethaddr(mac_addr))
++			eth_setenv_enetaddr("ethaddr", mac_addr);
++	}
++
++	mac_lo = readl(&cdev->macid1l);
++	mac_hi = readl(&cdev->macid1h);
++	mac_addr[0] = mac_hi & 0xFF;
++	mac_addr[1] = (mac_hi & 0xFF00) >> 8;
++	mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
++	mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
++	mac_addr[4] = mac_lo & 0xFF;
++	mac_addr[5] = (mac_lo & 0xFF00) >> 8;
++
++	if (!getenv("eth1addr")) {
++		if (is_valid_ethaddr(mac_addr))
++			eth_setenv_enetaddr("eth1addr", mac_addr);
++	}
++	board_get_boot_info();
++#endif
++
++	return 0;
++}
++#endif
++
++#ifndef CONFIG_DM_ETH
++
++#if (defined(CONFIG_DRIVER_TI_CPSW) && !defined(CONFIG_SPL_BUILD)) || \
++	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD))
++static void cpsw_control(int enabled)
++{
++	/* VTP can be added here */
++
++	return;
++}
++
++static struct cpsw_slave_data cpsw_slaves[] = {
++	{
++		.slave_reg_ofs	= 0x208,
++		.sliver_reg_ofs	= 0xd80,
++		.phy_addr	= 0,
++	},
++	{
++		.slave_reg_ofs	= 0x308,
++		.sliver_reg_ofs	= 0xdc0,
++		.phy_addr	= 1,
++	},
++};
++
++static struct cpsw_platform_data cpsw_data = {
++	.mdio_base		= CPSW_MDIO_BASE,
++	.cpsw_base		= CPSW_BASE,
++	.mdio_div		= 0xff,
++	.channels		= 8,
++	.cpdma_reg_ofs		= 0x800,
++	.slaves			= 1,
++	.slave_data		= cpsw_slaves,
++	.ale_reg_ofs		= 0xd00,
++	.ale_entries		= 1024,
++	.host_port_reg_ofs	= 0x108,
++	.hw_stats_reg_ofs	= 0x900,
++	.bd_ram_ofs		= 0x2000,
++	.mac_control		= (1 << 5),
++	.control		= cpsw_control,
++	.host_port_num		= 0,
++	.version		= CPSW_CTRL_VERSION_2,
++};
++#endif
++
++#if ((defined(CONFIG_SPL_ETH_SUPPORT) || defined(CONFIG_SPL_USBETH_SUPPORT)) &&\
++	defined(CONFIG_SPL_BUILD)) || \
++	((defined(CONFIG_DRIVER_TI_CPSW) || \
++	  defined(CONFIG_USB_ETHER) && defined(CONFIG_MUSB_GADGET)) && \
++	 !defined(CONFIG_SPL_BUILD))
++
++/*
++ * This function will:
++ * Read the eFuse for MAC addresses, and set ethaddr/eth1addr/usbnet_devaddr
++ * in the environment
++ * Perform fixups to the PHY present on certain boards.  We only need this
++ * function in:
++ * - SPL with either CPSW or USB ethernet support
++ * - Full U-Boot, with either CPSW or USB ethernet
++ * Build in only these cases to avoid warnings about unused variables
++ * when we build an SPL that has neither option but full U-Boot will.
++ */
++int board_eth_init(bd_t *bis)
++{
++	int rv, n = 0;
++	uint8_t mac_addr[6];
++#if defined(CONFIG_USB_ETHER) && \
++	(!defined(CONFIG_SPL_BUILD) || defined(CONFIG_SPL_USBETH_SUPPORT))
++	uint32_t mac_hi, mac_lo;
++
++	/*
++	 * use efuse mac address for USB ethernet as we know that
++	 * both CPSW and USB ethernet will never be active at the same time
++	 */
++	mac_lo = readl(&cdev->macid0l);
++	mac_hi = readl(&cdev->macid0h);
++	mac_addr[0] = mac_hi & 0xFF;
++	mac_addr[1] = (mac_hi & 0xFF00) >> 8;
++	mac_addr[2] = (mac_hi & 0xFF0000) >> 16;
++	mac_addr[3] = (mac_hi & 0xFF000000) >> 24;
++	mac_addr[4] = mac_lo & 0xFF;
++	mac_addr[5] = (mac_lo & 0xFF00) >> 8;
++#endif
++
++
++#if (defined(CONFIG_DRIVER_TI_CPSW) && !defined(CONFIG_SPL_BUILD)) || \
++	(defined(CONFIG_SPL_ETH_SUPPORT) && defined(CONFIG_SPL_BUILD))
++	if (!getenv("ethaddr")) {
++		puts("<ethaddr> not set. Validating first E-fuse MAC\n");
++		if (is_valid_ethaddr(mac_addr))
++			eth_setenv_enetaddr("ethaddr", mac_addr);
++	}
++
++#ifdef CONFIG_DRIVER_TI_CPSW
++	if (board_is_bone() || board_is_bone_lt() ||
++	    board_is_idk()) {
++		writel(MII_MODE_ENABLE, &cdev->miisel);
++		cpsw_slaves[0].phy_if = cpsw_slaves[1].phy_if =
++				PHY_INTERFACE_MODE_MII;
++	} else if (board_is_icev2()) {
++		writel(RMII_MODE_ENABLE | RMII_CHIPCKL_ENABLE, &cdev->miisel);
++		cpsw_slaves[0].phy_if = PHY_INTERFACE_MODE_RMII;
++		cpsw_slaves[1].phy_if = PHY_INTERFACE_MODE_RMII;
++		cpsw_slaves[0].phy_addr = 1;
++		cpsw_slaves[1].phy_addr = 3;
++	} else {
++		writel((RGMII_MODE_ENABLE | RGMII_INT_DELAY), &cdev->miisel);
++		cpsw_slaves[0].phy_if = cpsw_slaves[1].phy_if =
++				PHY_INTERFACE_MODE_RGMII;
++	}
++
++	rv = cpsw_register(&cpsw_data);
++	if (rv < 0)
++		printf("Error %d registering CPSW switch\n", rv);
++	else
++		n += rv;
++#endif
++
++	/*
++	 *
++	 * CPSW RGMII Internal Delay Mode is not supported in all PVT
++	 * operating points.  So we must set the TX clock delay feature
++	 * in the AR8051 PHY.  Since we only support a single ethernet
++	 * device in U-Boot, we only do this for the first instance.
++	 */
++#define AR8051_PHY_DEBUG_ADDR_REG	0x1d
++#define AR8051_PHY_DEBUG_DATA_REG	0x1e
++#define AR8051_DEBUG_RGMII_CLK_DLY_REG	0x5
++#define AR8051_RGMII_TX_CLK_DLY		0x100
++
++	if (board_is_evm_sk() || board_is_gp_evm()) {
++		const char *devname;
++		devname = miiphy_get_current_dev();
++
++		miiphy_write(devname, 0x0, AR8051_PHY_DEBUG_ADDR_REG,
++				AR8051_DEBUG_RGMII_CLK_DLY_REG);
++		miiphy_write(devname, 0x0, AR8051_PHY_DEBUG_DATA_REG,
++				AR8051_RGMII_TX_CLK_DLY);
++	}
++#endif
++#if defined(CONFIG_USB_ETHER) && \
++	(!defined(CONFIG_SPL_BUILD) || defined(CONFIG_SPL_USBETH_SUPPORT))
++	if (is_valid_ethaddr(mac_addr))
++		eth_setenv_enetaddr("usbnet_devaddr", mac_addr);
++
++	rv = usb_eth_initialize(bis);
++	if (rv < 0)
++		printf("Error %d registering USB_ETHER\n", rv);
++	else
++		n += rv;
++#endif
++	return n;
++}
++#endif
++
++#endif /* CONFIG_DM_ETH */
++
++#ifdef CONFIG_SPL_LOAD_FIT
++int board_fit_config_name_match(const char *name)
++{
++	if (board_is_gp_evm() && !strcmp(name, "am335x-evm"))
++		return 0;
++	else if (board_is_bone() && !strcmp(name, "am335x-bone"))
++		return 0;
++	else if (board_is_bone_lt() && !strcmp(name, "am335x-boneblack"))
++		return 0;
++	else if (board_is_evm_sk() && !strcmp(name, "am335x-evmsk"))
++		return 0;
++	else if (board_is_bbg1() && !strcmp(name, "am335x-bonegreen"))
++		return 0;
++	else if (board_is_icev2() && !strcmp(name, "am335x-icev2"))
++		return 0;
++	else
++		return -1;
++}
++#endif
++
++#ifdef CONFIG_TI_SECURE_DEVICE
++void board_fit_image_post_process(void **p_image, size_t *p_size)
++{
++	secure_boot_verify_image(p_image, p_size);
++}
++#endif
++
++#if defined(CONFIG_OF_LIBFDT) && defined(CONFIG_OF_BOARD_SETUP)
++
++static const char pruss_eth0_alias[] = "/pruss_eth/ethernet-mii0";
++static const char pruss_eth1_alias[] = "/pruss_eth/ethernet-mii1";
++
++int ft_board_setup(void *fdt, bd_t *bd)
++{
++	const char *path;
++	int offs;
++	int ret;
++
++	if (!board_is_icev2())
++		return 0;
++
++	/* Board DT default is both ports are RMII */
++	if (!eth0_is_mii && !eth1_is_mii)
++		return 0;
++
++	if (eth0_is_mii != eth1_is_mii) {
++		printf("Unsupported Ethernet port configuration\n");
++		printf("Both ports must be set as RMII or MII\n");
++		return 0;
++	}
++
++	printf("Fixing up ETH0 & ETH1 to PRUSS Ethernet\n");
++	/* Enable PRUSS-MDIO */
++	path = "/ocp/pruss_soc_bus@4a326000/pruss@4a300000/mdio@4a332400";
++	offs = fdt_path_offset(fdt, path);
++	if (offs < 0)
++		goto no_node;
++
++	ret = fdt_status_okay(fdt, offs);
++	if (ret < 0)
++		goto enable_failed;
++
++	/* Enable PRU-ICSS Ethernet */
++	path = "/pruss_eth";
++	offs = fdt_path_offset(fdt, path);
++	if (offs < 0)
++		goto no_node;
++
++	ret = fdt_status_okay(fdt, offs);
++	if (ret < 0)
++		goto enable_failed;
++
++	/* Disable CPSW Ethernet */
++	path = "/ocp/ethernet@4a100000";
++	offs = fdt_path_offset(fdt, path);
++	if (offs < 0)
++		goto no_node;
++
++	ret = fdt_status_disabled(fdt, offs);
++	if (ret < 0)
++		goto disable_failed;
++
++	/* Disable CPSW-MDIO */
++	path = "/ocp/ethernet@4a100000/mdio@4a101000";
++	offs = fdt_path_offset(fdt, path);
++	if (offs < 0)
++		goto no_node;
++
++	ret = fdt_status_disabled(fdt, offs);
++	if (ret < 0)
++		goto disable_failed;
++
++	/* Set MUX_MII_CTL1 pin low */
++	path = "/ocp/gpio@481ae000/p10";
++	offs = fdt_path_offset(fdt, path);
++	if (offs < 0) {
++		printf("Node %s not found.\n", path);
++		return offs;
++	}
++
++	ret = fdt_delprop(fdt, offs, "output-high");
++	if (ret < 0) {
++		printf("Could not delete output-high property from node %s: %s\n",
++		       path, fdt_strerror(ret));
++		return ret;
++	}
++
++	ret = fdt_setprop(fdt, offs, "output-low", NULL, 0);
++	if (ret < 0) {
++		printf("Could not add output-low property to node %s: %s\n",
++		       path, fdt_strerror(ret));
++		return ret;
++	}
++
++	/* Fixup ethernet aliases */
++	path = "/aliases";
++	offs = fdt_path_offset(fdt, path);
++	if (offs < 0)
++		goto no_node;
++
++	ret = fdt_setprop(fdt, offs, "ethernet0", pruss_eth0_alias,
++			  strlen(pruss_eth0_alias) + 1);
++	if (ret < 0) {
++		printf("Could not change ethernet0 alias: %s\n",
++		       fdt_strerror(ret));
++		return ret;
++	}
++
++	ret = fdt_setprop(fdt, offs, "ethernet1", pruss_eth1_alias,
++			  strlen(pruss_eth0_alias) + 1);
++	if (ret < 0) {
++		printf("Could not change ethernet0 alias: %s\n",
++		       fdt_strerror(ret));
++		return ret;
++	}
++
++	return 0;
++
++no_node:
++	printf("Node %s not found. Please update DTB.\n", path);
++
++	/* Return 0 as we don't want to prevent booting with older DTBs */
++	return 0;
++
++disable_failed:
++	printf("Could not disable node %s: %s\n",
++	       path, fdt_strerror(ret));
++	return ret;
++
++enable_failed:
++	printf("Could not enable node %s: %s\n",
++	       path, fdt_strerror(ret));
++	return ret;
++}
++#endif
++
++#if defined(CONFIG_GENERIC_MMC)
++
++int board_mmc_init(bd_t *bis)
++{
++	int ret;
++	ret = omap_mmc_init(0, 0, 0, -1, -1);
++	printf("MMC/SD init 0 return %d\n", ret);
++
++	return 0;
++}
++#endif
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/board_detect.c uboot-custom-silicom/board/myirtech/myd_j335x/board_detect.c
+--- uboot-custom-orig/board/myirtech/myd_j335x/board_detect.c	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/board_detect.c	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,395 @@
++/*
++ * Library to support early TI EVM EEPROM handling
++ *
++ * Copyright (C) 2015-2016 Texas Instruments Incorporated - http://www.ti.com/
++ *	Lokesh Vutla
++ *	Steve Kipisz
++ *
++ * SPDX-License-Identifier:    GPL-2.0+
++ */
++
++#include <common.h>
++#include <asm/omap_common.h>
++#include <i2c.h>
++
++#include "board_detect.h"
++
++/**
++ * ti_i2c_eeprom_init - Initialize an i2c bus and probe for a device
++ * @i2c_bus: i2c bus number to initialize
++ * @dev_addr: Device address to probe for
++ *
++ * Return: 0 on success or corresponding error on failure.
++ */
++static int __maybe_unused ti_i2c_eeprom_init(int i2c_bus, int dev_addr)
++{
++	int rc;
++
++	if (i2c_bus >= 0) {
++		rc = i2c_set_bus_num(i2c_bus);
++		if (rc)
++			return rc;
++	}
++
++	return i2c_probe(dev_addr);
++}
++
++/**
++ * ti_i2c_eeprom_read - Read data from an EEPROM
++ * @dev_addr: The device address of the EEPROM
++ * @offset: Offset to start reading in the EEPROM
++ * @ep: Pointer to a buffer to read into
++ * @epsize: Size of buffer
++ *
++ * Return: 0 on success or corresponding result of i2c_read
++ */
++static int __maybe_unused ti_i2c_eeprom_read(int dev_addr, int offset,
++					     uchar *ep, int epsize)
++{
++	return i2c_read(dev_addr, offset, 2, ep, epsize);
++}
++
++/**
++ * ti_eeprom_string_cleanup() - Handle eeprom programming errors
++ * @s:	eeprom string (should be NULL terminated)
++ *
++ * Some Board manufacturers do not add a NULL termination at the
++ * end of string, instead some binary information is kludged in, hence
++ * convert the string to just printable characters of ASCII chart.
++ */
++static void __maybe_unused ti_eeprom_string_cleanup(char *s)
++{
++	int i, l;
++
++	l = strlen(s);
++	for (i = 0; i < l; i++, s++)
++		if (*s < ' ' || *s > '~') {
++			*s = 0;
++			break;
++		}
++}
++
++__weak void gpi2c_init(void)
++{
++}
++
++static int __maybe_unused ti_i2c_eeprom_get(int bus_addr, int dev_addr,
++					    u32 header, u32 size, uint8_t *ep)
++{
++	u32 byte, hdr_read;
++	int rc;
++
++	gpi2c_init();
++	rc = ti_i2c_eeprom_init(bus_addr, dev_addr);
++	if (rc)
++		return rc;
++
++	/*
++	 * Read the header first then only read the other contents.
++	 */
++	byte = 2;
++	rc = i2c_read(dev_addr, 0x0, byte, (uint8_t *)&hdr_read, 4);
++	if (rc)
++		return rc;
++
++	/* Corrupted data??? */
++	if (hdr_read != header) {
++		rc = i2c_read(dev_addr, 0x0, byte, (uint8_t *)&hdr_read, 4);
++		/*
++		 * read the eeprom header using i2c again, but use only a
++		 * 1 byte address (some legacy boards need this..)
++		 */
++		byte = 1;
++		if (rc)
++			rc = i2c_read(dev_addr, 0x0, byte, (uint8_t *)&hdr_read,
++				      4);
++		if (rc)
++			return rc;
++	}
++	if (hdr_read != header)
++		return -1;
++
++	rc = i2c_read(dev_addr, 0x0, byte, ep, size);
++	if (rc)
++		return rc;
++
++	return 0;
++}
++
++int __maybe_unused ti_i2c_eeprom_am_set(const char *name, const char *rev)
++{
++	struct ti_common_eeprom *ep;
++
++	if (!name || !rev)
++		return -1;
++
++	ep = TI_EEPROM_DATA;
++	if (ep->header == TI_EEPROM_HEADER_MAGIC)
++		goto already_set;
++
++	/* Set to 0 all fields */
++	memset(ep, 0, sizeof(*ep));
++	strncpy(ep->name, name, TI_EEPROM_HDR_NAME_LEN);
++	strncpy(ep->version, rev, TI_EEPROM_HDR_REV_LEN);
++	/* Some dummy serial number to identify the platform */
++	strncpy(ep->serial, "0000", TI_EEPROM_HDR_SERIAL_LEN);
++	/* Mark it with a valid header */
++	ep->header = TI_EEPROM_HEADER_MAGIC;
++
++already_set:
++	return 0;
++}
++
++int __maybe_unused ti_i2c_eeprom_am_get(int bus_addr, int dev_addr)
++{
++	int rc;
++	struct ti_am_eeprom am_ep;
++	struct ti_common_eeprom *ep;
++
++	ep = TI_EEPROM_DATA;
++#ifndef CONFIG_SPL_BUILD
++	if (ep->header == TI_EEPROM_HEADER_MAGIC)
++		return 0; /* EEPROM has already been read */
++#endif
++
++	/* Initialize with a known bad marker for i2c fails.. */
++	ep->header = TI_DEAD_EEPROM_MAGIC;
++	ep->name[0] = 0x0;
++	ep->version[0] = 0x0;
++	ep->serial[0] = 0x0;
++	ep->config[0] = 0x0;
++
++	rc = ti_i2c_eeprom_get(bus_addr, dev_addr, TI_EEPROM_HEADER_MAGIC,
++			       sizeof(am_ep), (uint8_t *)&am_ep);
++	if (rc)
++		return rc;
++
++	ep->header = am_ep.header;
++	strlcpy(ep->name, am_ep.name, TI_EEPROM_HDR_NAME_LEN + 1);
++	ti_eeprom_string_cleanup(ep->name);
++
++	/* BeagleBone Green '1' eeprom, board_rev: 0x1a 0x00 0x00 0x00 */
++	if (am_ep.version[0] == 0x1a && am_ep.version[1] == 0x00 &&
++	    am_ep.version[2] == 0x00 && am_ep.version[3] == 0x00)
++		strlcpy(ep->version, "BBG1", TI_EEPROM_HDR_REV_LEN + 1);
++	else
++		strlcpy(ep->version, am_ep.version, TI_EEPROM_HDR_REV_LEN + 1);
++	ti_eeprom_string_cleanup(ep->version);
++	strlcpy(ep->serial, am_ep.serial, TI_EEPROM_HDR_SERIAL_LEN + 1);
++	ti_eeprom_string_cleanup(ep->serial);
++	strlcpy(ep->config, am_ep.config, TI_EEPROM_HDR_CONFIG_LEN + 1);
++	ti_eeprom_string_cleanup(ep->config);
++
++	memcpy(ep->mac_addr, am_ep.mac_addr,
++	       TI_EEPROM_HDR_NO_OF_MAC_ADDR * TI_EEPROM_HDR_ETH_ALEN);
++
++	return 0;
++}
++
++int __maybe_unused ti_i2c_eeprom_dra7_get(int bus_addr, int dev_addr)
++{
++	int rc, offset = 0;
++	struct dra7_eeprom dra7_ep;
++	struct ti_common_eeprom *ep;
++
++	ep = TI_EEPROM_DATA;
++#ifndef CONFIG_SPL_BUILD
++	if (ep->header == DRA7_EEPROM_HEADER_MAGIC)
++		return 0; /* EEPROM has already been read */
++#endif
++
++	/* Initialize with a known bad marker for i2c fails.. */
++	ep->header = TI_DEAD_EEPROM_MAGIC;
++	ep->name[0] = 0x0;
++	ep->version[0] = 0x0;
++	ep->serial[0] = 0x0;
++	ep->config[0] = 0x0;
++	ep->emif1_size = 0;
++	ep->emif2_size = 0;
++
++	rc = ti_i2c_eeprom_get(bus_addr, dev_addr, DRA7_EEPROM_HEADER_MAGIC,
++			       sizeof(dra7_ep), (uint8_t *)&dra7_ep);
++	if (rc)
++		return rc;
++
++	ep->header = dra7_ep.header;
++	strlcpy(ep->name, dra7_ep.name, TI_EEPROM_HDR_NAME_LEN + 1);
++	ti_eeprom_string_cleanup(ep->name);
++
++	offset = dra7_ep.version_major - 1;
++
++	/* Rev F is skipped */
++	if (offset >= 5)
++		offset = offset + 1;
++	snprintf(ep->version, TI_EEPROM_HDR_REV_LEN + 1, "%c.%d",
++		 'A' + offset, dra7_ep.version_minor);
++	ti_eeprom_string_cleanup(ep->version);
++	ep->emif1_size = (u64)dra7_ep.emif1_size;
++	ep->emif2_size = (u64)dra7_ep.emif2_size;
++	strlcpy(ep->config, dra7_ep.config, TI_EEPROM_HDR_CONFIG_LEN + 1);
++	ti_eeprom_string_cleanup(ep->config);
++
++	return 0;
++}
++
++bool __maybe_unused board_ti_is(char *name_tag)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	if (ep->header == TI_DEAD_EEPROM_MAGIC)
++		return false;
++	return !strncmp(ep->name, name_tag, TI_EEPROM_HDR_NAME_LEN);
++}
++
++bool __maybe_unused board_ti_rev_is(char *rev_tag, int cmp_len)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++	int l;
++
++	if (ep->header == TI_DEAD_EEPROM_MAGIC)
++		return false;
++
++	l = cmp_len > TI_EEPROM_HDR_REV_LEN ? TI_EEPROM_HDR_REV_LEN : cmp_len;
++	return !strncmp(ep->version, rev_tag, l);
++}
++
++char * __maybe_unused board_ti_get_rev(void)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	/* if ep->header == TI_DEAD_EEPROM_MAGIC, this is empty already */
++	return ep->version;
++}
++
++char * __maybe_unused board_ti_get_config(void)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	/* if ep->header == TI_DEAD_EEPROM_MAGIC, this is empty already */
++	return ep->config;
++}
++
++char * __maybe_unused board_ti_get_name(void)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	/* if ep->header == TI_DEAD_EEPROM_MAGIC, this is empty already */
++	return ep->name;
++}
++
++void __maybe_unused
++board_ti_get_eth_mac_addr(int index,
++			  u8 mac_addr[TI_EEPROM_HDR_ETH_ALEN])
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	if (ep->header == TI_DEAD_EEPROM_MAGIC)
++		goto fail;
++
++	if (index < 0 || index >= TI_EEPROM_HDR_NO_OF_MAC_ADDR)
++		goto fail;
++
++	memcpy(mac_addr, ep->mac_addr[index], TI_EEPROM_HDR_ETH_ALEN);
++	return;
++
++fail:
++	memset(mac_addr, 0, TI_EEPROM_HDR_ETH_ALEN);
++}
++
++u64 __maybe_unused board_ti_get_emif1_size(void)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	if (ep->header != DRA7_EEPROM_HEADER_MAGIC)
++		return 0;
++
++	return ep->emif1_size;
++}
++
++u64 __maybe_unused board_ti_get_emif2_size(void)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	if (ep->header != DRA7_EEPROM_HEADER_MAGIC)
++		return 0;
++
++	return ep->emif2_size;
++}
++
++void __maybe_unused set_board_info_env(char *name)
++{
++	char *unknown = "unknown";
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	setenv("board_name", "myd_j335x");
++	setenv("board_rev", "0.9");
++	setenv("board_serial", "XXXX-XXXXX");
++
++}
++
++static u64 mac_to_u64(u8 mac[6])
++{
++	int i;
++	u64 addr = 0;
++
++	for (i = 0; i < 6; i++) {
++		addr <<= 8;
++		addr |= mac[i];
++	}
++
++	return addr;
++}
++
++static void u64_to_mac(u64 addr, u8 mac[6])
++{
++	mac[5] = addr;
++	mac[4] = addr >> 8;
++	mac[3] = addr >> 16;
++	mac[2] = addr >> 24;
++	mac[1] = addr >> 32;
++	mac[0] = addr >> 40;
++}
++
++void board_ti_set_ethaddr(int index)
++{
++	uint8_t mac_addr[6];
++	int i;
++	u64 mac1, mac2;
++	u8 mac_addr1[6], mac_addr2[6];
++	int num_macs;
++	/*
++	 * Export any Ethernet MAC addresses from EEPROM.
++	 * The 2 MAC addresses in EEPROM define the address range.
++	 */
++	board_ti_get_eth_mac_addr(0, mac_addr1);
++	board_ti_get_eth_mac_addr(1, mac_addr2);
++
++	if (is_valid_ethaddr(mac_addr1) && is_valid_ethaddr(mac_addr2)) {
++		mac1 = mac_to_u64(mac_addr1);
++		mac2 = mac_to_u64(mac_addr2);
++
++		/* must contain an address range */
++		num_macs = mac2 - mac1 + 1;
++		/* <= 50 to protect against user programming error */
++		if (num_macs > 0 && num_macs <= 50) {
++			for (i = 0; i < num_macs; i++) {
++				u64_to_mac(mac1 + i, mac_addr);
++				if (is_valid_ethaddr(mac_addr)) {
++					eth_setenv_enetaddr_by_index("eth",
++								     i + index,
++								     mac_addr);
++				}
++			}
++		}
++	}
++}
++
++bool __maybe_unused board_ti_was_eeprom_read(void)
++{
++	struct ti_common_eeprom *ep = TI_EEPROM_DATA;
++
++	if (ep->header == TI_EEPROM_HEADER_MAGIC)
++		return true;
++	else
++		return false;
++}
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/board_detect.h uboot-custom-silicom/board/myirtech/myd_j335x/board_detect.h
+--- uboot-custom-orig/board/myirtech/myd_j335x/board_detect.h	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/board_detect.h	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,234 @@
++/*
++ * Library to support early TI EVM EEPROM handling
++ *
++ * Copyright (C) 2015-2016 Texas Instruments Incorporated - http://www.ti.com
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#ifndef __BOARD_DETECT_H
++#define __BOARD_DETECT_H
++
++/* TI EEPROM MAGIC Header identifier */
++#define TI_EEPROM_HEADER_MAGIC	0xEE3355AA
++#define TI_DEAD_EEPROM_MAGIC	0xADEAD12C
++
++#define TI_EEPROM_HDR_NAME_LEN		8
++#define TI_EEPROM_HDR_REV_LEN		4
++#define TI_EEPROM_HDR_SERIAL_LEN	12
++#define TI_EEPROM_HDR_CONFIG_LEN	32
++#define TI_EEPROM_HDR_NO_OF_MAC_ADDR	3
++#define TI_EEPROM_HDR_ETH_ALEN		6
++
++/**
++ * struct ti_am_eeprom - This structure holds data read in from the
++ *                     AM335x, AM437x, AM57xx TI EVM EEPROMs.
++ * @header: This holds the magic number
++ * @name: The name of the board
++ * @version: Board revision
++ * @serial: Board serial number
++ * @config: Reserved
++ * @mac_addr: Any MAC addresses written in the EEPROM
++ *
++ * The data is this structure is read from the EEPROM on the board.
++ * It is used for board detection which is based on name. It is used
++ * to configure specific TI boards. This allows booting of multiple
++ * TI boards with a single MLO and u-boot.
++ */
++struct ti_am_eeprom {
++	unsigned int header;
++	char name[TI_EEPROM_HDR_NAME_LEN];
++	char version[TI_EEPROM_HDR_REV_LEN];
++	char serial[TI_EEPROM_HDR_SERIAL_LEN];
++	char config[TI_EEPROM_HDR_CONFIG_LEN];
++	char mac_addr[TI_EEPROM_HDR_NO_OF_MAC_ADDR][TI_EEPROM_HDR_ETH_ALEN];
++} __attribute__ ((__packed__));
++
++/* DRA7 EEPROM MAGIC Header identifier */
++#define DRA7_EEPROM_HEADER_MAGIC	0xAA5533EE
++#define DRA7_EEPROM_HDR_NAME_LEN	16
++#define DRA7_EEPROM_HDR_CONFIG_LEN	4
++
++/**
++ * struct dra7_eeprom - This structure holds data read in from the DRA7 EVM
++ *			EEPROMs.
++ * @header: This holds the magic number
++ * @name: The name of the board
++ * @version_major: Board major version
++ * @version_minor: Board minor version
++ * @config: Board specific config options
++ * @emif1_size: Size of DDR attached to EMIF1
++ * @emif2_size: Size of DDR attached to EMIF2
++ *
++ * The data is this structure is read from the EEPROM on the board.
++ * It is used for board detection which is based on name. It is used
++ * to configure specific DRA7 boards. This allows booting of multiple
++ * DRA7 boards with a single MLO and u-boot.
++ */
++struct dra7_eeprom {
++	u32 header;
++	char name[DRA7_EEPROM_HDR_NAME_LEN];
++	u16 version_major;
++	u16 version_minor;
++	char config[DRA7_EEPROM_HDR_CONFIG_LEN];
++	u32 emif1_size;
++	u32 emif2_size;
++} __attribute__ ((__packed__));
++
++/**
++ * struct ti_common_eeprom - Null terminated, usable EEPROM contents.
++ * header:	Magic number
++ * @name:	NULL terminated name
++ * @version:	NULL terminated version
++ * @serial:	NULL terminated serial number
++ * @config:	NULL terminated Board specific config options
++ * @mac_addr:	MAC addresses
++ * @emif1_size:	Size of the ddr available on emif1
++ * @emif2_size:	Size of the ddr available on emif2
++ */
++struct ti_common_eeprom {
++	u32 header;
++	char name[TI_EEPROM_HDR_NAME_LEN + 1];
++	char version[TI_EEPROM_HDR_REV_LEN + 1];
++	char serial[TI_EEPROM_HDR_SERIAL_LEN + 1];
++	char config[TI_EEPROM_HDR_CONFIG_LEN + 1];
++	char mac_addr[TI_EEPROM_HDR_NO_OF_MAC_ADDR][TI_EEPROM_HDR_ETH_ALEN];
++	u64 emif1_size;
++	u64 emif2_size;
++};
++
++#define TI_EEPROM_DATA ((struct ti_common_eeprom *)\
++				TI_SRAM_SCRATCH_BOARD_EEPROM_START)
++
++/**
++ * ti_i2c_eeprom_am_get() - Consolidated eeprom data collection for AM* TI EVMs
++ * @bus_addr:	I2C bus address
++ * @dev_addr:	I2C slave address
++ *
++ * ep in SRAM is populated by the this AM generic function that consolidates
++ * the basic initialization logic common across all AM* platforms.
++ */
++int ti_i2c_eeprom_am_get(int bus_addr, int dev_addr);
++
++/**
++ * ti_i2c_eeprom_dra7_get() - Consolidated eeprom data for DRA7 TI EVMs
++ * @bus_addr:	I2C bus address
++ * @dev_addr:	I2C slave address
++ */
++int ti_i2c_eeprom_dra7_get(int bus_addr, int dev_addr);
++
++/**
++ * board_ti_is() - Board detection logic for TI EVMs
++ * @name_tag:	Tag used in eeprom for the board
++ *
++ * Return: false if board information does not match OR eeprom wasn't read.
++ *	   true otherwise
++ */
++bool board_ti_is(char *name_tag);
++
++/**
++ * board_ti_rev_is() - Compare board revision for TI EVMs
++ * @rev_tag:	Revision tag to check in eeprom
++ * @cmp_len:	How many chars to compare?
++ *
++ * NOTE: revision information is often messed up (hence the str len match) :(
++ *
++ * Return: false if board information does not match OR eeprom wasn't read.
++ *	   true otherwise
++ */
++bool board_ti_rev_is(char *rev_tag, int cmp_len);
++
++/**
++ * board_ti_get_rev() - Get board revision for TI EVMs
++ *
++ * Return: Empty string if eeprom wasn't read.
++ *	   Board revision otherwise
++ */
++char *board_ti_get_rev(void);
++
++/**
++ * board_ti_get_config() - Get board config for TI EVMs
++ *
++ * Return: Empty string if eeprom wasn't read.
++ *	   Board config otherwise
++ */
++char *board_ti_get_config(void);
++
++/**
++ * board_ti_get_name() - Get board name for TI EVMs
++ *
++ * Return: Empty string if eeprom wasn't read.
++ *	   Board name otherwise
++ */
++char *board_ti_get_name(void);
++
++/**
++ * board_ti_get_eth_mac_addr() - Get Ethernet MAC address from EEPROM MAC list
++ * @index:	0 based index within the list of MAC addresses
++ * @mac_addr:	MAC address contained at the index is returned here
++ *
++ * Does not sanity check the mac_addr. Whatever is stored in EEPROM is returned.
++ */
++void board_ti_get_eth_mac_addr(int index, u8 mac_addr[TI_EEPROM_HDR_ETH_ALEN]);
++
++/**
++ * board_ti_get_emif1_size() - Get size of the DDR on emif1 for TI EVMs
++ *
++ * Return: NULL if eeprom wasn't read or emif1_size is not available.
++ */
++u64 board_ti_get_emif1_size(void);
++
++/**
++ * board_ti_get_emif2_size() - Get size of the DDR on emif2 for TI EVMs
++ *
++ * Return: NULL if eeprom wasn't read or emif2_size is not available.
++ */
++u64 board_ti_get_emif2_size(void);
++
++/**
++ * set_board_info_env() - Setup commonly used board information environment vars
++ * @name:	Name of the board
++ *
++ * If name is NULL, default_name is used.
++ */
++void set_board_info_env(char *name);
++
++/**
++ * board_ti_was_eeprom_read() - Check to see if the eeprom contents have been read
++ *
++ * This function is useful to determine if the eeprom has already been read and
++ * its contents have already been loaded into memory. It utiltzes the magic
++ * number that the header value is set to upon successful eeprom read.
++ */
++bool board_ti_was_eeprom_read(void);
++
++/**
++ * ti_i2c_eeprom_am_set() - Setup the eeprom data with predefined values
++ * @name:	Name of the board
++ * @rev:	Revision of the board
++ *
++ * In some cases such as in RTC-only mode, we are able to skip reading eeprom
++ * and wasting i2c based initialization time by using predefined flags for
++ * detecting what platform we are booting on. For those platforms, provide
++ * a handy function to pre-program information.
++ *
++ * NOTE: many eeprom information such as serial number, mac address etc is not
++ * available.
++ *
++ * Return: 0 if all went fine, else return error.
++ */
++int ti_i2c_eeprom_am_set(const char *name, const char *rev);
++
++/**
++ * board_ti_set_ethaddr- Sets the ethaddr environment from EEPROM
++ * @index: The first eth<index>addr environment variable to set
++ *
++ * EEPROM should be already read before calling this function.
++ * The EEPROM contains 2 MAC addresses which define the MAC address
++ * range (i.e. first and last MAC address).
++ * This function sets the ethaddr environment variable for all
++ * the available MAC addresses starting from eth<index>addr.
++ */
++void board_ti_set_ethaddr(int index);
++
++#endif	/* __BOARD_DETECT_H */
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/board.h uboot-custom-silicom/board/myirtech/myd_j335x/board.h
+--- uboot-custom-orig/board/myirtech/myd_j335x/board.h	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/board.h	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,87 @@
++/*
++ * board.h
++ *
++ * TI AM335x boards information header
++ *
++ * Copyright (C) 2011, Texas Instruments, Incorporated - http://www.ti.com/
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#ifndef _BOARD_H_
++#define _BOARD_H_
++
++/**
++ * AM335X (EMIF_4D) EMIF REG_COS_COUNT_1, REG_COS_COUNT_2, and
++ * REG_PR_OLD_COUNT values to avoid LCDC DMA FIFO underflows and Frame
++ * Synchronization Lost errors. The values are the biggest that work
++ * reliably with offered video modes and the memory subsystem on the
++ * boards. These register have are briefly documented in "7.3.3.5.2
++ * Command Starvation" section of AM335x TRM. The REG_COS_COUNT_1 and
++ * REG_COS_COUNT_2 do not have any effect on current versions of
++ * AM335x.
++ */
++#define EMIF_OCP_CONFIG_BEAGLEBONE_BLACK       0x00141414
++#define EMIF_OCP_CONFIG_AM335X_EVM             0x003d3d3d
++
++static inline int board_is_bone(void)
++{
++	return board_ti_is("A335BONE");
++}
++
++static inline int board_is_bone_lt(void)
++{
++	return board_ti_is("A335BNLT");
++}
++
++static inline int board_is_bbg1(void)
++{
++	return board_is_bone_lt() && !strncmp(board_ti_get_rev(), "BBG1", 4);
++}
++
++static inline int board_is_beaglebonex(void)
++{
++	return board_is_bone() || board_is_bone_lt() || board_is_bbg1();
++}
++
++static inline int board_is_evm_sk(void)
++{
++	return board_ti_is("A335X_SK");
++}
++
++static inline int board_is_idk(void)
++{
++	return !strncmp(board_ti_get_config(), "SKU#02", 6);
++}
++
++static inline int board_is_gp_evm(void)
++{
++	return board_ti_is("A33515BB");
++}
++
++static inline int board_is_evm_15_or_later(void)
++{
++	return (board_is_gp_evm() &&
++		strncmp("1.5", board_ti_get_rev(), 3) <= 0);
++}
++
++static inline int board_is_icev2(void)
++{
++	return board_ti_is("A335_ICE") && !strncmp("2", board_ti_get_rev(), 1);
++}
++
++/*
++ * We have three pin mux functions that must exist.  We must be able to enable
++ * uart0, for initial output and i2c0 to read the main EEPROM.  We then have a
++ * main pinmux function that can be overridden to enable all other pinmux that
++ * is required on the board.
++ */
++void enable_uart0_pin_mux(void);
++void enable_uart1_pin_mux(void);
++void enable_uart2_pin_mux(void);
++void enable_uart3_pin_mux(void);
++void enable_uart4_pin_mux(void);
++void enable_uart5_pin_mux(void);
++void enable_i2c0_pin_mux(void);
++void enable_board_pin_mux(void);
++#endif
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/Kconfig uboot-custom-silicom/board/myirtech/myd_j335x/Kconfig
+--- uboot-custom-orig/board/myirtech/myd_j335x/Kconfig	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/Kconfig	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,33 @@
++if TARGET_MYD_J335X
++
++config SYS_BOARD
++	default "myd_j335x"
++
++config SYS_VENDOR
++	default "myirtech"
++
++config SYS_SOC
++	default "am33xx"
++
++config SYS_CONFIG_NAME
++	default "myd_j335x"
++
++config CONS_INDEX
++	int "UART used for console"
++	range 1 6
++	default 1
++	help
++	  The AM335x SoC has a total of 6 UARTs (UART0 to UART5 as referenced
++	  in documentation, etc) available to it.  Depending on your specific
++	  board you may want something other than UART0 as for example the IDK
++	  uses UART3 so enter 4 here.
++
++config MYIR_EMMC
++	bool "MYIR EMMC, boot from emmc 1"
++	help
++		Select this, would cause the SPL MLO to load uboot from sdcard.
++		Also enables auto loading of dtb/zimage/rootfs from sd card
++		if not selected, then default autobooting from emmc with upgrade support
++
++
++endif
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/MAINTAINERS uboot-custom-silicom/board/myirtech/myd_j335x/MAINTAINERS
+--- uboot-custom-orig/board/myirtech/myd_j335x/MAINTAINERS	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/MAINTAINERS	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,6 @@
++MYD_J335X BOARD
++M:	Sunny Guo <sunny.guo@myirtech.com>
++S:	Maintained
++F:	board/myirtech/myd_j335x/
++F:	include/configs/myd_j335x.h
++F:	configs/myd_j335x_defconfig
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/Makefile uboot-custom-silicom/board/myirtech/myd_j335x/Makefile
+--- uboot-custom-orig/board/myirtech/myd_j335x/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/Makefile	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,14 @@
++#
++# Copyright (C) 2016 MYIR Tech Ltd - http://www.myirtech.com//
++#
++# Author: Sunny Guo <sunny.guo@myirtech.com>
++#
++# SPDX-License-Identifier:	GPL-2.0+
++#
++
++ifeq ($(CONFIG_SKIP_LOWLEVEL_INIT),)
++obj-y	:= mux.o
++endif
++
++obj-y	+= board.o
++obj-y	+= board_detect.o
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/mux.c uboot-custom-silicom/board/myirtech/myd_j335x/mux.c
+--- uboot-custom-orig/board/myirtech/myd_j335x/mux.c	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/mux.c	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,190 @@
++/*
++ * mux.c
++ *
++ * Copyright (C) 2011 Texas Instruments Incorporated - http://www.ti.com/
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation version 2.
++ *
++ * This program is distributed "as is" WITHOUT ANY WARRANTY of any
++ * kind, whether express or implied; without even the implied warranty
++ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ */
++
++#include <common.h>
++#include <asm/arch/sys_proto.h>
++#include <asm/arch/hardware.h>
++#include <asm/arch/mux.h>
++#include <asm/io.h>
++#include <i2c.h>
++//#include "../common/board_detect.h"
++#include "board.h"
++
++static struct module_pin_mux uart0_pin_mux[] = {
++	{OFFSET(uart0_rxd), (MODE(0) | PULLUP_EN | RXACTIVE)},	/* UART0_RXD */
++	{OFFSET(uart0_txd), (MODE(0) | PULLUDEN)},		/* UART0_TXD */
++	{-1},
++};
++
++static struct module_pin_mux uart2_pin_mux[] = {
++	{OFFSET(mii1_crs), (MODE(6) | PULLUP_EN | RXACTIVE)},
++	{OFFSET(mii1_rxerr), (MODE(6) | PULLUDEN)},
++	{-1},
++};
++
++static struct module_pin_mux mmc0_pin_mux[] = {
++	{OFFSET(mmc0_dat3), (MODE(0) | RXACTIVE | PULLUP_EN)},	/* MMC0_DAT3 */
++	{OFFSET(mmc0_dat2), (MODE(0) | RXACTIVE | PULLUP_EN)},	/* MMC0_DAT2 */
++	{OFFSET(mmc0_dat1), (MODE(0) | RXACTIVE | PULLUP_EN)},	/* MMC0_DAT1 */
++	{OFFSET(mmc0_dat0), (MODE(0) | RXACTIVE | PULLUP_EN)},	/* MMC0_DAT0 */
++	{OFFSET(mmc0_clk), (MODE(0) | RXACTIVE | PULLUP_EN)},	/* MMC0_CLK */
++	{OFFSET(mmc0_cmd), (MODE(0) | RXACTIVE | PULLUP_EN)},	/* MMC0_CMD */
++	{-1},
++};
++
++static struct module_pin_mux i2c0_pin_mux[] = {
++	{OFFSET(i2c0_sda), (MODE(0) | RXACTIVE |
++			PULLUDEN | SLEWCTRL)}, /* I2C_DATA */
++	{OFFSET(i2c0_scl), (MODE(0) | RXACTIVE |
++			PULLUDEN | SLEWCTRL)}, /* I2C_SCLK */
++	{-1},
++};
++
++static struct module_pin_mux i2c1_pin_mux[] = {
++	{OFFSET(spi0_d1), (MODE(2) | RXACTIVE |
++			PULLUDEN | SLEWCTRL)},	/* I2C_DATA */
++	{OFFSET(spi0_cs0), (MODE(2) | RXACTIVE |
++			PULLUDEN | SLEWCTRL)},	/* I2C_SCLK */
++	{-1},
++};
++
++
++
++static struct module_pin_mux rgmii1_pin_mux[] = {
++	{OFFSET(mii1_txen), MODE(2)},			/* RGMII1_TCTL */
++	{OFFSET(mii1_rxdv), MODE(2) | RXACTIVE},	/* RGMII1_RCTL */
++	{OFFSET(mii1_txd3), MODE(2)},			/* RGMII1_TD3 */
++	{OFFSET(mii1_txd2), MODE(2)},			/* RGMII1_TD2 */
++	{OFFSET(mii1_txd1), MODE(2)},			/* RGMII1_TD1 */
++	{OFFSET(mii1_txd0), MODE(2)},			/* RGMII1_TD0 */
++	{OFFSET(mii1_txclk), MODE(2)},			/* RGMII1_TCLK */
++	{OFFSET(mii1_rxclk), MODE(2) | RXACTIVE},	/* RGMII1_RCLK */
++	{OFFSET(mii1_rxd3), MODE(2) | RXACTIVE},	/* RGMII1_RD3 */
++	{OFFSET(mii1_rxd2), MODE(2) | RXACTIVE},	/* RGMII1_RD2 */
++	{OFFSET(mii1_rxd1), MODE(2) | RXACTIVE},	/* RGMII1_RD1 */
++	{OFFSET(mii1_rxd0), MODE(2) | RXACTIVE},	/* RGMII1_RD0 */
++	{OFFSET(mdio_data), MODE(0) | RXACTIVE | PULLUP_EN},/* MDIO_DATA */
++	{OFFSET(mdio_clk), MODE(0) | PULLUP_EN},	/* MDIO_CLK */
++	{-1},
++};
++
++
++#ifdef CONFIG_NAND
++static struct module_pin_mux nand_pin_mux[] = {
++	{OFFSET(gpmc_ad0),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD0  */
++	{OFFSET(gpmc_ad1),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD1  */
++	{OFFSET(gpmc_ad2),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD2  */
++	{OFFSET(gpmc_ad3),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD3  */
++	{OFFSET(gpmc_ad4),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD4  */
++	{OFFSET(gpmc_ad5),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD5  */
++	{OFFSET(gpmc_ad6),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD6  */
++	{OFFSET(gpmc_ad7),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD7  */
++#ifdef CONFIG_SYS_NAND_BUSWIDTH_16BIT
++	{OFFSET(gpmc_ad8),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD8  */
++	{OFFSET(gpmc_ad9),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD9  */
++	{OFFSET(gpmc_ad10),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD10 */
++	{OFFSET(gpmc_ad11),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD11 */
++	{OFFSET(gpmc_ad12),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD12 */
++	{OFFSET(gpmc_ad13),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD13 */
++	{OFFSET(gpmc_ad14),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD14 */
++	{OFFSET(gpmc_ad15),	(MODE(0) | PULLUDDIS | RXACTIVE)}, /* AD15 */
++#endif
++	{OFFSET(gpmc_wait0),	(MODE(0) | PULLUP_EN | RXACTIVE)}, /* nWAIT */
++	{OFFSET(gpmc_wpn),	(MODE(7) | PULLUP_EN)},		   /* nWP */
++	{OFFSET(gpmc_csn0),	(MODE(0) | PULLUP_EN)},		   /* nCS */
++	{OFFSET(gpmc_wen),	(MODE(0) | PULLDOWN_EN)},	   /* WEN */
++	{OFFSET(gpmc_oen_ren),	(MODE(0) | PULLDOWN_EN)},	   /* OE */
++	{OFFSET(gpmc_advn_ale),	(MODE(0) | PULLDOWN_EN)},	   /* ADV_ALE */
++	{OFFSET(gpmc_be0n_cle),	(MODE(0) | PULLDOWN_EN)},	   /* BE_CLE */
++	{-1},
++};
++#endif
++
++static struct module_pin_mux status_led_pin_mux[] = {
++	{OFFSET(mcasp0_aclkr), (MODE(7) | PULLUDEN)},	/* GPIO3_18 */
++	{-1},
++};
++
++static struct module_pin_mux myd_wdt_pin_mux[] = {
++	{OFFSET(emu1), (MODE(7) | PULLUDDIS | RXACTIVE)},	/* GPIO3_8 */
++	{-1},
++};
++
++#if defined(CONFIG_NOR_BOOT)
++void enable_norboot_pin_mux(void)
++{
++	configure_module_pin_mux(bone_norcape_pin_mux);
++}
++#endif
++
++void enable_uart0_pin_mux(void)
++{
++	configure_module_pin_mux(uart0_pin_mux);
++}
++
++void enable_uart2_pin_mux(void)
++{
++	configure_module_pin_mux(uart2_pin_mux);
++}
++
++void enable_i2c0_pin_mux(void)
++{
++	configure_module_pin_mux(i2c0_pin_mux);
++}
++
++/*
++ * The AM335x GP EVM, if daughter card(s) are connected, can have 8
++ * different profiles.  These profiles determine what peripherals are
++ * valid and need pinmux to be configured.
++ */
++#define PROFILE_NONE	0x0
++#define PROFILE_0	(1 << 0)
++#define PROFILE_1	(1 << 1)
++#define PROFILE_2	(1 << 2)
++#define PROFILE_3	(1 << 3)
++#define PROFILE_4	(1 << 4)
++#define PROFILE_5	(1 << 5)
++#define PROFILE_6	(1 << 6)
++#define PROFILE_7	(1 << 7)
++#define PROFILE_MASK	0x7
++#define PROFILE_ALL	0xFF
++
++/* CPLD registers */
++#define I2C_CPLD_ADDR	0x35
++#define CFG_REG		0x10
++
++static unsigned short detect_daughter_board_profile(void)
++{
++	unsigned short val;
++
++	if (i2c_probe(I2C_CPLD_ADDR))
++		return PROFILE_NONE;
++
++	if (i2c_read(I2C_CPLD_ADDR, CFG_REG, 1, (unsigned char *)(&val), 2))
++		return PROFILE_NONE;
++
++	return (1 << (val & PROFILE_MASK));
++}
++
++void enable_board_pin_mux(void)
++{
++	configure_module_pin_mux(i2c0_pin_mux);
++	configure_module_pin_mux(i2c1_pin_mux);
++	configure_module_pin_mux(rgmii1_pin_mux);
++	configure_module_pin_mux(mmc0_pin_mux);
++	configure_module_pin_mux(nand_pin_mux);
++	configure_module_pin_mux(status_led_pin_mux);
++	configure_module_pin_mux(myd_wdt_pin_mux);
++}
+diff -uNr uboot-custom-orig/board/myirtech/myd_j335x/u-boot.lds uboot-custom-silicom/board/myirtech/myd_j335x/u-boot.lds
+--- uboot-custom-orig/board/myirtech/myd_j335x/u-boot.lds	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/myirtech/myd_j335x/u-boot.lds	2018-07-23 22:42:52.969236951 +0800
+@@ -0,0 +1,116 @@
++/*
++ * Copyright (c) 2012-2014 Birdland Audio - http://birdland.com/oem
++ * Copyright (c) 2004-2008 Texas Instruments
++ *
++ * (C) Copyright 2002
++ * Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
++ *
++ * See file CREDITS for list of people who contributed to this
++ * project.
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
++OUTPUT_ARCH(arm)
++ENTRY(_start)
++SECTIONS
++{
++	. = 0x00000000;
++
++	. = ALIGN(4);
++	.text :
++	{
++		*(.__image_copy_start)
++		*(.vectors)
++		CPUDIR/start.o (.text*)
++		board/myirtech/myd_j335x/built-in.o (.text*)
++		*(.text*)
++	}
++
++	. = ALIGN(4);
++	.rodata : { *(SORT_BY_ALIGNMENT(SORT_BY_NAME(.rodata*))) }
++
++	. = ALIGN(4);
++	.data : {
++		*(.data*)
++	}
++
++	. = ALIGN(4);
++
++	. = .;
++
++	. = ALIGN(4);
++	.u_boot_list : {
++		KEEP(*(SORT(.u_boot_list*)));
++	}
++
++	. = ALIGN(4);
++
++	.image_copy_end :
++	{
++		*(.__image_copy_end)
++	}
++
++	.rel_dyn_start :
++	{
++		*(.__rel_dyn_start)
++	}
++
++	.rel.dyn : {
++		*(.rel*)
++	}
++
++	.rel_dyn_end :
++	{
++		*(.__rel_dyn_end)
++	}
++
++	.hash : { *(.hash*) }
++
++	.end :
++	{
++		*(.__end)
++	}
++
++	_image_binary_end = .;
++
++	/*
++	 * Deprecated: this MMU section is used by pxa at present but
++	 * should not be used by new boards/CPUs.
++	 */
++	. = ALIGN(4096);
++	.mmutable : {
++		*(.mmutable)
++	}
++
++/*
++ * Compiler-generated __bss_start and __bss_end, see arch/arm/lib/bss.c
++ * __bss_base and __bss_limit are for linker only (overlay ordering)
++ */
++
++	.bss_start __rel_dyn_start (OVERLAY) : {
++		KEEP(*(.__bss_start));
++		__bss_base = .;
++	}
++
++	.bss __bss_base (OVERLAY) : {
++		*(.bss*)
++		 . = ALIGN(4);
++		 __bss_limit = .;
++	}
++
++	.bss_end __bss_limit (OVERLAY) : {
++		KEEP(*(.__bss_end));
++	}
++
++	.dynsym _image_binary_end : { *(.dynsym) }
++	.dynbss : { *(.dynbss) }
++	.dynstr : { *(.dynstr*) }
++	.dynamic : { *(.dynamic*) }
++	.gnu.hash : { *(.gnu.hash) }
++	.plt : { *(.plt*) }
++	.interp : { *(.interp*) }
++	.gnu : { *(.gnu*) }
++	.ARM.exidx : { *(.ARM.exidx*) }
++}
+--- uboot-custom-orig/arch/arm/dts/myd_j335x.dts	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/arch/arm/dts/myd_j335x.dts	2018-08-04 21:16:32.304348288 +0800
+@@ -0,0 +1,821 @@
++/*
++ * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++/dts-v1/;
++
++#include "am33xx.dtsi"
++#include <dt-bindings/interrupt-controller/irq.h>
++#include <dt-bindings/pinctrl/am33xx.h>
++
++/ {
++	model = "MYD AM335x";
++	compatible = "ti,am335x-evm", "ti,am33xx";
++
++	chosen {
++		stdout-path = &uart0;
++		tick-timer = &timer2;
++	};
++
++	cpus {
++		cpu@0 {
++			cpu0-supply = <&vdd1_reg>;
++		};
++	};
++
++	memory {
++		device_type = "memory";
++		reg = <0x80000000 0x20000000>; /* 512 MB */
++	};
++
++	vdd1_reg: fixedregulator@0 {
++		compatible = "regulator-fixed";
++		regulator-name = "vdd1_reg";
++		regulator-min-microvolt = <1100000>;
++		regulator-max-microvolt = <1100000>;
++		regulator-boot-on;
++	};
++
++	vmmc_reg: fixedregulator {
++		compatible = "regulator-fixed";
++		regulator-name = "vmmc_reg";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-boot-on;
++		regulator-always-on;
++	};
++
++	/* W_DISABLE_WWAN_N on gpio2_3 */
++	wlan_en_reg: fixedregulator@2 {
++		compatible = "regulator-fixed";
++		regulator-name = "wlan-en-regulator";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++
++		/* WLAN_EN GPIO for this board - Bank2, pin3 */
++		gpio = <&gpio2 3 0>;
++
++		/* WLAN card specific delay */
++		startup-delay-us = <70000>;
++		enable-active-high;
++	};
++
++	i2c_peci: i2c {
++		pinctrl-names = "default";
++		pinctrl-0 = <&i2c1_pins>;
++
++		compatible = "i2c-gpio";
++		/* TODO - The linux version of this binding needs to set the gpio flags to (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN) */
++		sda-gpios = <&gpio1 19 0>;
++		scl-gpios = <&gpio3 21 0>;
++		i2c-gpio,delay-us = <2>;	/* ~100 kHz */
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		/* TODO - Having a hwmon device for SMBus PECI would be cool */
++	};
++};
++
++&am33xx_pinmux {
++	pinctrl-names = "default";
++
++	/* BMC's master for sensors/PROMs */
++	i2c0_pins: pinmux_i2c0_pins {
++		pinctrl-single,pins = <
++			0x188 (PIN_INPUT | MUX_MODE0)	/* i2c0_sda.i2c0_sda */
++			0x18c (PIN_INPUT | MUX_MODE0)	/* i2c0_scl.i2c0_scl */
++		>;
++	};
++
++	/* I2C1 controller is unused, uses bit-banged SCL(gpio3_21) & SDA (gpio0_19) */
++	i2c1_pins: pinmux_i2c1_pins {
++		pinctrl-single,pins = <
++#if 0
++			0x1b0 (PIN_INPUT | MUX_MODE7)		/* xdma_event_intr0	gpio0[19] */
++			0x1ac (PIN_INPUT | MUX_MODE7)		/* mcasp0_ahclkx	gpio3[21] */
++#endif
++			0x158 (PIN_INPUT | MUX_MODE2 )		/* spi0_d1,		spi0_d1 */
++			0x15c (PIN_INPUT | MUX_MODE2 )		/* spi0_cs0,		spi0_cs0 */
++		>;
++	};
++#if 0
++	/* I2C2 is slaved to SMB_HOST from denverton */
++	i2c2_pins: pinmux_i2c2_pins {
++		pinctrl-single,pins = <
++			0x178 (PIN_INPUT | MUX_MODE3)	/* uart1_ctsn.uart1_ctsn I2C2_SDA_mux0*/
++			0x17C (PIN_INPUT | MUX_MODE3)	/* uart1_rtsn.uart1_rtsn I2C2_SCL_mux0*/
++		>;
++	};
++#endif
++
++	/* UART connected to Denverton ttyS0 */
++	uart0_pins: pinmux_uart0_pins {
++		pinctrl-single,pins = <
++			0x168 (PIN_INPUT | MUX_MODE0)	/* uart0_ctsn.uart0_ctsn */
++			0x16C (PIN_OUTPUT | MUX_MODE0)	/* uart0_rtsn.uart0_rtsn */
++			0x170 (PIN_INPUT | MUX_MODE0)	/* uart0_rxd.uart0_rxd */
++			0x174 (PIN_OUTPUT | MUX_MODE0)	/* uart0_txd.uart0_txd */
++		>;
++	};
++
++	/* UART for SoL operations */
++	uart1_pins: pinmux_uart2_pins {
++		pinctrl-single,pins = <
++			0x10c (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mii1_crs,		gpio3[1] */
++			0x110 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mii1_rxerr,		gpio3[2] */
++#if 0
++			0x180 (PIN_INPUT | MUX_MODE0)	/* uart1_rxd.uart1_rxd */
++			0x184 (PIN_OUTPUT | MUX_MODE0)	/* uart1_txd.uart1_txd */
++#endif
++		>;
++	};
++
++	/* Get a reference clock on xdma_event_intr1 */
++	clkout2_pin: pinmux_clkout2_pin {
++		pinctrl-single,pins = <
++#if 0
++			AM33XX_IOPAD(conf_xdma_event_intr1, PIN_OUTPUT_PULLDOWN | MUX_MODE3)	/* xdma_event_intr1.clkout2 */
++#endif
++			0x1b4 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* xdma_event_intr1	gpio0[20] */
++		>;
++	};
++
++	cpsw_default: cpsw_default {
++		pinctrl-single,pins = <
++			/* emac0 using RGMII1 */
++			0x114 (PIN_OUTPUT | MUX_MODE2)	/* mii1_txen.rgmii1_tctl */
++			0x118 (PIN_INPUT  | MUX_MODE2)	/* mii1_rxdv.rgmii1_rctl */
++			0x11c (PIN_OUTPUT | MUX_MODE2)	/* mii1_txd3.rgmii1_td3 */
++			0x120 (PIN_OUTPUT | MUX_MODE2)	/* mii1_txd2.rgmii1_td2 */
++			0x124 (PIN_OUTPUT | MUX_MODE2)	/* mii1_txd1.rgmii1_td1 */
++			0x128 (PIN_OUTPUT | MUX_MODE2)	/* mii1_txd0.rgmii1_td0 */
++			0x12c (PIN_OUTPUT | MUX_MODE2)	/* mii1_txclk.rgmii1_tclk */
++			0x130 (PIN_INPUT | MUX_MODE2)	/* mii1_rxclk.rgmii1_rclk */
++			0x134 (PIN_INPUT | MUX_MODE2)	/* mii1_rxd3.rgmii1_rd3 */
++			0x138 (PIN_INPUT | MUX_MODE2)	/* mii1_rxd2.rgmii1_rd2 */
++			0x13c (PIN_INPUT | MUX_MODE2)	/* mii1_rxd1.rgmii1_rd1 */
++			0x140 (PIN_INPUT | MUX_MODE2)	/* mii1_rxd0.rgmii1_rd0 */
++
++			/* emac1 using RMII2 */
++			0x40 (PIN_OUTPUT | MUX_MODE3)	/* gpmc_a0 mii2_txen.rgmii2_tctl */
++			0x50 (PIN_OUTPUT | MUX_MODE3)	/* gpmc_a4 mii2_txd1.rgmii2_td1 */
++			0x54 (PIN_OUTPUT | MUX_MODE3)	/* gpmc_a5 mii2_txd0.rgmii2_td0 */
++			0x68 (PIN_INPUT | MUX_MODE3)	/* gpmc_a10 mii2_rxd1.rgmii2_rd1 */
++			0x6c (PIN_INPUT | MUX_MODE3)	/* gpmc_a11 mii2_rxd0.rgmii2_rd0 */
++			0x70 (PIN_INPUT | MUX_MODE3)	/* gpmc_wait0 rgmii2_crs_dv_mux0 */
++			0x108 (PIN_INPUT | MUX_MODE1)	/* mii1_col rgmii2_refclk */
++
++			/* TODO - Update this once hardware is fixed, right now it's connected to FRU EEPROM mux select */
++			0x74 (PIN_INPUT_PULLDOWN | MUX_MODE3)	/* gpmc_wpn.rmii2_rxer */
++		>;
++	};
++
++	cpsw_sleep: cpsw_sleep{
++		pinctrl-single,pins = <
++			/* emac0 using RGMII1 */
++			0x114 (PIN_OUTPUT | MUX_MODE7)	/* mii1_txen.rgmii1_tctl */
++			0x118 (PIN_INPUT  | MUX_MODE7)	/* mii1_rxdv.rgmii1_rctl */
++			0x11c (PIN_OUTPUT | MUX_MODE7)	/* mii1_txd3.rgmii1_td3 */
++			0x120 (PIN_OUTPUT | MUX_MODE7)	/* mii1_txd2.rgmii1_td2 */
++			0x124 (PIN_OUTPUT | MUX_MODE7)	/* mii1_txd1.rgmii1_td1 */
++			0x128 (PIN_OUTPUT | MUX_MODE7)	/* mii1_txd0.rgmii1_td0 */
++			0x12c (PIN_OUTPUT | MUX_MODE7)	/* mii1_txclk.rgmii1_tclk */
++			0x130 (PIN_INPUT | MUX_MODE7)	/* mii1_rxclk.rgmii1_rclk */
++			0x134 (PIN_INPUT | MUX_MODE7)	/* mii1_rxd3.rgmii1_rd3 */
++			0x138 (PIN_INPUT | MUX_MODE7)	/* mii1_rxd2.rgmii1_rd2 */
++			0x13c (PIN_INPUT | MUX_MODE7)	/* mii1_rxd1.rgmii1_rd1 */
++			0x140 (PIN_INPUT | MUX_MODE7)	/* mii1_rxd0.rgmii1_rd0 */
++
++			/* emac1 using RMII2 */
++			0x40 (PIN_OUTPUT | MUX_MODE3)	/* gpmc_a0 mii2_txen.rgmii2_tctl */
++			0x50 (PIN_OUTPUT | MUX_MODE3)	/* gpmc_a4 mii2_txd1.rgmii2_td1 */
++			0x54 (PIN_OUTPUT | MUX_MODE3)	/* gpmc_a5 mii2_txd0.rgmii2_td0 */
++			0x68 (PIN_INPUT | MUX_MODE3)	/* gpmc_a10 mii2_rxd1.rgmii2_rd1 */
++			0x6c (PIN_INPUT | MUX_MODE3)	/* gpmc_a11 mii2_rxd0.rgmii2_rd0 */
++			0x70 (PIN_INPUT | MUX_MODE3)	/* gpmc_wait0 rgmii2_crs_dv_mux0 */
++			0x108 (PIN_INPUT | MUX_MODE1)	/* mii1_col rgmii2_refclk */
++
++			/* TODO - Update this once hardware is fixed, right now it's connected to FRU EEPROM mux select */
++			0x74 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_wpn.rmii2_rxer */
++		>;
++	};
++
++	davinci_mdio_default: davinci_mdio_default {
++		pinctrl-single,pins = <
++			/* MDIO */
++			0x148 (PIN_INPUT_PULLUP | SLEWCTRL_FAST | MUX_MODE0)	/* mdio_data.mdio_data */
++			0x14c (PIN_OUTPUT_PULLUP | MUX_MODE0)			/* mdio_clk.mdio_clk */
++		>;
++	};
++
++	davinci_mdio_sleep: davinci_mdio_sleep {
++		pinctrl-single,pins = <
++			/* MDIO reset value */
++			0x148 (PIN_INPUT_PULLDOWN | MUX_MODE7)
++			0x14c (PIN_INPUT_PULLDOWN | MUX_MODE7)
++		>;
++	};
++
++	usb1_pins: usb1_pins {
++		pinctrl-single,pins = <
++			0x2c0 (PIN_OUTPUT_PULLDOWN | MUX_MODE0) /* usb0_drvvbus.usb0_drvvbus */
++		>;
++	};
++
++	usb2_pins: usb2_pins {
++		pinctrl-single,pins = <
++			0x2c4 (PIN_OUTPUT_PULLDOWN | MUX_MODE0) /* usb0_drvvbus.usb0_drvvbus */
++		>;
++	};
++
++	gpio0_pins: gpio0_pins {
++		pinctrl-single,pins = <
++			/* No connect */
++			0x160 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* spi0_cs1,		gpio0[6] */
++			0x164 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* ecap0_in_pwm0_out	gpio0[7] */
++
++			/* SYSBOOT_12 */
++			0xd0  (PIN_INPUT | MUX_MODE7)		/* lcd_data12,		gpio0[8] */
++			/* SYSBOOT_13 */
++			0xd4  (PIN_INPUT | MUX_MODE7)		/* lcd_data13,		gpio0[9] */
++
++			/* No connect */
++			0xd8  (PIN_INPUT | MUX_MODE7)		/* lcd_data14,		gpio0[10] */
++			0xdc  (PIN_INPUT | MUX_MODE7)		/* lcd_data15,		gpio0[11] */
++			0x20  (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ad8		gpio0[22] */
++
++			/* PSU_LEFT_PWRGD */
++			0x24  (PIN_INPUT_PULLUP | MUX_MODE7)	/* gpmc_ad9		gpio0[23] */
++
++			/* PSU_RIGHT_PWRGD */
++			0x28  (PIN_INPUT_PULLUP | MUX_MODE7)	/* gpmc_ad10		gpio0[26] */
++
++			/* SPI_HOST_MUX_EN, leave as PD for Host owns until gpio driver loads */
++			0x2c  (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* gpmc_ad11		gpio0[27] */
++
++			/* BMC_PWRBTN_OUT_N, leave as PU until gpio driver loads */
++			0x144 (PIN_INPUT_PULLUP | MUX_MODE7)	/* rmii1_refclk		gpio0[29] */
++
++/* TODO - Need a new home for HOST_FRU_EEPROM_MUX_SEL since we need to default rmii2_rxer on this pin */
++#if 0
++			0x74  (PIN_OUTPUT | MUX_MODE7)		/* gpmc_wpn		gpio0[31] */
++#endif
++		>;
++	};
++
++	gpio1_pins: gpio1_pins {
++		pinctrl-single,pins = <
++		/* HOST_PLTRST_N */
++			0x30 (PIN_INPUT | MUX_MODE7 ) 		/* gpmc_ad12,		gpio1[12] */
++		/* HOST_S45_N */
++			0x34 (PIN_INPUT | MUX_MODE7 ) 		/* gpmc_ad13,		gpio1[13] */
++		/* GPIO_HOST_1, unused currently */
++			0x38 (PIN_INPUT_PULLDOWN | MUX_MODE7 ) 	/* gpmc_ad14,		gpio1[14] */
++		/* HOST_S3_N */
++			0x3c (PIN_INPUT | MUX_MODE7 ) 		/* gpmc_ad15,		gpio1[15] */
++
++		/* No connect */
++			0x44 (PIN_INPUT_PULLDOWN | MUX_MODE7 )	/* gpmc_a1,		gpio1[17] */
++			0x48 (PIN_INPUT_PULLDOWN | MUX_MODE7 )	/* gpmc_a2,		gpio1[18] */
++			0x4c (PIN_INPUT_PULLDOWN | MUX_MODE7 )	/* gpmc_a3,		gpio1[19] */
++
++		/*
++		 * BMC_UART_MUX_SEL, leave as PD for Host owns until gpio driver loads
++		 * 0 = BMC connected to FP, host UART -> BMC SoL UART
++		 * 1 = Host UART -> FP, BMC SoL UART disconnected
++		 */
++			0x58 (PIN_INPUT_PULLDOWN | MUX_MODE7 )		/* gpmc_a6,		gpio1[22] */
++
++		/*
++		 * RS232_CABLE_DETECTED
++		 * 0 = no cable
++		 * 1 = cable attached
++		 */
++			0x5c (PIN_INPUT | MUX_MODE7 )		/* gpmc_a7,		gpio1[23] */
++
++		/* FP_RSTBTN_N */
++			0x60 (PIN_INPUT | MUX_MODE7 )		/* gpmc_a8,		gpio1[24] */
++
++		/* FP_PWRBTN_N */
++			0x64 (PIN_INPUT | MUX_MODE7 )		/* gpmc_a9,		gpio1[25] */
++
++		/* HOST_ERROR_N */
++			0x7c (PIN_INPUT | MUX_MODE7 )		/* gpmc_csn0,		gpio1[29] */
++
++
++		>;
++	};
++
++	gpio2_pins: gpio2_pins {
++		pinctrl-single,pins = <
++		/* GPIO_HOST_0 */
++			0x88 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* gpmc_csn3,		gpio2[0] */
++
++		/* HOST_PROCHOT_N */
++			0x8c (PIN_INPUT | MUX_MODE7)		/* gpmc_clk,		gpio2[1] */
++
++		/* HOST_THERMTRIP_N */
++			0x90 (PIN_INPUT | MUX_MODE7)		/* gpmc_advn_ale,	gpio2[2] */
++
++		/* DYING_GASP_N */
++			0x98 (PIN_INPUT | MUX_MODE7)		/* gpmc_wen,		gpio2[4] */
++
++		/* SYSBOOT[11:0] */
++			0xa0 (PIN_INPUT | MUX_MODE7)		/* lcd_data0,		gpio2[6] */
++			0xa4 (PIN_INPUT | MUX_MODE7)		/* lcd_data1,		gpio2[7] */
++			0xa8 (PIN_INPUT | MUX_MODE7)		/* lcd_data2,		gpio2[8] */
++			0xac (PIN_INPUT | MUX_MODE7)		/* lcd_data3,		gpio2[9] */
++			0xb0 (PIN_INPUT | MUX_MODE7)		/* lcd_data4,		gpio2[10] */
++			0xb4 (PIN_INPUT | MUX_MODE7)		/* lcd_data5,		gpio2[11] */
++			0xb8 (PIN_INPUT | MUX_MODE7)		/* lcd_data6,		gpio2[12] */
++			0xbc (PIN_INPUT | MUX_MODE7)		/* lcd_data7,		gpio2[13] */
++			0xc0 (PIN_INPUT | MUX_MODE7)		/* lcd_data8,		gpio2[14] */
++			0xc4 (PIN_INPUT | MUX_MODE7)		/* lcd_data9,		gpio2[15] */
++			0xc8 (PIN_INPUT | MUX_MODE7)		/* lcd_data10,		gpio2[16] */
++			0xcc (PIN_INPUT | MUX_MODE7)		/* lcd_data11,		gpio2[17] */
++
++		/*
++		 * BMC_FP_BUTTON_OVERRIDE
++		 * 0 = passthrough button to MB
++		 * 1 = BMC_*BTN_OUTN drives button to MB
++		 */
++			0xe4 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* lcd_hsync,		gpio2[23] */
++
++		/* TESTPOINT_SPARE */
++			0xe8 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* lcd_pclk,		gpio2[24] */
++
++		/* BMC_RSTBTN_OUT_N, leave as PU until gpio driver loads */
++			0xec (PIN_INPUT_PULLUP | MUX_MODE7 )	/* lcd_ac_bias_en,gpio2[25] */
++
++			0x94 (PIN_OUTPUT | MUX_MODE7 )		/* gpmc_oen_ren,	gpio2[3] */
++		>;
++	};
++
++	gpio3_pins: gpio3_pins {
++		pinctrl-single,pins = <
++		/* No connect */
++			0x190 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_aclkx,	gpio3[14] */
++			0x198 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_axr0,		gpio3[16] */
++			0x19c (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_ahclkr,	gpio3[17] */
++			0x1a0 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_aclkr,	gpio3[18] */
++			0x1a4 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_fsr,		gpio3[19] */
++			0x1a8 (PIN_OUTPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_axr1,		gpio3[20] */
++			0x1ac (PIN_OUTPUT | MUX_MODE7 )			/* mcasp0_ahclkx,	gpio3[21] */
++		>;
++	};
++
++	gpio_led_pins: pinmux_gpio_led_pins {
++		pinctrl-single,pins = <
++		/* LED_BMC_BOT_GRN_N */
++			0x78 (PIN_INPUT_PULLUP | MUX_MODE7 )	/* gpmc_be1n,		gpio1[28] */
++
++		/* LED_BMC_BOT_BLU_N */
++			0xe0 (PIN_INPUT_PULLUP | MUX_MODE7 )	/* lcd_vsync,		gpio2[22] */
++
++		/* LED_BMC_BOT_RED_N */
++			0x9c (PIN_INPUT_PULLUP | MUX_MODE7 )	/* gpmc_be0n_cle,	gpio2[5] */
++		>;
++	};
++#if 0
++	misc_pins: misc_pins {
++		pinctrl-single,pins = <
++			0x1f8 (PIN_INPUT | MUX_MODE0 )		/* rtc_porz,		RTC_porz */
++			0x204 (PIN_INPUT | MUX_MODE0 )		/* enz_kaldo_1p8v,	ENZ_KALDO_1P8V */
++			0x1f4 (PIN_OUTPUT_PULLUP | MUX_MODE0 )	/* pmic_power_en,	PMIC_POWER_EN */
++			0x1b8 (PIN_INPUT | MUX_MODE0 )		/* nresetin_out,	nRESETIN_OUT */
++			0x1c0 (PIN_INPUT | MUX_MODE0 )		/* nnmi,		nNMI */
++			0x200 (PIN_INPUT_PULLDOWN | MUX_MODE0 )	/* ext_wakeup,		EXT_WAKEUP */
++			0x1dc (PIN_INPUT | MUX_MODE0 )		/* tck,			TCK */
++			0x1d4 (PIN_INPUT | MUX_MODE0 )		/* tdi,			TDI */
++			0x1d8 (PIN_OUTPUT | MUX_MODE0 )		/* tdo,			TDO */
++			0x1d0 (PIN_INPUT | MUX_MODE0 )		/* tms,			TMS */
++			0x1e0 (PIN_INPUT_PULLUP| MUX_MODE0 )	/* ntrst,		nTRST */
++			0x1e4 (PIN_INPUT_PULLUP| MUX_MODE0 )	/* emu0,		EMU0 */
++			0x1e8 (PIN_INPUT_PULLUP| MUX_MODE0 )	/* emu1,		EMU1 */
++		>;
++	};
++#endif
++	/*
++	 * mmc1 is the 4bit SD card interface, SDCD and SDWP are not connected to the SD cage
++	 *
++	 * Note: mmc1 from am33xx.dtsi is mmc0 in all other documentation.  Sigh.
++	 */
++	mmc1_pins: pinmux_mmc1_pins {
++		pinctrl-single,pins = <
++			0xf0 (PIN_INPUT | MUX_MODE0)	/* mmc0_dat0.mmc0_dat0 */
++			0xf4 (PIN_INPUT | MUX_MODE0)	/* mmc0_dat1.mmc0_dat1 */
++			0xf8 (PIN_INPUT | MUX_MODE0)	/* mmc0_dat2.mmc0_dat2 */
++			0xfc (PIN_INPUT | MUX_MODE0)	/* mmc0_dat3.mmc0_dat3 */
++			0x100 (PIN_INPUT | MUX_MODE0)	/* mmc0_clk.mmc0_clk */
++			0x104 (PIN_INPUT | MUX_MODE0)	/* mmc0_cmd.mmc0_cmd */
++#if 1
++			0x194 (PIN_INPUT_PULLDOWN | MUX_MODE7)	/* mcasp0_fsx mmc1_sdcd_mux1 */
++#endif
++		>;
++	};
++#if 0
++	/*
++	 * mmc2 is the 8bit eMMC interface, it's 3.3V only, pull ups on board
++	 *
++	 * Note: mmc2 from am33xx.dtsi is mmc1 in all other documentation.  Sigh.
++	 */
++	mmc2_pins: pinmux_mmc2_pins {
++		pinctrl-single,pins = <
++			0x0 (PIN_INPUT | MUX_MODE1)	/* gpmc_ad0.gpmc_ad0 mmc1_dat0_mux2 */
++			0x4 (PIN_INPUT | MUX_MODE1)	/* gpmc_ad1.gpmc_ad1 mmc1_dat1_mux2 */
++			0x8 (PIN_INPUT | MUX_MODE1)	/* gpmc_ad2.gpmc_ad2 mmc1_dat2_mux2 */
++			0xc (PIN_INPUT | MUX_MODE1)	/* gpmc_ad3.gpmc_ad3 mmc1_dat3_mux2 */
++			0x10 (PIN_INPUT | MUX_MODE1)	/* gpmc_ad4.gpmc_ad4 mmc1_dat4_mux2 */
++			0x14 (PIN_INPUT | MUX_MODE1)	/* gpmc_ad5.gpmc_ad5 mmc1_dat5_mux2 */
++			0x18 (PIN_INPUT | MUX_MODE1)	/* gpmc_ad6.gpmc_ad6 mmc1_dat6_mux2 */
++			0x1c (PIN_INPUT | MUX_MODE1)	/* gpmc_ad7.gpmc_ad7 mmc1_dat7_mux2 */
++			0x80 (PIN_INPUT | MUX_MODE2)	/* gpmc_csn1 mmc1_clk_mux0 */
++			0x84 (PIN_INPUT | MUX_MODE2)	/* gpmc_csn2 mmc1_cmd_mux0 */
++#if 0
++			0x194 (PIN_INPUT_PULLUP | MUX_MODE4)	/* mcasp0_fsx mmc1_sdcd_mux1 */
++#endif
++		>;
++	};
++#endif
++
++	spi0_pins: pinmux_spi0_pins {
++		pinctrl-single,pins = <
++			0x150 (PIN_OUTPUT | MUX_MODE0 )		/* spi0_sclk,		spi0_sclk */
++			0x154 (PIN_INPUT | MUX_MODE0 )		/* spi0_d0,		spi0_d0 */
++		>;
++	};
++
++};
++
++&gpio0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&gpio0_pins>;
++
++	gpio-line-names =
++		"", /*  0 */
++		"", /*  1 */
++		"", /*  2 */
++		"", /*  3 */
++		"", /*  4 */
++		"", /*  5 */
++		"", /*  6 */
++		"", /*  7 */
++		"", /*  8 */
++		"", /*  9 */
++		"", /* 10 */
++		"", /* 11 */
++		"", /* 12 */
++		"", /* 13 */
++		"", /* 14 */
++		"", /* 15 */
++		"", /* 16 */
++		"", /* 17 */
++		"", /* 18 */
++		"SMB_PECI_DATA", /* 19 */
++		"", /* 20 */
++		"", /* 21 */
++		"", /* 22 */
++		"PSU_LEFT_PWRGD", /* 23 */
++		"", /* 24 */
++		"", /* 25 */
++		"PSU_RIGHT_PWRGD", /* 26 */
++		"SPI_HOST_MUX_EN", /* 27 */
++		"", /* 28 */
++		"BMC_PWRBTN_OUT_N", /* 29 */
++		"", /* 30 */
++		"HOST_FRU_EEPROM_MUX_SEL"; /* 31 */
++};
++
++&gpio1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&gpio1_pins>;
++
++	gpio-line-names =
++		"", /*  0 */
++		"", /*  1 */
++		"", /*  2 */
++		"", /*  3 */
++		"", /*  4 */
++		"", /*  5 */
++		"", /*  6 */
++		"", /*  7 */
++		"", /*  8 */
++		"", /*  9 */
++		"", /* 10 */
++		"", /* 11 */
++		"HOST_PLTRST_N", /* 12 */
++		"HOST_S45_N", /* 13 */
++		"GPIO_HOST_1", /* 14 */
++		"HOST_S3_N", /* 15 */
++		"", /* 16 */
++		"", /* 17 */
++		"", /* 18 */
++		"", /* 19 */
++		"", /* 20 */
++		"", /* 21 */
++		"BMC_UAR_MUX_SEL", /* 22 */
++		"RS232_CABLE_DETECTED", /* 23 */
++		"FP_RSTBTN_N", /* 24 */
++		"FP_PWRBTN_N", /* 25 */
++		"", /* 26 */
++		"", /* 27 */
++		"LED_BMC_BOT_GRN_N", /* 28 */
++		"HOST_ERROR_N", /* 29 */
++		"", /* 30 */
++		""; /* 31 */
++};
++
++&gpio2 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&gpio2_pins>;
++
++	gpio-line-names =
++		"GPIO_HOST_0", /*  0 */
++		"HOST_PROCHOT_N", /*  1 */
++		"HOST_THERMTRIP_N", /*  2 */
++		"W_DIABLE_WWAN_N", /*  3 */
++		"DYING_GASP_N", /*  4 */
++		"LED_BMC_BOT_RED_N", /*  5 */
++		"", /*  6 */
++		"", /*  7 */
++		"SYSBOOT_SD_N", /*  8 */
++		"", /*  9 */
++		"", /* 10 */
++		"", /* 11 */
++		"", /* 12 */
++		"", /* 13 */
++		"", /* 14 */
++		"", /* 15 */
++		"", /* 16 */
++		"", /* 17 */
++		"", /* 18 */
++		"", /* 19 */
++		"", /* 20 */
++		"", /* 21 */
++		"LED_BMC_BOT_BLU_N", /* 22 */
++		"BMC_FP_BUTTON_OVERRIDE", /* 23 */
++		"TESTPOINT_SPARE", /* 24 */
++		"BMC_RSTBTN_OUT_N", /* 25 */
++		"", /* 26 */
++		"", /* 27 */
++		"", /* 28 */
++		"", /* 29 */
++		"", /* 30 */
++		""; /* 31 */
++};
++
++&gpio3 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&gpio3_pins>;
++
++	gpio-line-names =
++		"", /*  0 */
++		"", /*  1 */
++		"", /*  2 */
++		"", /*  3 */
++		"", /*  4 */
++		"", /*  5 */
++		"", /*  6 */
++		"", /*  7 */
++		"", /*  8 */
++		"", /*  9 */
++		"", /* 10 */
++		"", /* 11 */
++		"", /* 12 */
++		"", /* 13 */
++		"", /* 14 */
++		"", /* 15 */
++		"", /* 16 */
++		"", /* 17 */
++		"", /* 18 */
++		"", /* 19 */
++		"", /* 20 */
++		"SMB_PECI_CLK", /* 21 */
++		"", /* 22 */
++		"", /* 23 */
++		"", /* 24 */
++		"", /* 25 */
++		"", /* 26 */
++		"", /* 27 */
++		"", /* 28 */
++		"", /* 29 */
++		"", /* 30 */
++		""; /* 31 */
++};
++
++&uart0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart0_pins>;
++
++	status = "okay";
++};
++
++&uart1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart1_pins>;
++
++	status = "okay";
++};
++
++&i2c0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c0_pins>;
++
++	status = "okay";
++	clock-frequency = <400000>;
++
++	bmc_fru: eeprom@50 {
++		compatible = "atmel,24c02";
++		reg = <0x50>;
++		pagesize = <16>;
++		size = <256>;
++	};
++
++	/*
++	 * EMC2300 triple fan controller
++	 *
++	 * Probably need this patch in the kernel unless u-boot changes default mode
++	 * https://www.spinics.net/lists/lm-sensors/msg33203.html
++	 */
++	fan_ctl: lm85@5c {
++		 compatible = "smsc,emc6d103s";
++		 reg = <0x5c>;
++	};
++
++	/* This is the FRU on the motherboard, the FRU_EEPROM_MUX_SEL must be set to see this device */
++	mb_fru: eeprom@56 {
++		compatible = "atmel,24c02";
++		reg = <0x56>;
++		pagesize = <16>;
++		size = <256>;
++	};
++
++	/* 8ch ADC for monitoring the MB voltage rails */
++	ads7828: ads7828@48 {
++		compatible = "ti,ads7828";
++		reg = <0x48>;
++	};
++};
++
++/* I2C2 is slaved to SMB_HOST from the Denverton processor */
++&i2c1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c1_pins>;
++
++	status = "okay";
++	clock-frequency = <400000>;
++};
++
++&usb {
++	status = "okay";
++};
++
++&usb_ctrl_mod {
++	status = "okay";
++};
++
++&usb0_phy {
++	status = "okay";
++};
++
++&usb1_phy {
++	status = "okay";
++};
++
++&usb0 {
++	status = "okay";
++};
++
++&usb1 {
++	status = "okay";
++	dr_mode = "host";
++};
++
++&cppi41dma  {
++	status = "okay";
++};
++
++&elm {
++	status = "okay";
++};
++
++&mac {
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&cpsw_default>;
++	pinctrl-1 = <&cpsw_sleep>;
++	dual_emac = <1>;
++	status = "okay";
++};
++
++&davinci_mdio {
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&davinci_mdio_default>;
++	pinctrl-1 = <&davinci_mdio_sleep>;
++	status = "okay";
++};
++
++/*
++ * emac0 is RGMII interface to port 0 of the Marvell Peridot switch
++ *
++ * The TI part requires external delay of the clk relative to the data lines
++ *
++ * For receive (input to the AM3352) the waveform must look like:
++ *           _____       _
++ * RCLK    _/     \_____/
++ *         ____ _____ ____
++ * RD/RCTL ____X_____X____
++ *
++ *
++ * For transmit (output from the AM3352) the waveform looks like:
++ *           _____       _
++ * TCLK    _/     \_____/
++ *         _ _____ _____ _
++ * TD/TCTL _X_____X_____X_
++ *
++ */
++&cpsw_emac0 {
++	phy-mode = "rgmii-id";
++	dual_emac_res_vlan = <1>;
++	fixed-link {
++		   speed = <1000>;
++		   full-duplex;
++	};
++};
++
++/* emac1 is RMII NC-SI interface to the i210, external 50MHz refclk on H16 (MII1_COL) */
++&cpsw_emac1 {
++	phy-mode = "rmii";
++	dual_emac_res_vlan = <2>;
++	rmii-clock-ext;
++	fixed-link {
++		   speed = <100>;
++		   full-duplex;
++	};
++};
++
++&mmc1 {
++	status = "okay";
++	bus-width = <4>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc1_pins>;
++	cd-gpios = <&gpio3 15 GPIO_ACTIVE_LOW>;
++	disable-wp;
++	max-frequency = <96000000>;
++	vmmc-supply = <&vmmc_reg>;
++	vqmmc-supply = <&vmmc_reg>;
++	no-1-8-v;
++	cap-sd-highspeed;
++	no-sdio;
++	no-mmc;
++};
++#if 0
++&mmc2 {
++	status = "okay";
++	bus-width = <8>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc2_pins>;
++	disable-wp;
++	max-frequency = <96000000>;
++	vmmc-supply = <&vmmc_reg>;
++	vqmmc-supply = <&vmmc_reg>;
++	no-1-8-v;
++	cap-mmc-highspeed;
++	no-sdio;
++	no-sd;
++	non-removable;
++};
++#endif
++/*
++ * SPI0 is connected to a W25Q128FV or equivalent SPI flash
++ *
++ * The SPI_HOST_MUX_EN gpio (0,27) must be driven high for this to work
++ */
++&spi0 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi0_pins>;
++
++	/* BIOS SPI flash */
++	flash: w25q128@0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		label = "BIOS";
++		compatible = "winbond,w25q128", "jedec,spi-nor";
++		reg = <0>;
++		/* Limit to 25MHz, there are a number of muxes on the bus */
++		spi-max-frequency = <25000000>;
++		m25p,fast-read;
++	};
++};
++
++&sham {
++	status = "okay";
++};
++
++&aes {
++	status = "okay";
++};
++

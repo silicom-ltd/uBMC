@@ -1,0 +1,1596 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:ietf:params:xml:ns:yang:yin:1" xmlns:ubmc-sys="urn:silicom:params:xml:ns:yang:ubmc" xmlns:yang="urn:ietf:params:xml:ns:yang:ietf-yang-types" xmlns:inet="urn:ietf:params:xml:ns:yang:ietf-inet-types" name="ubmc">
+  <namespace uri="urn:silicom:params:xml:ns:yang:ubmc"/>
+  <prefix value="ubmc-sys"/>
+  <import module="ietf-yang-types">
+    <prefix value="yang"/>
+  </import>
+  <import module="ietf-inet-types">
+    <prefix value="inet"/>
+  </import>
+  <organization>
+    <text>Silicom Ltd.</text>
+  </organization>
+  <contact>
+    <text>Editor:   Julian Zhu
+          &lt;mailto:julian.zhu@silicom.co.il&gt;</text>
+  </contact>
+  <description>
+    <text>This module contains a collection of YANG definitions for the
+configuration and identification of some common system
+properties within a device containing a NETCONF server.  This
+includes data node definitions for system identification,
+time-of-day management, user management, DNS resolver
+configuration, and some protocol operations for system
+management.</text>
+  </description>
+  <revision date="2018-09-20">
+    <description>
+      <text>Initial revision.</text>
+    </description>
+  </revision>
+  <typedef name="timezone-name">
+    <type name="string"/>
+    <description>
+      <text>A time zone name as used by the Time Zone Database,
+sometimes referred to as the 'Olson Database'.
+
+The exact set of valid values is an implementation-specific
+matter.  Client discovery of the exact set of time zone names
+for a particular server is out of scope.</text>
+    </description>
+    <reference>
+      <text>RFC 6557: Procedures for Maintaining the Time Zone Database</text>
+    </reference>
+  </typedef>
+  <typedef name="ip-origin">
+    <type name="enumeration">
+      <enum name="static">
+        <description>
+          <text>Static IP address mode</text>
+        </description>
+      </enum>
+      <enum name="dhcp">
+        <description>
+          <text>DHCP mode</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>type define of IP origin</text>
+    </description>
+  </typedef>
+  <typedef name="auth-protocol-type">
+    <type name="enumeration">
+      <enum name="ikev1">
+        <description>
+          <text>Authentication protocol based on IKEv1</text>
+        </description>
+      </enum>
+      <enum name="ikev2">
+        <description>
+          <text>Authentication protocol based on IKEv2</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>IPSEC authentication protocols</text>
+    </description>
+  </typedef>
+  <typedef name="ipsec-mode">
+    <type name="enumeration">
+      <enum name="tunnel">
+        <description>
+          <text>Tunnel mode</text>
+        </description>
+      </enum>
+      <enum name="transport">
+        <description>
+          <text>Transport mode</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>type define of ipsec mode</text>
+    </description>
+  </typedef>
+  <typedef name="auth-method-type">
+    <type name="enumeration">
+      <enum name="psk">
+        <description>
+          <text>Select pre-shared key message as the authentication method</text>
+        </description>
+      </enum>
+      <enum name="pubkey">
+        <description>
+          <text>Select public key encryption (RSA/ECDSA) as the authentication method</text>
+        </description>
+      </enum>
+      <enum name="eap">
+        <description>
+          <text>Select EAP as the authentication method</text>
+        </description>
+      </enum>
+      <enum name="eap-aka"/>
+      <enum name="eap-gtc"/>
+      <enum name="eap-md5"/>
+      <enum name="eap-mschapv2"/>
+      <enum name="eap-peap"/>
+      <enum name="xauth">
+        <description>
+          <text>Select the IKEv1 eXtended Authentication as the authentication method</text>
+        </description>
+      </enum>
+      <enum name="xauth-generic"/>
+      <enum name="xauth-eap"/>
+    </type>
+    <description>
+      <text>IPSEC authentication method</text>
+    </description>
+  </typedef>
+  <typedef name="secret-type">
+    <type name="enumeration">
+      <enum name="RSA">
+        <description>
+          <text>defines an RSA private key</text>
+        </description>
+      </enum>
+      <enum name="ECDSA">
+        <description>
+          <text>defines an ECDSA private key</text>
+        </description>
+      </enum>
+      <enum name="BLISS">
+        <description>
+          <text>defines a BLISS Private key</text>
+        </description>
+      </enum>
+      <enum name="P12">
+        <description>
+          <text>defines a PKCS#12 container</text>
+        </description>
+      </enum>
+      <enum name="PSK">
+        <description>
+          <text>defines a pre-shared key</text>
+        </description>
+      </enum>
+      <enum name="EAP">
+        <description>
+          <text>defines EAP credentials</text>
+        </description>
+      </enum>
+      <enum name="NTLM">
+        <description>
+          <text>defines NTLM credentials</text>
+        </description>
+      </enum>
+      <enum name="XAUTH">
+        <description>
+          <text>defines XAUTH credentials</text>
+        </description>
+      </enum>
+      <enum name="PIN">
+        <description>
+          <text>defines a smartcard PIN</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>IPSEC secret type</text>
+    </description>
+  </typedef>
+  <typedef name="syslog-severity">
+    <type name="enumeration">
+      <enum name="EMERGENCY">
+        <description>
+          <text>Emergency: system is unusable (0)</text>
+        </description>
+      </enum>
+      <enum name="ALERT">
+        <description>
+          <text>Alert: action must be taken immediately (1)</text>
+        </description>
+      </enum>
+      <enum name="CRITICAL">
+        <description>
+          <text>Critical: critical conditions (2)</text>
+        </description>
+      </enum>
+      <enum name="ERROR">
+        <description>
+          <text>Error: error conditions (3)</text>
+        </description>
+      </enum>
+      <enum name="WARNING">
+        <description>
+          <text>Warning: warning conditions (4)</text>
+        </description>
+      </enum>
+      <enum name="NOTICE">
+        <description>
+          <text>Notice: normal but significant  condition(5)</text>
+        </description>
+      </enum>
+      <enum name="INFORMATIONAL">
+        <description>
+          <text>Informational: informational messages (6)</text>
+        </description>
+      </enum>
+      <enum name="DEBUG">
+        <description>
+          <text>Debug: debug-level messages (7)</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>Syslog message severities</text>
+    </description>
+    <reference>
+      <text>IETF RFC 5424 - The Syslog Protocol</text>
+    </reference>
+  </typedef>
+  <typedef name="snmp-version">
+    <type name="enumeration">
+      <enum name="v1">
+        <description>
+          <text>SNMPv1</text>
+        </description>
+      </enum>
+      <enum name="v2c">
+        <description>
+          <text>SNMPv2c</text>
+        </description>
+      </enum>
+      <enum name="v3">
+        <description>
+          <text>SNMPv3</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>typef define of SNMP version</text>
+    </description>
+  </typedef>
+  <typedef name="snmp-hash">
+    <type name="enumeration">
+      <enum name="md5">
+        <description>
+          <text>MD5</text>
+        </description>
+      </enum>
+      <enum name="sha">
+        <description>
+          <text>SHA</text>
+        </description>
+      </enum>
+    </type>
+    <description>
+      <text>type define of SNMP hash algorithm</text>
+    </description>
+  </typedef>
+  <container name="system-config">
+    <description>
+      <text>System configuration.</text>
+    </description>
+    <container name="general">
+      <description>
+        <text>System general configuration.</text>
+      </description>
+      <leaf name="hostname">
+        <type name="inet:domain-name"/>
+        <description>
+          <text>The name of the host.  This name can be a single domain
+label or the fully qualified domain name of the host.</text>
+        </description>
+      </leaf>
+      <container name="clock">
+        <description>
+          <text>Configuration of the system date and time properties.</text>
+        </description>
+        <leaf name="timezone-name">
+          <type name="timezone-name"/>
+          <description>
+            <text>The TZ database name to use for the system, such
+as 'Europe/Stockholm'.</text>
+          </description>
+        </leaf>
+      </container>
+      <container name="ntp">
+        <description>
+          <text>Configuration of the NTP client.</text>
+        </description>
+        <leaf name="enabled">
+          <type name="boolean"/>
+          <description>
+            <text>Indicates that the system should attempt to
+synchronize the system clock with an NTP server
+from the 'ntp/server' list.</text>
+          </description>
+        </leaf>
+        <list name="server">
+          <key value="address"/>
+          <description>
+            <text>List of NTP servers to use for system clock
+synchronization.  If '/system/ntp/enabled'
+is 'true', then the system will attempt to
+contact and utilize the specified NTP servers.</text>
+          </description>
+          <leaf name="address">
+            <type name="inet:host"/>
+            <mandatory value="true"/>
+            <description>
+              <text>The address of the DNS server.</text>
+            </description>
+          </leaf>
+        </list>
+      </container>
+      <container name="syslog">
+        <description>
+          <text>Configuration of the syslog.</text>
+        </description>
+        <leaf name="severity">
+          <type name="syslog-severity"/>
+          <description>
+            <text>Specifies that only messages of the given severity (or
+greater severity) for the corresonding facility are logged</text>
+          </description>
+        </leaf>
+        <leaf name="max-file-size">
+          <type name="uint16"/>
+          <units name="megabytes"/>
+          <description>
+            <text>This leaf specifies the maximum log file size.</text>
+          </description>
+        </leaf>
+        <container name="remote">
+          <description>
+            <text>This container describes the configuration parameters for 
+remote logging.</text>
+          </description>
+          <leaf name="enabled">
+            <type name="boolean"/>
+            <description>
+              <text>Indicates that the system should attempt to
+send logs to remote server in the destination list.</text>
+            </description>
+          </leaf>
+          <list name="destination">
+            <key value="address"/>
+            <ordered-by value="user"/>
+            <description>
+              <text>This list describes a collection of remote logging 
+destinations.</text>
+            </description>
+            <leaf name="address">
+              <type name="inet:host"/>
+              <mandatory value="true"/>
+              <description>
+                <text>The address of the remote logging server.</text>
+              </description>
+            </leaf>
+            <leaf name="port">
+              <type name="inet:port-number"/>
+              <default value="514"/>
+              <description>
+                <text>This leaf specifies the port number used to 
+deliver messages to the remote server.</text>
+              </description>
+            </leaf>
+          </list>
+        </container>
+      </container>
+    </container>
+    <container name="management">
+      <description>
+        <text>System management configuration.</text>
+      </description>
+      <container name="session">
+        <description>
+          <text>Configuration of the system session management.</text>
+        </description>
+        <leaf name="idle-timeout">
+          <type name="uint32"/>
+          <units name="seconds"/>
+          <default value="600"/>
+          <description>
+            <text>The amount of time the server will wait for a request on a session 
+before disconnecting it, 0 means disable.</text>
+          </description>
+        </leaf>
+      </container>
+      <list name="vrf">
+        <key value="name"/>
+        <description>
+          <text>List of the VRFs.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The identifier of the VRF.</text>
+          </description>
+        </leaf>
+        <leaf name="table">
+          <type name="uint32"/>
+          <description>
+            <text>The table ID of the VRF.</text>
+          </description>
+        </leaf>
+      </list>
+      <list name="vrf-process">
+        <key value="name"/>
+        <description>
+          <text>List of the bindings of processes and VRFs.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The identifier of the binding.</text>
+          </description>
+        </leaf>
+        <leaf name="process">
+          <type name="enumeration">
+            <enum name="ipsec"/>
+            <enum name="netconf"/>
+            <enum name="ssh"/>
+            <enum name="web"/>
+            <enum name="dying-gasp"/>
+            <enum name="ntp"/>
+            <enum name="syslog"/>
+          </type>
+          <description>
+            <text>The process which may run on VRF.</text>
+          </description>
+        </leaf>
+        <leaf name="vrf">
+          <type name="string"/>
+          <description>
+            <text>The VRF name which can be empty string for no VRF.</text>
+          </description>
+        </leaf>
+      </list>
+      <list name="interface">
+        <key value="name"/>
+        <description>
+          <text>The list of the interfaces.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The identifier of the interface.</text>
+          </description>
+        </leaf>
+        <leaf name="description">
+          <type name="string"/>
+          <description>
+            <text>A textual description of the interface.</text>
+          </description>
+        </leaf>
+        <leaf name="enabled">
+          <type name="boolean"/>
+          <default value="true"/>
+          <description>
+            <text>This leaf contains the configured, desired state of the
+interface.</text>
+          </description>
+        </leaf>
+        <leaf name="mtu">
+          <type name="uint16">
+            <range value="68..max"/>
+          </type>
+          <units name="octets"/>
+          <default value="1500"/>
+          <description>
+            <text>The size, in octets, of the largest IPv4 packet that the
+interface will send and receive.</text>
+          </description>
+          <reference>
+            <text>RFC 791: Internet Protocol</text>
+          </reference>
+        </leaf>
+        <leaf name="dev">
+          <type name="string"/>
+          <description>
+            <text>The network device of the interface [eth0/eth1].</text>
+          </description>
+        </leaf>
+        <leaf name="master">
+          <type name="string"/>
+          <default value=""/>
+          <description>
+            <text>The master VRF of the interface, empty string for no VRF.</text>
+          </description>
+        </leaf>
+        <leaf name="vlan">
+          <type name="uint16">
+            <range value="0..4094"/>
+          </type>
+          <default value="0"/>
+          <description>
+            <text>The vlan id for the interface, and 0 means no vlan.</text>
+          </description>
+        </leaf>
+        <leaf name="dhcp-sendname">
+          <type name="boolean"/>
+          <default value="true"/>
+          <description>
+            <text>Enable sending hostname when DHCP.</text>
+          </description>
+        </leaf>
+        <container name="ipv4">
+          <presence value="Enables IPv4 unless the 'enabled' leaf&#10;(which defaults to 'true') is set to 'false'"/>
+          <description>
+            <text>Parameters for the IPv4 address family.</text>
+          </description>
+          <leaf name="enabled">
+            <type name="boolean"/>
+            <default value="true"/>
+            <description>
+              <text>Controls whether IPv4 is enabled or disabled on this
+interface.  When IPv4 is enabled, this interface is
+connected to an IPv4 stack, and the interface can send
+and receive IPv4 packets.</text>
+            </description>
+          </leaf>
+          <container name="address">
+            <description>
+              <text>The configured IPv4 addresses on the interface.</text>
+            </description>
+            <leaf name="origin">
+              <type name="ip-origin"/>
+              <description>
+                <text>The IPv4 addresses orignation.</text>
+              </description>
+            </leaf>
+            <container name="static">
+              <leaf name="ip">
+                <type name="inet:ipv4-address"/>
+                <description>
+                  <text>The IPv4 address on the interface.</text>
+                </description>
+              </leaf>
+              <leaf name="ip-prefix-length">
+                <type name="uint8">
+                  <range value="0..32"/>
+                </type>
+                <description>
+                  <text>The IPv4 address prefix.</text>
+                </description>
+              </leaf>
+            </container>
+          </container>
+        </container>
+        <container name="ipv6">
+          <presence value="Enables IPv6 unless the 'enabled' leaf&#10;(which defaults to 'true') is set to 'false'"/>
+          <description>
+            <text>Parameters for the IPv6 address family.</text>
+          </description>
+          <leaf name="enabled">
+            <type name="boolean"/>
+            <default value="true"/>
+            <description>
+              <text>Controls whether IPv6 is enabled or disabled on this
+interface.  When IPv6 is enabled, this interface is
+connected to an IPv6 stack, and the interface can send
+and receive IPv6 packets.</text>
+            </description>
+          </leaf>
+          <container name="address">
+            <description>
+              <text>The configured IPv6 addresses on the interface.</text>
+            </description>
+            <leaf name="origin">
+              <type name="ip-origin"/>
+              <description>
+                <text>The IPv6 addresses orignation.</text>
+              </description>
+            </leaf>
+            <container name="static">
+              <leaf name="ip">
+                <type name="inet:ipv6-address"/>
+                <description>
+                  <text>The IPv6 address on the interface.</text>
+                </description>
+              </leaf>
+              <leaf name="ip-prefix-length">
+                <type name="uint8">
+                  <range value="0..128"/>
+                </type>
+                <description>
+                  <text>The IPv6 address prefix.</text>
+                </description>
+              </leaf>
+            </container>
+          </container>
+        </container>
+      </list>
+      <list name="interface-address">
+        <key value="name"/>
+        <description>
+          <text>List of the interface IP addresses.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The identifier of the address.</text>
+          </description>
+        </leaf>
+        <leaf name="address">
+          <type name="inet:ip-address"/>
+          <description>
+            <text>The IP address.</text>
+          </description>
+        </leaf>
+        <leaf name="ip-prefix-length">
+          <type name="uint8">
+            <range value="0..128"/>
+          </type>
+          <description>
+            <text>The IP address prefix.</text>
+          </description>
+        </leaf>
+        <leaf name="interface">
+          <type name="string"/>
+          <description>
+            <text>The interface where this address is on.</text>
+          </description>
+        </leaf>
+      </list>
+      <list name="ip-route">
+        <key value="name"/>
+        <description>
+          <text>List of the IP routes.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The identifier of the route.</text>
+          </description>
+        </leaf>
+        <leaf name="dest">
+          <type name="string"/>
+          <description>
+            <text>The route dest: [default |&lt;ip&gt;/&lt;prefixlen&gt;].</text>
+          </description>
+        </leaf>
+        <leaf name="via">
+          <type name="string"/>
+          <default value=""/>
+          <description>
+            <text>The route via.</text>
+          </description>
+        </leaf>
+        <leaf name="table">
+          <type name="string"/>
+          <default value=""/>
+          <description>
+            <text>The route table.</text>
+          </description>
+        </leaf>
+        <leaf name="dev">
+          <type name="string"/>
+          <default value=""/>
+          <description>
+            <text>The route device.</text>
+          </description>
+        </leaf>
+        <leaf name="metric">
+          <type name="string"/>
+          <default value=""/>
+          <description>
+            <text>The route metric.</text>
+          </description>
+        </leaf>
+      </list>
+      <container name="ipsec">
+        <description>
+          <text>Configuration of the IPSEC.</text>
+        </description>
+        <leaf name="enabled">
+          <type name="boolean"/>
+          <description>
+            <text>Indicates that the system should start IPSEC service.</text>
+          </description>
+        </leaf>
+        <list name="private-key">
+          <key value="name"/>
+          <description>
+            <text>List of the private keys.</text>
+          </description>
+          <leaf name="name">
+            <type name="string"/>
+            <description>
+              <text>The identifier of the private key.</text>
+            </description>
+          </leaf>
+          <leaf name="content">
+            <type name="string"/>
+            <description>
+              <text>The content of the private key.</text>
+            </description>
+          </leaf>
+        </list>
+        <list name="certificate">
+          <key value="name"/>
+          <description>
+            <text>List of the certificates.</text>
+          </description>
+          <leaf name="name">
+            <type name="string"/>
+            <description>
+              <text>The identifier of the certificate.</text>
+            </description>
+          </leaf>
+          <leaf name="content">
+            <type name="string"/>
+            <description>
+              <text>The content of the certificate.</text>
+            </description>
+          </leaf>
+        </list>
+        <list name="connection">
+          <key value="name"/>
+          <description>
+            <text>List of the IPSEC connections.</text>
+          </description>
+          <leaf name="name">
+            <type name="string"/>
+            <description>
+              <text>The identifier of the connection.</text>
+            </description>
+          </leaf>
+          <leaf name="mode">
+            <type name="ipsec-mode"/>
+            <default value="tunnel"/>
+            <description>
+              <text>The mode of the connection.</text>
+            </description>
+          </leaf>
+          <leaf name="protocol">
+            <type name="auth-protocol-type"/>
+            <default value="ikev2"/>
+            <description>
+              <text>The auth protocl of the connection.</text>
+            </description>
+          </leaf>
+          <leaf name="tries">
+            <type name="string"/>
+            <description>
+              <text>Attempts to negotiate (a positive integer or %forever).</text>
+            </description>
+          </leaf>
+          <leaf name="ike">
+            <type name="string"/>
+            <description>
+              <text>Comma-separated list of IKE/ISAKMP SA encryption/authentication algorithms to be used.</text>
+            </description>
+          </leaf>
+          <leaf name="esp">
+            <type name="string"/>
+            <description>
+              <text>Comma-separated list of ESP encryption/authentication algorithms to be used for the connection.</text>
+            </description>
+          </leaf>
+          <leaf name="compress">
+            <type name="enumeration">
+              <enum name="yes"/>
+              <enum name="no"/>
+            </type>
+            <default value="no"/>
+            <description>
+              <text>Whether IPComp compression of content is proposed on the connection.</text>
+            </description>
+          </leaf>
+          <leaf name="replay-window">
+            <type name="int32"/>
+            <default value="0"/>
+            <description>
+              <text>The IPsec replay window size for this connection.</text>
+            </description>
+          </leaf>
+          <leaf name="dpdaction">
+            <type name="enumeration">
+              <enum name="none"/>
+              <enum name="clear"/>
+              <enum name="hold"/>
+              <enum name="restart"/>
+            </type>
+            <default value="none"/>
+            <description>
+              <text>Controls the use of the Dead Peer Detection protocol.</text>
+            </description>
+          </leaf>
+          <leaf name="dpddelay">
+            <type name="string"/>
+            <default value="30s"/>
+            <description>
+              <text>Defines the period time interval with which R_U_THERE messages/INFORMATIONAL exchanges are sent to the peer.</text>
+            </description>
+          </leaf>
+          <leaf name="dpdtimeout">
+            <type name="string"/>
+            <default value="150s"/>
+            <description>
+              <text>Defines the timeout interval, after which all connections to a peer are deleted in case of inactivity.</text>
+            </description>
+          </leaf>
+          <leaf name="ikelifetime">
+            <type name="string"/>
+            <default value="3h"/>
+            <description>
+              <text>How long the keying channel of a connection (ISAKMP or IKE SA) should last before being renegotiated.</text>
+            </description>
+          </leaf>
+          <leaf name="lifetime">
+            <type name="string"/>
+            <default value="1h"/>
+            <description>
+              <text>how long a particular instance of a connection should last, from successful negotiation to expiry.</text>
+            </description>
+          </leaf>
+          <leaf name="local-ip">
+            <type name="string"/>
+            <description>
+              <text>Local IP address of the public-network interface or one of several magic values.</text>
+            </description>
+          </leaf>
+          <leaf name="local-src-ip">
+            <type name="string"/>
+            <description>
+              <text>Local virtual IP.</text>
+            </description>
+          </leaf>
+          <leaf name="local-subnet">
+            <type name="string"/>
+            <description>
+              <text>Local private subnet.</text>
+            </description>
+          </leaf>
+          <leaf name="local-auth">
+            <type name="auth-method-type"/>
+            <default value="psk"/>
+            <description>
+              <text>Local authentication methord.</text>
+            </description>
+          </leaf>
+          <leaf name="local-auth2">
+            <type name="string"/>
+            <description>
+              <text>Local additional authentication methord, which can be null if not present.</text>
+            </description>
+          </leaf>
+          <leaf name="local-id">
+            <type name="string"/>
+            <description>
+              <text>Local ID for authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="local-id2">
+            <type name="string"/>
+            <description>
+              <text>Local additional ID for authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="local-cert">
+            <type name="string"/>
+            <description>
+              <text>Local certificate reference to the name in list certificate for pubkey authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="local-cert2">
+            <type name="string"/>
+            <description>
+              <text>Local additional certificate reference to the name in list certificate for pubkey authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-ip">
+            <type name="string"/>
+            <description>
+              <text>Peer IP address of the public-network interface or one of several magic values.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-src-ip">
+            <type name="string"/>
+            <description>
+              <text>Peer virtual IP.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-subnet">
+            <type name="string"/>
+            <description>
+              <text>Peer private subnet.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-auth">
+            <type name="auth-method-type"/>
+            <default value="psk"/>
+            <description>
+              <text>Peer authentication methord.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-auth2">
+            <type name="string"/>
+            <description>
+              <text>Peer additional authentication methord, which can be null if not present.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-id">
+            <type name="string"/>
+            <description>
+              <text>Peer ID for authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-id2">
+            <type name="string"/>
+            <description>
+              <text>Peer additional ID for authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-cert">
+            <type name="string"/>
+            <description>
+              <text>Peer certificate reference to the name in list certificate for pubkey authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="peer-cert2">
+            <type name="string"/>
+            <description>
+              <text>Peer additional certificate reference to the name in list certificate for pubkey authentication.</text>
+            </description>
+          </leaf>
+        </list>
+        <list name="secret">
+          <key value="name"/>
+          <description>
+            <text>List of the IPSEC secrets.</text>
+          </description>
+          <leaf name="name">
+            <type name="string"/>
+            <description>
+              <text>The identifier of the secret.</text>
+            </description>
+          </leaf>
+          <leaf name="host">
+            <type name="string"/>
+            <default value=""/>
+            <description>
+              <text>Host ID for authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="peer">
+            <type name="string"/>
+            <default value=""/>
+            <description>
+              <text>Peer ID for authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="type">
+            <type name="secret-type"/>
+            <default value="PSK"/>
+            <description>
+              <text>Peer private subnet.</text>
+            </description>
+          </leaf>
+          <leaf name="key">
+            <type name="string"/>
+            <description>
+              <text>The key or credential string if PSK/EAP/NTLM/XAUTH.</text>
+            </description>
+          </leaf>
+          <leaf name="key-ref">
+            <type name="string"/>
+            <description>
+              <text>The private-key reference to name in list private-key if RSA/ECDSA/BLISS.</text>
+            </description>
+          </leaf>
+          <leaf name="passphrase">
+            <type name="string"/>
+            <description>
+              <text>The passphrase for encrypted key.</text>
+            </description>
+          </leaf>
+        </list>
+        <list name="ca">
+          <key value="name"/>
+          <description>
+            <text>List of the IPSEC CA.</text>
+          </description>
+          <leaf name="name">
+            <type name="string"/>
+            <description>
+              <text>The identifier of the CA.</text>
+            </description>
+          </leaf>
+          <leaf name="cacert">
+            <type name="string"/>
+            <description>
+              <text>The certificate reference to the name in list certificate for pubkey authentication.</text>
+            </description>
+          </leaf>
+          <leaf name="ocspuri">
+            <type name="string"/>
+            <description>
+              <text>An OCSP URI.</text>
+            </description>
+          </leaf>
+          <leaf name="crluri">
+            <type name="string"/>
+            <description>
+              <text>A CRL distribution point (ldap, http, or file URI).</text>
+            </description>
+          </leaf>
+          <leaf name="certuribase">
+            <type name="string"/>
+            <description>
+              <text>The base URI for the Hash and URL feature supported by IKEv2.</text>
+            </description>
+          </leaf>
+        </list>
+      </container>
+      <container name="dns-resolver">
+        <description>
+          <text>Configuration of the DNS resolver.</text>
+        </description>
+        <list name="server">
+          <key value="address"/>
+          <ordered-by value="user"/>
+          <description>
+            <text>List of the DNS servers that the resolver should query.</text>
+          </description>
+          <leaf name="address">
+            <type name="inet:ip-address"/>
+            <mandatory value="true"/>
+            <description>
+              <text>The address of the DNS server.</text>
+            </description>
+          </leaf>
+        </list>
+      </container>
+      <list name="iptables-rule">
+        <key value="name"/>
+        <description>
+          <text>List of iptables rule.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The identifier of the binding.</text>
+          </description>
+        </leaf>
+        <leaf name="version">
+          <type name="enumeration">
+            <enum name="ipv4"/>
+            <enum name="ipv6"/>
+          </type>
+          <description>
+            <text>The rule ip version.</text>
+          </description>
+        </leaf>
+        <leaf name="table">
+          <type name="enumeration">
+            <enum name="filter"/>
+          </type>
+          <description>
+            <text>The iptables table name.</text>
+          </description>
+        </leaf>
+        <leaf name="priority">
+          <type name="uint32"/>
+          <description>
+            <text>The rule priority, 0 means the lowest.</text>
+          </description>
+        </leaf>
+        <leaf name="rule">
+          <type name="string"/>
+          <description>
+            <text>The rule specification.</text>
+          </description>
+        </leaf>
+      </list>
+    </container>
+    <container name="service">
+      <description>
+        <text>System service configuration.</text>
+      </description>
+      <container name="console">
+        <description>
+          <text>Configuration of the serial console service.</text>
+        </description>
+        <leaf name="speed">
+          <type name="enumeration">
+            <enum name="9600"/>
+            <enum name="38400"/>
+            <enum name="115200"/>
+          </type>
+          <default value="115200"/>
+          <description>
+            <text>The console speed.</text>
+          </description>
+        </leaf>
+        <leaf name="terminal">
+          <type name="enumeration">
+            <enum name="vt100"/>
+            <enum name="vt102"/>
+            <enum name="vt200"/>
+            <enum name="vt220"/>
+            <enum name="xterm"/>
+            <enum name="ansi"/>
+            <enum name="linux"/>
+          </type>
+          <default value="vt100"/>
+          <description>
+            <text>The console terminal type.</text>
+          </description>
+        </leaf>
+      </container>
+      <container name="ssh">
+        <description>
+          <text>Configuration of the SSH server.</text>
+        </description>
+        <leaf name="port">
+          <type name="inet:port-number"/>
+          <default value="22"/>
+          <description>
+            <text>The port number used to listen for incoming SSH connection.</text>
+          </description>
+        </leaf>
+      </container>
+      <container name="web">
+        <description>
+          <text>Configuration of the web server.</text>
+        </description>
+        <leaf name="idle-timeout">
+          <type name="uint32">
+            <range value="60..3600"/>
+          </type>
+          <units name="seconds"/>
+          <default value="900"/>
+          <description>
+            <text>The amount of time the server will wait for a
+request from a client before requesting a re-login.</text>
+          </description>
+        </leaf>
+        <container name="http">
+          <leaf name="enabled">
+            <type name="boolean"/>
+            <default value="true"/>
+            <description>
+              <text>Enable the HTTP service</text>
+            </description>
+          </leaf>
+          <leaf name="port">
+            <type name="inet:port-number"/>
+            <default value="80"/>
+            <description>
+              <text>The port number used to listen for incoming http connection.</text>
+            </description>
+          </leaf>
+        </container>
+        <container name="https">
+          <leaf name="enabled">
+            <type name="boolean"/>
+            <default value="true"/>
+            <description>
+              <text>Enable the HTTPS service</text>
+            </description>
+          </leaf>
+          <leaf name="port">
+            <type name="inet:port-number"/>
+            <default value="443"/>
+            <description>
+              <text>The port number used to listen for incoming https connection.</text>
+            </description>
+          </leaf>
+        </container>
+      </container>
+    </container>
+    <container name="radius">
+      <description>
+        <text>Configuration of the RADIUS.</text>
+      </description>
+      <leaf name="enabled">
+        <type name="boolean"/>
+        <description>
+          <text>Enable the RADIUS authentication</text>
+        </description>
+      </leaf>
+      <leaf name="retry">
+        <type name="uint16"/>
+        <default value="1"/>
+        <description>
+          <text>Set the retry on no response from the RADUIS server</text>
+        </description>
+      </leaf>
+      <list name="server">
+        <key value="address"/>
+        <ordered-by value="user"/>
+        <description>
+          <text>List of the TACACS+ servers.</text>
+        </description>
+        <leaf name="address">
+          <type name="inet:ip-address"/>
+          <mandatory value="true"/>
+          <description>
+            <text>The address of the TACACS+ server.</text>
+          </description>
+        </leaf>
+        <leaf name="port">
+          <type name="inet:port-number"/>
+          <default value="49"/>
+          <description>
+            <text>The port number on which to contact the RADUIS server</text>
+          </description>
+        </leaf>
+        <leaf name="secret-key">
+          <type name="string"/>
+          <description>
+            <text>The unencrypted shared key used between the authentication
+server and the device.</text>
+          </description>
+        </leaf>
+        <leaf name="timeout">
+          <type name="uint16"/>
+          <units name="seconds"/>
+          <description>
+            <text>Set the timeout in seconds on responses from the RADUIS server</text>
+          </description>
+        </leaf>
+      </list>
+    </container>
+    <container name="tacacs">
+      <description>
+        <text>Configuration of the TACACS+.</text>
+      </description>
+      <leaf name="enabled">
+        <type name="boolean"/>
+        <description>
+          <text>Enable the TACACS+ authentication</text>
+        </description>
+      </leaf>
+      <leaf name="timeout">
+        <type name="uint16"/>
+        <units name="seconds"/>
+        <default value="5"/>
+        <description>
+          <text>Set the timeout in seconds on responses from the TACACS+ server</text>
+        </description>
+      </leaf>
+      <leaf name="service-tag">
+        <type name="string"/>
+        <description>
+          <text>The service tag to specify the user privilege.</text>
+        </description>
+      </leaf>
+      <list name="server">
+        <key value="id"/>
+        <ordered-by value="user"/>
+        <description>
+          <text>List of the TACACS+ servers.</text>
+        </description>
+        <leaf name="id">
+          <type name="uint32"/>
+          <description>
+            <text>The ID of the TACACS+ server.</text>
+          </description>
+        </leaf>
+        <leaf name="address">
+          <type name="inet:ip-address"/>
+          <mandatory value="true"/>
+          <description>
+            <text>The address of the TACACS+ server.</text>
+          </description>
+        </leaf>
+        <leaf name="port">
+          <type name="inet:port-number"/>
+          <default value="49"/>
+          <description>
+            <text>The port number on which to contact the TACACS+ server</text>
+          </description>
+        </leaf>
+        <leaf name="secret-key">
+          <type name="string"/>
+          <description>
+            <text>The unencrypted shared key used between the authentication
+server and the device.</text>
+          </description>
+        </leaf>
+      </list>
+    </container>
+    <container name="snmp">
+      <description>
+        <text>Configuration of the SNMP agent service.</text>
+      </description>
+      <leaf name="enabled">
+        <type name="boolean"/>
+        <default value="false"/>
+        <description>
+          <text>Enable the SNMP agent</text>
+        </description>
+      </leaf>
+      <list name="user">
+        <key value="name"/>
+        <ordered-by value="user"/>
+        <description>
+          <text>List of the SNMPv3 users.</text>
+        </description>
+        <leaf name="name">
+          <type name="string"/>
+          <description>
+            <text>The ID of user.</text>
+          </description>
+        </leaf>
+        <leaf name="enabled">
+          <type name="boolean"/>
+          <description>
+            <text>Enable the user.</text>
+          </description>
+        </leaf>
+        <leaf name="hash">
+          <type name="snmp-hash"/>
+          <description>
+            <text>The user password hash algorithm.</text>
+          </description>
+        </leaf>
+        <leaf name="pass">
+          <type name="string"/>
+          <description>
+            <text>The user passowrd.</text>
+          </description>
+        </leaf>
+        <leaf name="write-enabled">
+          <type name="boolean"/>
+          <description>
+            <text>Enable the user write access.</text>
+          </description>
+        </leaf>
+      </list>
+      <list name="trap-host">
+        <key value="address"/>
+        <ordered-by value="user"/>
+        <description>
+          <text>List of the SNMP trap hosts.</text>
+        </description>
+        <leaf name="address">
+          <type name="inet:ip-address"/>
+          <description>
+            <text>The IP of trap host.</text>
+          </description>
+        </leaf>
+        <leaf name="enabled">
+          <type name="boolean"/>
+          <description>
+            <text>Enable the trap host.</text>
+          </description>
+        </leaf>
+        <leaf name="version">
+          <type name="snmp-version"/>
+          <description>
+            <text>The SNMP version of trap host.</text>
+          </description>
+        </leaf>
+        <leaf name="access-id">
+          <type name="string"/>
+          <description>
+            <text>The authentication ID to access trap host (community for snmpv1/v2c and user name for snmpv3).</text>
+          </description>
+        </leaf>
+        <leaf name="hash">
+          <type name="snmp-hash"/>
+          <description>
+            <text>The snmpv3 user password hash algorithm.</text>
+          </description>
+        </leaf>
+        <leaf name="pass">
+          <type name="string"/>
+          <description>
+            <text>The snmpv3 user passowrd.</text>
+          </description>
+        </leaf>
+      </list>
+    </container>
+    <container name="bmc">
+      <description>
+        <text>BMC configuration.</text>
+      </description>
+      <container name="console">
+        <description>
+          <text>Configuration of the serial console service.</text>
+        </description>
+        <leaf name="speed">
+          <type name="enumeration">
+            <enum name="9600"/>
+            <enum name="38400"/>
+            <enum name="115200"/>
+          </type>
+          <default value="115200"/>
+          <description>
+            <text>The console speed.</text>
+          </description>
+        </leaf>
+        <leaf name="data">
+          <type name="enumeration">
+            <enum name="5"/>
+            <enum name="6"/>
+            <enum name="7"/>
+            <enum name="8"/>
+          </type>
+          <default value="8"/>
+          <description>
+            <text>The console data.</text>
+          </description>
+        </leaf>
+        <leaf name="parity">
+          <type name="enumeration">
+            <enum name="none"/>
+            <enum name="even"/>
+            <enum name="odd"/>
+            <enum name="mark"/>
+            <enum name="space"/>
+          </type>
+          <default value="none"/>
+          <description>
+            <text>The console parity.</text>
+          </description>
+        </leaf>
+        <leaf name="stopbits">
+          <type name="enumeration">
+            <enum name="1"/>
+            <enum name="2"/>
+          </type>
+          <default value="1"/>
+          <description>
+            <text>The console stopbits.</text>
+          </description>
+        </leaf>
+        <leaf name="hw-flowctrl">
+          <type name="boolean"/>
+          <default value="true"/>
+          <description>
+            <text>Enable hardware flow control.</text>
+          </description>
+        </leaf>
+        <leaf name="sw-flowctrl">
+          <type name="boolean"/>
+          <default value="false"/>
+          <description>
+            <text>Enable software flow control.</text>
+          </description>
+        </leaf>
+      </container>
+      <container name="log">
+        <description>
+          <text>Configuration of the console log.</text>
+        </description>
+        <leaf name="to-file">
+          <type name="boolean"/>
+          <default value="true"/>
+          <description>
+            <text>Enable writing log to file.</text>
+          </description>
+        </leaf>
+        <leaf name="rotate-num">
+          <type name="uint32">
+            <range value="1..50"/>
+          </type>
+          <default value="20"/>
+          <description>
+            <text>The max number of log rotate files.</text>
+          </description>
+        </leaf>
+        <leaf name="rotate-size">
+          <type name="uint32">
+            <range value="1..10"/>
+          </type>
+          <units name="MB"/>
+          <default value="5"/>
+          <description>
+            <text>The size size of log rotate file.</text>
+          </description>
+        </leaf>
+      </container>
+    </container>
+  </container>
+  <container name="system-state">
+    <config value="false"/>
+    <description>
+      <text>System group operational state.</text>
+    </description>
+    <container name="platform">
+      <description>
+        <text>Contains vendor-specific information for
+identifying the system platform.</text>
+      </description>
+      <leaf name="device-name">
+        <type name="string"/>
+        <description>
+          <text>The type of the device.</text>
+        </description>
+      </leaf>
+      <leaf name="device-id">
+        <type name="string"/>
+        <description>
+          <text>The id of the device (serial number).</text>
+        </description>
+      </leaf>
+      <leaf name="hardware-version">
+        <type name="string"/>
+        <description>
+          <text>The version of the hardware.</text>
+        </description>
+      </leaf>
+      <leaf name="software-version">
+        <type name="string"/>
+        <description>
+          <text>The version of the software.</text>
+        </description>
+      </leaf>
+      <leaf name="uboot-version">
+        <type name="string"/>
+        <description>
+          <text>The version of the U-Boot.</text>
+        </description>
+      </leaf>
+    </container>
+    <container name="clock">
+      <description>
+        <text>Monitoring of the system date and time properties.</text>
+      </description>
+      <leaf name="current-datetime">
+        <type name="yang:date-and-time"/>
+        <description>
+          <text>The current system date and time.</text>
+        </description>
+      </leaf>
+      <leaf name="uptime">
+        <type name="string"/>
+        <description>
+          <text>The uptime of system.</text>
+        </description>
+      </leaf>
+    </container>
+  </container>
+  <rpc name="set-current-datetime">
+    <description>
+      <text>Set the /system-state/clock/current-datetime leaf
+to the specified value.
+
+If the system is using NTP (i.e., /system/ntp/enabled
+is set to 'true'), then this operation will fail with
+error-tag 'operation-failed' and error-app-tag value of
+'ntp-active'.</text>
+    </description>
+    <input>
+      <leaf name="current-datetime">
+        <type name="yang:date-and-time"/>
+        <mandatory value="true"/>
+        <description>
+          <text>The current system date and time.</text>
+        </description>
+      </leaf>
+    </input>
+  </rpc>
+  <rpc name="system-restart">
+    <description>
+      <text>Request that the entire system be restarted immediately.
+A server SHOULD send an rpc reply to the client before
+restarting the system.</text>
+    </description>
+  </rpc>
+  <rpc name="system-shutdown">
+    <description>
+      <text>Request that the entire system be shut down immediately.
+A server SHOULD send an rpc reply to the client before
+shutting down the system.</text>
+    </description>
+  </rpc>
+  <rpc name="config-save">
+    <description>
+      <text>Request to save the entire system configuration to disk as startup configuration.</text>
+    </description>
+  </rpc>
+  <rpc name="snmp-apply">
+    <description>
+      <text>Request to apply the SNMP configuration.</text>
+    </description>
+  </rpc>
+</module>

@@ -1,0 +1,14 @@
+-- SILICOM-IBS-MIB { iso org(3) dod(6) internet(1) private(4)
+--    enterprises(1) silicom(15694) }
+
+SILICOM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, enterprises      FROM SNMPv2-SMI;
+
+
+silicom                            OBJECT IDENTIFIER ::=  { enterprises 15694 }
+silicomSystem                      OBJECT IDENTIFIER ::=  { silicom 1 }
+
+
+END

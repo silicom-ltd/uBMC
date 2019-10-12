@@ -1,0 +1,135 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+<%+header%>
+<h2><a id="content" name="content"><%:BIOS update%></a></h2>
+
+	<fieldset class="cbi-section">
+		<div class="cbi-section-node">
+
+<% if step == 1 then %>
+	<p>
+		<span><%:Upload a software bin file to update the bios. %></span>
+		<% if verify_result.err_code and verify_result.err_code ~= 0 then %>
+		<br/>
+		<span style='color: red'>
+			<%:Please upload a right file to update the bios.%>
+			<br/>
+		<span>
+		<% end %>
+	</p>
+	<form method="post" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+		<%:OS File:%>
+		<input type="file" size="100" name="image" />
+		<br/><br/>
+		<input type="hidden" name="step" value="2" />
+		<input type="checkbox" id="whole" name="all" value="1" style="margin: 5px 10px;"/>
+		<span style="margin-top: 5px; display: block; float: left;"><%:Update all flash regions%></span>
+		<br/>
+		<span id="warning" style="display: none; color: red;">
+		<%:Overwrite all sections of the BIOS may result in network switch not working, proceed only if you know what you are doing.%>
+		</span>
+		<br/><br/><br/>
+		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Start Update%>" />
+	</form>
+	<script type="text/javascript">
+		var EventUtil = {
+			addHandler: function(element, type, handler) {
+				if (element.addEventListener) {
+					element.addEventListener(type, handler, false);
+				} else if (element.attachEvent) {
+					element.attachEvent("on" + type, handler);
+				} else {
+					element["on" + type] = handler;
+				}
+			},
+			removeHandler: function(element, type, handler) {
+				if (element.removeEventListener) {
+					element.removeEventListener(type, handler, false);
+				} else if (element.detachEvent) {
+					element.detachEvent("on" + type, handler);
+				} else {
+					element["on" + type] = null;
+				}
+			}
+		};
+
+		function selectWhole() {
+			var elem = document.getElementById('whole');
+			if (elem.checked) {
+				document.getElementById('warning').style.display = 'block';
+			} else {
+				document.getElementById('warning').style.display = 'none';
+			}
+		}
+
+		EventUtil.addHandler(document.getElementById('whole'), "change", selectWhole);
+	</script>
+<% elseif step == 2 then %>
+	<p>
+		<span><%:BIOS update running status. %></span>
+	</p>
+	<textarea id="process" style="width: 800px !important; height: 300px !important;"></textarea>
+	<script type="text/javascript">
+		var content = '';
+		var apply_xhr = new XHR();
+		var process_panel = document.getElementById('process');
+		function refresh(data) {
+			content += data;
+			content += '\n';
+			process_panel.value = content;
+			process_panel.scrollTop = process_panel.scrollHeight;
+		}
+
+		function percent(step, warning) {
+			apply_xhr.get("<%=controller%>/admin/bmc/bios", "step="+step, function(x, data) {
+				if (data[0].hasOwnProperty('status')) {
+					if (step == 4) {
+						if (warning == undefined) {
+							refresh(data[0].status);
+						}
+						if (data[0].status.indexOf('Processing') >= 0) {
+							setTimeout(function(){percent(4);}, 1000);
+						} else {
+							var index = data[0].status.indexOf(':');
+							if (warning == undefined) {
+								alert(data[0].status.substring(index+1));
+							}
+							location.href="<%=controller%>/admin/bmc/bios";
+						}
+					}
+				} else {
+					location.href="<%=controller%>/admin/bmc/bios";
+				}
+			});
+		}
+<% if all == 0 then %>
+		percent(3);
+		setTimeout(function(){percent(4);}, 1000);
+<% else %>
+		if (confirm('All host bios flash will be overwritten! Are you sure?')) {
+			percent(3);
+			setTimeout(function(){percent(4);}, 1000);
+		} else {
+			percent(4, 1);
+		}
+<% end %>
+	</script>
+<% end %>
+
+		</div>
+		<br>
+	</fieldset>
+
+<%+footer%>

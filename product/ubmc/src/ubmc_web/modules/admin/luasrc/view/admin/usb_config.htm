@@ -1,0 +1,239 @@
+<%#
+LuCI - Lua Configuration Interface
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008 Jo-Philipp Wich <xm@leipzig.freifunk.net>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+$Id$
+
+-%>
+<style type="text/css">
+.cbi-value-field .btn:hover,
+.cbi-value-field .cbi-button:hover {
+	color: #666;
+	text-decoration: none;
+}
+</style>
+<%+header%>
+<h2><a id="content" name="content"><%:USB Image Configure%></a></h2>
+<% if err then %>
+<p><span style='color: red'><%="Error: "..err%></span></p>
+<% elseif msg then %>
+<p><span style='color: green'><%=msg%></span></p>
+<% end %>
+<br />
+
+<form method="post" name="usb_config" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+
+	<fieldset class="cbi-section">
+		<legend>USB and CDROM</legend>
+		<div class="cbi-section-node">
+	<p>&nbsp;</p>
+	<div class="cbi-value">
+		<label class="cbi-value-title"><%:Mounted%></label>
+		<div class="cbi-value-field" style="padding-top: 6px;">
+<% 
+	if state ~= 'false' then
+		write('yes')
+	else
+		write('no')
+	end
+%>
+		</div>
+	</div>
+	<div class="cbi-value">
+		<label class="cbi-value-title"><%:Image%></label>
+		<div class="cbi-value-field" style="padding-top: 6px;"><%=image%></div>
+	</div>
+		</div>
+		<br>
+	</fieldset>
+	<!--<p>&nbsp;</p>-->
+
+	<div class="cbi-value">
+		<label class="cbi-value-title">
+		</label>
+		<div class="cbi-value-field">
+<% if state ~= 'false' then %>
+			<input id="attach-submit" class="cbi-button cbi-button-apply" type="submit" disabled="disabled" name="attach" value="<%:Attach%>"  style="margin-right: 50px;"/>
+			<input id="detach-submit" class="cbi-button cbi-button-apply" type="submit" name="detach" value="<%:Detach%>" onclick="javascript:return confirm('Do you really want to detach the USB CD-ROM Image?');" />
+<% else %>
+			<input id="attach-submit" class="cbi-button cbi-button-apply" type="submit" name="attach" value="<%:Attach%>"  style="margin-right: 50px;"/>
+			<input id="detach-submit" class="cbi-button cbi-button-apply" type="submit" disabled="disabled" name="detach" value="<%:Detach%>" onclick="javascript:return confirm('Do you really want to detach the USB CD-ROM Image?');" />
+<% end %>
+		</div>
+	</div>
+	<p>&nbsp;</p>
+
+
+
+
+	<div class="cbi-value" style="border-bottom: 1px solid #ddd; padding-bottom: 18px; height: 26px; position: relative;">
+		<label class="cbi-value-title">Select ISO file source type</label>
+		<div class="cbi-value-field">
+<% if state ~= 'false' then %>
+			<input class="cbi-input-radio" type="radio" disabled="disabled" checked="true" id="local_image" name="attach_range" value="local" style="float: left;" /> 
+			<label for="local_image" class="cbi-value-dummy" style="width: 130px; cursor: pointer;"><%:Local Image%></label>
+			<input class="cbi-input-radio" type="radio" disabled="disabled" id="remote_image" name="attach_range" value="remote" style="float: left;" />	
+			<label for="remote_image" class="cbi-value-dummy" style="width: 130px; cursor: pointer;"><%:Remote Image%></label>
+<% else %>
+			<input class="cbi-input-radio" type="radio" checked="true" id="local_image" name="attach_range" value="local" style="float: left;" /> 
+			<label for="local_image" class="cbi-value-dummy" style="width: 130px; cursor: pointer;"><%:Local Image%></label>
+			<input class="cbi-input-radio" type="radio" id="remote_image" name="attach_range" value="remote" style="float: left;" />	
+			<label for="remote_image" class="cbi-value-dummy" style="width: 130px; cursor: pointer;"><%:Remote Image%></label>
+<% end %>
+		</div>
+		<div id="slider" style="width: 140px; height: 1px; background-color: #888; position: absolute; bottom: 0px; z-index: 6; left: 180px;">&nbsp;</div>
+	</div>
+	
+	<fieldset class="cbi-section" id="local_section" style="display: block;">
+		<div class="cbi-section-node">
+			<!--<p>&nbsp;</p>-->
+		<%
+			if #iso_list > 0 then
+			local c = 0
+		%>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:Image List%></label>
+				<div class="cbi-value-field">
+<% if state ~= 'false' then %>
+				<% for k,v in pairs(iso_list) do c = c + 1 %>
+					<% if c == 1 then %>
+						<input class="cbi-input-radio" type="radio" disabled="disabled" checked="true" id="file_name_<%=c%>" name="file_name" value="<%=v.name%>" />
+						<label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.name%></label><label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.mtime%></label><br />
+					<% else %>
+						<input class="cbi-input-radio" type="radio" disabled="disabled" id="file_name_<%=c%>" name="file_name" value="<%=v.name%>" />
+						<label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.name%></label><label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.mtime%></label><br />
+					<% end  %>
+				<%- end %>
+<% else %>
+				<% for k,v in pairs(iso_list) do c = c + 1 %>
+					<% if c == 1 then %>
+						<input class="cbi-input-radio" type="radio" checked="true" id="file_name_<%=c%>" name="file_name" value="<%=v.name%>" />
+						<label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.name%></label><label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.mtime%></label><br />
+					<% else %>
+						<input class="cbi-input-radio" type="radio" id="file_name_<%=c%>" name="file_name" value="<%=v.name%>" />
+						<label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.name%></label><label for="file_name_<%=c%>" class="cbi-value-dummy"><%=v.mtime%></label><br />
+					<% end  %>
+				<%- end %>
+<% end %>
+					<br />
+				</div>
+			</div>
+			<% else %>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:Local ISO Image list is empty.%></label>
+			</div>
+			<% end %>
+
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:Upload an ISO image file as%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-text" type="text" disabled="disabled" id="upload_file_name" name="upload_file_name" />
+					<input type="file" disabled="disabled" size="30" name="upload_file" />
+					<br />
+					<br />
+					<input class="cbi-button cbi-button-apply" type="submit" disabled="disabled" name="upload" value="<%:Upload%>" />
+				</div>
+			</div>
+		</div>
+		<br>
+	</fieldset>
+
+	<fieldset class="cbi-section" id="remote_section" style="display: none">
+		<div class="cbi-section-node">
+			<!--<p>&nbsp;</p>-->
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:Remote Address(Host/IP)%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-text" type="text" id="remote_address" name="remote_address" />
+				</div>
+			</div>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:File Path%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-text" type="text" id="remote_path" name="remote_path" />
+				</div>
+			</div>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:Remote Login User%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-text" type="text" id="remote_user" name="remote_user" />
+				</div>
+			</div>
+			<div class="cbi-value">
+				<label class="cbi-value-title"><%:Remote Login Password%></label>
+				<div class="cbi-value-field">
+					<input class="cbi-input-text" type="password" id="remote_password" name="remote_password" />
+				</div>
+			</div>
+		</div>
+		<br>
+	</fieldset>
+	<script type="text/javascript">
+		var EventUtil = {
+			addHandler: function(element, type, handler) {
+				if (element.addEventListener) {
+					element.addEventListener(type, handler, false);
+				} else if (element.attachEvent) {
+					element.attachEvent("on" + type, handler);
+				} else {
+					element["on" + type] = handler;
+				}
+			},
+			removeHandler: function(element, type, handler) {
+				if (element.removeEventListener) {
+					element.removeEventListener(type, handler, false);
+				} else if (element.detachEvent) {
+					element.detachEvent("on" + type, handler);
+				} else {
+					element["on" + type] = null;
+				}
+			}
+		};
+		var timer;
+
+		function range() {
+			if (document.forms['usb_config'].attach_range.value == 'local') {
+				document.getElementById('remote_section').style.display = 'none';
+				document.getElementById('local_section').style.display = 'block';
+				moving(180, 300);
+			} else {
+				document.getElementById('local_section').style.display = 'none';
+				document.getElementById('remote_section').style.display = 'block';
+				moving(330, 300);
+			}
+		}
+
+		function moving(target, time) {
+			clearInterval(timer);
+			var slider = document.getElementById('slider');
+			var init = (new Date()).getTime();
+			var left = parseInt(slider.style.left);
+			var disp = target - left;
+			console.log(disp);
+			timer = setInterval(function() {
+				var instance = (new Date()).getTime() - init;
+				if (instance < time ) {
+					var con = instance / time;
+					//console.log(con);
+					var pos = Math.floor(disp * con);
+					result = left + pos;
+					//console.log(result);
+					slider.style.left =  result + 'px';
+				} else {
+					slider.style.left = target + 'px'; //safety side ^^
+				}
+			},1);
+		}
+
+		EventUtil.addHandler(document.getElementById('local_image'), 'change', range);
+		EventUtil.addHandler(document.getElementById('remote_image'), 'change', range);
+	</script>
+
+</form>

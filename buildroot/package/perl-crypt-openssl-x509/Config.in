@@ -1,0 +1,11 @@
+config BR2_PACKAGE_PERL_CRYPT_OPENSSL_X509
+	bool "perl-crypt-openssl-x509"
+	depends on !BR2_STATIC_LIBS
+	select BR2_PACKAGE_PERL_CRYPT_OPENSSL_RANDOM
+	help
+	  X509 encoding and decoding, using the openSSL libraries
+
+	  https://metacpan.org/release/Crypt-OpenSSL-X509
+
+comment "perl-crypt-openssl-x509 needs a toolchain w/ dynamic library"
+	depends on BR2_STATIC_LIBS

@@ -1,0 +1,2 @@
+board/myirtech
+arch/arm/dts/myd_j335x.dts

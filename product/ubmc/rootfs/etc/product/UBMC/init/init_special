@@ -1,0 +1,15 @@
+#!/bin/sh
+#UBMC X model has no RTC,S/L/M using the /dev/rtc1 as hwclock 
+#if we can setting the /dev/rtc1 successfully we just use it.
+#if not ,using the time when it was build 
+#set the system date from RTC
+hwclock -s -u -f /dev/rtc1
+if [ $? != "0" ];then
+    date -s "$(stat -c %y /etc/hostname)"
+fi
+echo 27 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio27/direction
+
+echo 0 > /sys/class/gpio/gpio27/value
+rmmod m25p80
+

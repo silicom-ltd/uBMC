@@ -1,0 +1,41 @@
+#!/bin/sh
+
+#/usr/sbin/load_bcm
+#/usr/sbin/is_mount_flash.sh
+#/usr/sbin/is_upgrade.sh -C
+#/usr/sbin/is_version_hack.sh
+
+echo "1" > /proc/sys/kernel/sysrq
+
+echo "Staring services"
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+for i in /etc/init.d/S??* ;do
+  # Ignore dangling symlinks (if any).
+  [ ! -f "$i" ] && continue
+
+  case "$i" in
+  *.sh)
+    # Source shell script for speed.
+    (
+      trap - INT QUIT TSTP
+      set start
+      . $i
+    )
+    ;;
+  *)
+    # No sh extension, so fork subprocess.
+    $i start
+    ;;
+  esac
+done
+
+read -p "Start system installation? [Y/N]" -n1
+echo
+if [ "$REPLY" == "Y" ] || [ "$REPLY" == "y" ] ; then
+  /usr/sbin/is_install_system.sh
+else
+  echo "Not installing. You can log in as root, and run is_install_system.sh manually"
+fi
+

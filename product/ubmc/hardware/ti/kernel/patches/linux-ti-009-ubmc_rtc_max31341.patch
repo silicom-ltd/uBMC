@@ -1,0 +1,366 @@
+--- linux-custom-orig/drivers/rtc/rtc-max31341.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/drivers/rtc/rtc-max31341.c	2019-01-24 17:34:52.292361307 +0800
+@@ -0,0 +1,338 @@
++/*
++ * rtc-max31341.c
++ *
++ *  Created on: Sep 28, 2018
++ *      Author: jason_zhang
++ */
++
++#include <linux/module.h>
++#include <linux/i2c.h>
++#include <linux/bcd.h>
++#include <linux/rtc.h>
++#include <linux/delay.h>
++
++/***************************rtc max31341 reg********************************/
++#define MAX31341_CONF_REG1 0X00
++#define MAX31341_CONF_REG2 0X01
++#define MAX31341_SLEEP_CONF_REG 0X02
++#define MAX31341_TIMER_CONF_REG 0X03
++#define MAX31341_INT_EN_REG 0X04
++#define MAX31341_INT_STATUS_REG 0X05
++
++#define MAX31341_SECONDS 0X06
++#define MAX31341_MINUTES 0X07
++#define MAX31341_HOURS 0X08
++#define MAX31341_DAY 0X09
++#define MAX31341_DATE 0X0A
++#define MAX31341_MONTH 0X0B
++#define MAX31341_YEAR 0X0C
++#define MAX31341_ALM1_SEC 0X0D
++#define MAX31341_ALM1_MIN 0X0E
++#define MAX31341_ALM1_HRS 0X0F
++#define MAX31341_ALM1DAY_DATE 0X10
++#define MAX31341_ALM2_MIN 0X11
++#define MAX31341_ALM2_HRS 0X12
++#define MAX31341_ALM2DAY_DATE 0X13
++#define MAX31341_TIMER_COUNT 0X14
++#define MAX31341_TIMER_INIT 0X15
++#define MAX31341_PWR_MGMT_REG 0X56
++#define MAX31341_CLOCK_SYNC_REG 0X58
++static struct i2c_driver max31341_driver;
++/***************************rtc max31341 bit mask********************************/
++#define SQ_1HZ 0X00
++#define MAX31341_RS 0x06 & (SQ_1HZ | 0xf9)	//output 1 hz square wave
++#define MAX31341_CLK_IN 0x03 << 4
++#define MAX31341_SWRSTN 0x01 << 0
++#define MAX31341_BREF 0x01 << 4
++#define MAX31341_RD_RTC 0x01 << 2
++#define MAX31341_SET_RTC 0x01 << 1
++#define MAX31341_OSCONZ 0X01 << 3
++#define MAX31341_SET_DELAY 0X02 << 0
++#define MAX31341_PWR_MGMT 0x0d //set the pwr supply source to AIN
++#define W_FLG 0
++#define MAX31341_SET_DELAY_TIME 1010
++static int max31341_write_byte(struct i2c_client *client,const unsigned char reg,const unsigned char val)
++{
++	int rc;
++	char tx_buf[2] = {reg,val};
++    struct i2c_msg msg[1] = {
++        [0] = {
++            .addr = client->addr,
++            .flags= W_FLG,
++            .len = sizeof(tx_buf),
++            .buf = tx_buf,
++        },
++    };
++    rc = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
++    //printk("max31341_write_byte var :%x,reg: %x rc is %d ARRAY_SIZE is %d \n",val,reg,rc,ARRAY_SIZE(msg));
++    if (rc != ARRAY_SIZE(msg))
++    		goto write_failed;
++    msleep(1);
++    return rc;
++write_failed:
++   	dev_err(&client->dev, "%s: register write failed\n", __func__);
++   	return -EIO;
++
++}
++
++static char max31341_read_byte(struct i2c_client *client,const unsigned char reg)
++{
++    char txbuf[1] = {reg};
++    char rxbuf[1] = {0};
++    int rc = 0;
++    struct i2c_msg msg[2] = {
++        [0] = {
++            .addr = client->addr,
++            .flags = W_FLG,
++            .len = sizeof(txbuf),
++            .buf = txbuf,
++        },
++        [1] = {
++            .addr = client->addr,
++            .flags = I2C_M_RD,
++            .len = sizeof(rxbuf),
++            .buf = rxbuf,
++        },
++    };
++
++    rc = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
++    //printk("max31341_read_byte var:%x,reg: %x,rc is %d ",rxbuf[0],reg,rc);
++    if (rc != ARRAY_SIZE(msg)) {
++    		dev_err(&client->dev, "%s: register read failed\n", __func__);
++    		return -EIO;
++    	}
++    msleep(1);
++    return rxbuf[0];
++}
++static int max31341_i2c_dump(struct i2c_client *client, unsigned char reg,char *rxbuf)
++{
++    char txbuf[1] = {reg};
++    int rc = 0;
++    struct i2c_msg msg[2] = {
++        [0] = {
++            .addr = client->addr,
++            .flags = W_FLG,
++            .len = sizeof(txbuf),
++            .buf = txbuf,
++        },
++        [1] = {
++            .addr = client->addr,
++            .flags = I2C_M_RD,
++            .len = sizeof(rxbuf),
++            .buf = rxbuf,
++        },
++    };
++
++    rc = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
++    //printk("max31341_read_byte var:%x,reg: %x,rc is %d ",rxbuf[0],reg,rc);
++    if (rc != ARRAY_SIZE(msg)) {
++    		dev_err(&client->dev, "%s: register read failed\n", __func__);
++    		return -EIO;
++    	}
++    msleep(1);
++    return rc;
++}
++static int max31341_init(struct i2c_client *client)
++{
++	char var = 0;
++	int rc;
++	var =  MAX31341_BREF | MAX31341_RD_RTC;
++	var = var & ~(MAX31341_SET_RTC);
++	rc = max31341_write_byte(client,MAX31341_CONF_REG2,var);
++	if (rc < 0)
++	{
++		printk("RTC:set MAX31341_CONF_REG2 fail \n");
++		return rc;
++	}
++
++	var = max31341_read_byte(client,MAX31341_CONF_REG1);
++	var = MAX31341_CLK_IN|MAX31341_SWRSTN|MAX31341_RS;
++	var = var & ~(MAX31341_OSCONZ);
++	rc = max31341_write_byte(client,MAX31341_CONF_REG1,var);
++	if (rc < 0)
++	{
++		printk("RTC:set MAX31341_CONF_REG1 fail \n");
++		return rc;
++	}
++
++	rc = max31341_write_byte(client,MAX31341_CLOCK_SYNC_REG,MAX31341_SET_DELAY);
++	if (rc < 0)
++	{
++		printk("RTC:set MAX31341_CLOCK_SYNC_REG fail \n");
++		return rc;
++	}
++	var = max31341_read_byte(client,MAX31341_PWR_MGMT_REG);
++	if((var & 0x0f) != MAX31341_PWR_MGMT)
++	{
++		rc = max31341_write_byte(client,MAX31341_PWR_MGMT_REG,MAX31341_PWR_MGMT);
++	}
++
++	return 0;
++
++}
++
++static int max31341_write_protect_enable(struct i2c_client *client)
++{
++	char var;
++	int rc;
++	var = max31341_read_byte(client,MAX31341_CONF_REG2);
++	var = var | MAX31341_SET_RTC;
++	rc = max31341_write_byte(client,MAX31341_CONF_REG2,var);
++	return rc;
++}
++static int max31341_write_protect_disable(struct i2c_client *client)
++{
++	char var;
++	int rc;
++	var = max31341_read_byte(client,MAX31341_CONF_REG2);
++	var = var & ~(MAX31341_SET_RTC);
++	rc = max31341_write_byte(client,MAX31341_CONF_REG2,var);
++
++	return rc;
++}
++static int max31341_read_protect_enable(struct i2c_client *client)
++{
++	char var;
++	int rc;
++	var = max31341_read_byte(client,MAX31341_CONF_REG2);
++	var = var | MAX31341_RD_RTC;
++	rc = max31341_write_byte(client,MAX31341_CONF_REG2,var);
++	return rc;
++}
++static int max31341_read_protect_disable(struct i2c_client *client)
++{
++	char var;
++	int rc;
++	var = max31341_read_byte(client,MAX31341_CONF_REG2);
++	var = var & ~(MAX31341_RD_RTC);
++	rc = max31341_write_byte(client,MAX31341_CONF_REG2,var);
++	return rc;
++}
++
++static int max31341_i2c_set_time(struct i2c_client *client, struct rtc_time *tm)
++{
++	int rc = 0;
++	//printk("max31341_i2c_set_time%d:%d:%d:%d:%d:%d:%d rc is %d\n",tm->tm_sec,tm->tm_min,tm->tm_hour,tm->tm_mday,tm->tm_mon,tm->tm_year,tm->tm_wday,rc);
++	/*printk("max31341_i2c_set_time in bcd :%d:%d:%d:%d:%d:%d:%d rc is %d\n",
++			bin2bcd(tm->tm_sec),
++			bin2bcd(tm->tm_min),
++			bin2bcd(tm->tm_hour),
++			bin2bcd(tm->tm_mday),
++			bin2bcd(tm->tm_mon),
++			bin2bcd(tm->tm_year),
++			bin2bcd(tm->tm_wday),rc);*/
++	rc = max31341_write_byte(client,MAX31341_SECONDS,bin2bcd(tm->tm_sec));
++	if (rc < 0)
++			return rc;
++	rc = max31341_write_byte(client,MAX31341_MINUTES,bin2bcd(tm->tm_min));
++	if (rc < 0)
++			return rc;
++	rc = max31341_write_byte(client,MAX31341_HOURS,bin2bcd(tm->tm_hour));
++	if (rc < 0)
++			return rc;
++	rc = max31341_write_byte(client,MAX31341_DATE,bin2bcd(tm->tm_mday));
++	if (rc < 0)
++			return rc;
++	rc = max31341_write_byte(client,MAX31341_MONTH,bin2bcd(tm->tm_mon));
++	if (rc < 0)
++			return rc;
++	rc = max31341_write_byte(client,MAX31341_DAY,bin2bcd(tm->tm_wday));
++	if (rc < 0)
++			return rc;
++	rc = max31341_write_byte(client,MAX31341_YEAR,bin2bcd(tm->tm_year));
++	if (rc < 0)
++			return rc;
++	max31341_write_protect_enable(client);
++	msleep(MAX31341_SET_DELAY_TIME);
++	max31341_write_protect_disable(client);
++	return 0;
++}
++
++
++static int max31341_i2c_read_time(struct i2c_client *client, struct rtc_time *tm)
++{
++	int rc;
++	max31341_read_protect_enable(client);
++	tm->tm_sec = bcd2bin(max31341_read_byte(client,MAX31341_SECONDS));
++	tm->tm_min = bcd2bin(max31341_read_byte(client,MAX31341_MINUTES));
++	tm->tm_hour = bcd2bin(max31341_read_byte(client,MAX31341_HOURS));
++	tm->tm_mday = bcd2bin(max31341_read_byte(client,MAX31341_DATE));
++	tm->tm_mon = bcd2bin(max31341_read_byte(client,MAX31341_MONTH));
++	tm->tm_year = bcd2bin(max31341_read_byte(client,MAX31341_YEAR));
++	tm->tm_wday = bcd2bin(max31341_read_byte(client,MAX31341_DAY));
++	rc = rtc_valid_tm(tm);
++	//printk("max31341_i2c_read_time %d:%d:%d:%d:%d:%d:%d rc is %d\n",tm->tm_sec,tm->tm_min,tm->tm_hour,tm->tm_mday,tm->tm_mon,tm->tm_year,tm->tm_wday,rc);
++	if(rc < 0)
++	{
++		//set default value when rtc value is not init
++		printk("rtc date vaule is invalid ,set rtc value to the default value");
++		tm->tm_sec = 0;
++		tm->tm_min = 0;
++		tm->tm_hour = 0;
++		tm->tm_mday = 1;
++		tm->tm_mon = 0;
++		tm->tm_year = 70;
++		tm->tm_wday = 0;
++		max31341_i2c_set_time(client, tm);
++	}
++	//printk("max31341_i2c_read_time %d:%d:%d:%d:%d:%d:%d rc is %d\n",tm->tm_sec,tm->tm_min,tm->tm_hour,tm->tm_mday,tm->tm_mon,tm->tm_year,tm->tm_wday,rc);
++	return rc;
++}
++
++
++
++static int max31341_rtc_read_time(struct device *dev, struct rtc_time *tm)
++{
++	return max31341_i2c_read_time(to_i2c_client(dev), tm);
++}
++
++static int max31341_rtc_set_time(struct device *dev, struct rtc_time *tm)
++{
++	return max31341_i2c_set_time(to_i2c_client(dev), tm);
++}
++
++static const struct rtc_class_ops max31341_rtc_ops = {
++	.read_time = max31341_rtc_read_time,
++	.set_time = max31341_rtc_set_time,
++};
++
++static int
++max31341_probe(struct i2c_client *client, const struct i2c_device_id *id)
++{
++	struct rtc_device *rtc;
++	int rc;
++	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
++		return -ENODEV;
++
++	rtc = devm_rtc_device_register(&client->dev, max31341_driver.driver.name,
++					&max31341_rtc_ops, THIS_MODULE);
++	if (IS_ERR(rtc))
++	{
++		return PTR_ERR(rtc);
++	}
++	i2c_set_clientdata(client, rtc);
++	rc = max31341_init(client);
++	if(rc < 0)
++		return -EIO;
++	return 0;
++}
++
++static const struct i2c_device_id max31341_id[] = {
++	{ "max31341", 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, max31341_id);
++
++static struct i2c_driver max31341_driver = {
++	.driver = {
++		   .name = "rtc-max31341",
++		   },
++	.probe = max31341_probe,
++	.id_table = max31341_id,
++};
++
++module_i2c_driver(max31341_driver);
++
++MODULE_DESCRIPTION("Maxim max31341 RTC driver");
++MODULE_AUTHOR("Jason Zhang ");
++MODULE_LICENSE("GPL");
+--- linux-custom-orig/drivers/rtc/Kconfig	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/rtc/Kconfig	2018-09-28 18:26:18.572311155 +0800
+@@ -320,6 +320,15 @@
+ 	  This driver can also be built as a module. If so, the module
+ 	  will be called rtc-max6900.
+ 
++config RTC_DRV_MAX31341
++	tristate "Maxim MAX31341"
++	help
++	  If you say yes here you will get support for the
++	  Maxim MAX31341 I2C RTC chip.
++
++	  This driver can also be built as a module. If so, the module
++	  will be called rtc-max31341.
++	  
+ config RTC_DRV_MAX8907
+ 	tristate "Maxim MAX8907"
+ 	depends on MFD_MAX8907 || COMPILE_TEST
+--- linux-custom-orig/drivers/rtc/Makefile	2018-07-15 00:46:29.000000000 +0800
++++ linux-custom-silicom/drivers/rtc/Makefile	2018-09-28 18:26:54.311450898 +0800
+@@ -173,3 +173,4 @@
+ obj-$(CONFIG_RTC_DRV_XGENE)	+= rtc-xgene.o
+ obj-$(CONFIG_RTC_DRV_ZYNQMP)	+= rtc-zynqmp.o
+ obj-$(CONFIG_RTC_DRV_GOLDFISH)	+= rtc-goldfish.o
++obj-$(CONFIG_RTC_DRV_MAX31341)	+= rtc-max31341.o
