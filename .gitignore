@@ -1,5 +1,5 @@
 buildroot/.config
 buildroot/..config.tmp
-buildroot/dl/
+buildroot/dl
 buildroot/output/
 buildroot/product

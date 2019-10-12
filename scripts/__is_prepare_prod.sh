@@ -1,5 +1,6 @@
 #!/bin/bash
 #set -x
+#this script is supposed by called from the root of src base, by make
 set -e
 echo "Select product to build. Press enter to select [ubmc]:"
 read prodname
@@ -79,7 +80,16 @@ if [ ! -f buildroot/.config ]; then
 else
 	echo "NOT Copying ${CFG_FILE} to buildroot/.config"
 fi
+
+if [ -d buildroot/../../br2_download ]; then
+	if [ ! -e buildroot/dl ]; then
+		echo "Using buildroot/../../br2_download as buildroot/dl"
+		ln -s ../../br2_download buildroot/dl
+	fi
+fi
+
 mkdir -p buildroot/output
+
 echo "${cfgname}">buildroot/output/.product_cfg
 echo "${prodname}">buildroot/output/.product
 
