@@ -478,6 +478,7 @@ struct ubmc_sensor_config_s ubmc_xsmall_sensor_cfg[XSMALL_SENSOR_MAX_NUM] =
 				.ipmitool_factor.k2 = 0,
 				.ipmitool_factor.minification = 100
 		},
+#if 0
 		{
 				.dev_name = FAN_AND_TEMP_DEV_NAME,
 				.sensor_type = UBMC_SENSOR_FAN,
@@ -500,6 +501,7 @@ struct ubmc_sensor_config_s ubmc_xsmall_sensor_cfg[XSMALL_SENSOR_MAX_NUM] =
 				.ipmitool_factor.k2 = 0,
 				.ipmitool_factor.minification = 100
 		},
+#endif
 		{
 				.dev_name = VOL_DEV_NAME,
 				.sensor_type = UBMC_SENSOR_VOL,

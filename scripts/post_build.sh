@@ -3,7 +3,8 @@
 set -e
 PRODUCT=$(cat ${TARGET_DIR}/etc/product.txt) || ( echo "/etc/product.txt not found in target dir, try make silc_product-rebuild"; exit 1;)
 
-SVNREV=$( svn info |grep Revision|awk '{print $2}')
+#SVNREV=$( svn info |grep Revision|awk '{print $2}')
+SVNREV=$(git rev-parse --short HEAD)
 sed -i "s/SVN/$SVNREV/" ${TARGET_DIR}/etc/product/${PRODUCT}/version/software_version.txt
 sed -i "s/SVN/$SVNREV/" ${TARGET_DIR}/etc/product/${PRODUCT}/version/firmware_version.txt
 sed -i "s/SVN/$SVNREV/" ${TARGET_DIR}/etc/product/${PRODUCT}/version/uboot_version.txt
@@ -12,6 +13,8 @@ sed -i 's/\/root:\/bin\/sh/\/root:\/sbin\/nologin/' ${TARGET_DIR}/etc/passwd
 
 echo "Run product post build scripts $(pwd)/product/scripts/post_build_prod.sh"
 . product/scripts/post_build_prod.sh
+
+echo $(ls ${TARGET_DIR}/etc/product/${PRODUCT}/)
 
 for prod_subdir in $(ls ${TARGET_DIR}/etc/product/${PRODUCT}/); do
 	subdname=$(basename ${prod_subdir})

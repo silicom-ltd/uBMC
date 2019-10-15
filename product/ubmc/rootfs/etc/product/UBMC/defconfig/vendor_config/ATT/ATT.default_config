@@ -97,16 +97,3 @@ protection of AT&T information assets.
 /config/system/mgmt/iptables-rule/pub-icmp/table,filter
 /config/system/mgmt/iptables-rule/pub-icmp/priority,10
 /config/system/mgmt/iptables-rule/pub-icmp/rule,-I INPUT -i vrf-pub -p icmp -j ACCEPT
-/config/system/misc/datetime/ntp-enabled,true
-/config/system/misc/datetime/ntp-server-v2/0.pool.ntp.org,
-/config/system/misc/datetime/ntp-server-v2/0.pool.ntp.org/key,0
-/config/system/misc/datetime/ntp-server-v2/0.pool.ntp.org/version,4
-/config/system/misc/datetime/ntp-server-v2/1.pool.ntp.org,
-/config/system/misc/datetime/ntp-server-v2/1.pool.ntp.org/key,0
-/config/system/misc/datetime/ntp-server-v2/1.pool.ntp.org/version,4
-/config/system/misc/datetime/ntp-server-v2/2.pool.ntp.org,
-/config/system/misc/datetime/ntp-server-v2/2.pool.ntp.org/key,0
-/config/system/misc/datetime/ntp-server-v2/2.pool.ntp.org/version,4
-/config/system/misc/datetime/ntp-server-v2/3.pool.ntp.org,
-/config/system/misc/datetime/ntp-server-v2/3.pool.ntp.org/key,0
-/config/system/misc/datetime/ntp-server-v2/3.pool.ntp.org/version,4

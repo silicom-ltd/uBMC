@@ -535,7 +535,6 @@ int get_machine_model(void)
 		ubmc_error("open %s fail :%s",OEMI_MODEL_FILE_PATH,strerror(errno));
 		return -1;
 	}
-	fseek(fp,0,SEEK_SET);
 	fgets(buf,DECODE_NAME_MAX,fp);
 	if(strcmp(buf,UBMC_XSMALL_MODEL) == 0)
 	{
@@ -559,7 +558,7 @@ int get_machine_model(void)
 
 	}
 	ubmc_debug("model is %s\n",buf);
-	fseek(fp,0,SEEK_SET);
+	fclose(fp);
 	return device_type;
 }
 int get_device_type(struct ubmc_ipmi_s *ubmc_ipmi)
@@ -780,6 +779,8 @@ exit:
 	}
 	if( fd != -1 )
 		close(fd);
+	if( g_ubmc_ipmi.ubmc_ipmi_sel.sel_msg_fd != NULL)
+		fclose(g_ubmc_ipmi.ubmc_ipmi_sel.sel_msg_fd);
 #endif
     return ret;
 }

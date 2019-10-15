@@ -14,4 +14,3 @@ else
 	echo "WARNING: PhoneHome configuration is unavailable from ${phonehome_cfg_scp_url}!!!!!!"
 fi
 
-exit 0

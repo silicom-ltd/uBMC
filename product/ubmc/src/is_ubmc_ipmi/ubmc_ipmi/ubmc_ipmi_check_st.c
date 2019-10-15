@@ -53,6 +53,7 @@ int ubmc_ipmi_get_ntp_vrf(char *vrf_name)
 		if (buf[strlen(buf)-1] == '\n')
 			buf[strlen(buf)-1] = '\0';
 		strcpy(vrf_name,buf);
+		fclose(fp);
 		return 0;
 	}
 	else
@@ -252,7 +253,7 @@ void ubmc_ipmi_check_status_thread(void *data)
 	while(1)
 	{
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 500000;		//500 ms per check
+		timeout.tv_usec = 500000;		//check per 500 ms
 		// just use the select funciton as a timer
 	    switch( select(0,NULL,NULL,NULL,&timeout) )
 		{

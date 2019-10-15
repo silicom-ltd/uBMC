@@ -86,25 +86,14 @@ done
 
 chown -R :is_admin /var/images
 
-pin_offset=2                                                
-bank_offset=33                                              
-line=$(lsgpio | grep -n LED_BMC_BOT_BLU_N | cut -d ':' -f 1)
-#	echo $line        
-chip_num=$((line))             
-#	echo $chip_num                   
-if [ $((line%bank_offset)) -eq 0 ]; then  
-        chip_num=$((3-line/bank_offset+1))
-        pin_num=31             
-else                           
-		chip_num=$((3-line/bank_offset))
-        pin_num=$((line%bank_offset-pin_offset))
-fi            
-LED_BLU_GPIO_NUM=$((chip_num*32+pin_num))
+BOT_LED_BLU_BANK=2
+BOT_LED_BLU_PIN=22         
+BOT_LED_BLU_GPIO_NUM=$((BOT_LED_BLU_BANK*32+BOT_LED_BLU_PIN))
 SYS_GPIO_PATH="/sys/class/gpio"
 SYS_GPIO_EXPORT_PATH="/sys/class/gpio/export"
-echo $LED_BLU_GPIO_NUM > $SYS_GPIO_EXPORT_PATH
-echo out > "$SYS_GPIO_PATH/gpio$LED_BLU_GPIO_NUM/direction"
-echo 0 > "$SYS_GPIO_PATH/gpio$LED_BLU_GPIO_NUM/value"
+echo $BOT_LED_BLU_GPIO_NUM > $SYS_GPIO_EXPORT_PATH
+echo out > "$SYS_GPIO_PATH/gpio$BOT_LED_BLU_GPIO_NUM/direction"
+echo 0 > "$SYS_GPIO_PATH/gpio$BOT_LED_BLU_GPIO_NUM/value"
 
 #check machine model file
 MODEL_FILE="/etc/product/UBMC/OEMI/model.txt"

@@ -41,7 +41,7 @@ static unsigned int g_debug_info_cnt = 0;
 /*********************************************************config sensor number of XSMALL**************************************************************/
 #define XSMALL_SERSOR_TEMP_NUM	3
 #define XSMALL_SERSOR_VOL_NUM	8
-#define XSMALL_SERSOR_FAN_NUM	2
+#define XSMALL_SERSOR_FAN_NUM	1
 #define XSMALL_SERSOR_PS_NUM	0
 #define XSMALL_SENSOR_MAX_NUM (XSMALL_SERSOR_TEMP_NUM + XSMALL_SERSOR_VOL_NUM + XSMALL_SERSOR_FAN_NUM + XSMALL_SERSOR_PS_NUM)
 
