@@ -17,7 +17,7 @@ else
 	        continue
     	fi
 		if [ ${prodpath:0:1} == "/" ]; then 
-			result_path=${prod_path}
+			result_path=${prodpath}
 		else
 			result_path=buildroot/${prodpath}
 		fi
