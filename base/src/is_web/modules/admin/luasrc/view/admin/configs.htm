@@ -69,7 +69,7 @@ $Id$
 			<input type="file" size="30" name="upload_file" />
 			<br />
 			<br />
-			<input class="cbi-button cbi-button-apply" type="submit" name="upload" value="<%:Upload%>" />
+			<input id="upload-submit" class="cbi-button cbi-button-apply" type="submit" name="upload" value="<%:Upload%>" />
 		</div>
 	</div>
 
@@ -128,6 +128,29 @@ EventUtil.addHandler(document.getElementById('save-submit'), 'click', function(e
 
 	var list = document.getElementsByName('config_file');
 	var newOne = document.getElementById('save_file_name');
+	var isExist = false;
+
+	if (list.length>0) {
+		for (var loop=0; loop<list.length; loop++) {
+			if (list[loop].value == newOne.value) {
+				isExist = true;
+				break;
+			}
+		}
+	}
+
+	if (isExist)
+		if (!confirm('This config name already exists, do you want to overwrite it?')) {
+			e.preventDefault();
+			newOne.value = '';
+		}
+
+});
+
+EventUtil.addHandler(document.getElementById('upload-submit'), 'click', function(e){
+
+	var list = document.getElementsByName('config_file');
+	var newOne = document.getElementById('upload_file_name');
 	var isExist = false;
 
 	if (list.length>0) {

@@ -207,22 +207,30 @@ function action_configs()
 		end
 	elseif luci.http.formvalue("save") then
 		local cfg_name = #(luci.http.formvalue("save_file_name")) > 0 and luci.http.formvalue("save_file_name") or "is_config_"..os.date("%Y%m%d%H%M%S")
-		local ret = mgmtdclient.action("/action/system/save-config-as", cfg_name)
-		if ret == "OK" then
-			msg = "Configuration saved as "..cfg_name.."."
+		if string.find(cfg_name, "^[%w_%-]+$") then
+			local ret = mgmtdclient.action("/action/system/save-config-as", cfg_name)
+			if ret == "OK" then
+				msg = "Configuration saved as "..cfg_name.."."
+			else
+				err = ret
+			end
 		else
-			err = ret
+			err = "Invalid file name, only support [a~z][A~Z][0~9][._-]."
 		end
 	elseif luci.http.formvalue("upload") then
 		local cfg_name = #(luci.http.formvalue("upload_file_name")) > 0 and luci.http.formvalue("upload_file_name") or "is_config_"..os.date("%Y%m%d%H%M%S")
 		if luci.http.formvalue("upload_file_name") and nixio.fs.access(tmpfile) then
-			local ret = sync_execute("is_check_conf.sh "..tmpfile)
-			if ret.output:sub(1,2) == "OK" then
-				nixio.fs.move(tmpfile, cfg_dir.."/"..cfg_name)
-				msg = "New configuration "..cfg_name.." uploaded!"
+			if string.find(cfg_name, "^[%w_%-]+$") then
+				local ret = sync_execute("is_check_conf.sh "..tmpfile)
+				if ret.output:sub(1,2) == "OK" then
+					nixio.fs.move(tmpfile, cfg_dir.."/"..cfg_name)
+					msg = "New configuration "..cfg_name.." uploaded!"
+				else
+					nixio.fs.unlink(tmpfile)
+					err = "The uploaded configuration is invalid. Configuration file must be downloaded from device and can not be modified manually !"
+				end
 			else
-				nixio.fs.unlink(tmpfile)
-				err = "The uploaded configuration is invalid. Configuration file must be downloaded from device and can not be modified manually !"
+				err = "Invalid file name, only support [a~z][A~Z][0~9][._-]."
 			end
 		else
 			err = "Please upload a configuration file!"
