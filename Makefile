@@ -23,6 +23,12 @@ prod_change:
 config_save:$(prodfile)
 	@scripts/__is_save_config.sh buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config
 
+config_revert:$(prodfile)
+	diff -uNr buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config buildroot/.config || echo -n"="
+	@echo "======================================================================================"
+	@echo "Now reverting, in case you are doing this by accident, the above the diff for recovery"
+	@cp -v -a buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config buildroot/.config
+
 config_diff:$(prodfile)
 	diff -uNr buildroot/product/configs/$(shell cat buildroot/output/.product_cfg).config buildroot/.config
 	
