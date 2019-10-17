@@ -45,7 +45,7 @@ rm -rf output/images
 if [ "$1" == "-r" ]; then
   echo "Revert to normal make"
   cd ${BR2_ROOT}
-  cp ./product/config/is.config .config
+  cp ./product/configs/is.config .config
   rebuild
   exit 0
 fi
@@ -54,11 +54,12 @@ if [ ! -f $1 ]; then
   echo "$1 is not a regular file"
   exit 1
 fi
-echo "Using $1 as the the image copying to ${BASE_ROOT}/rootfs_install/install.img"
+echo "Using $1 as the the image copying to output/target/install.img"
 #the first big file will be corrupted for unknown reason, so we need to copy it twice.
-cp $1 ${BASE_ROOT}/rootfs_install/aaa-unused.img
-cp $1 ${BASE_ROOT}/rootfs_install/install.img
+mkdir -p output/target
+cp $1 output/target/aaa-unused.img
+cp $1 output/target/install.img
 
 cd ${BR2_ROOT}
-cp ./product/config/config_install .config
+cp ./product/configs/is_install.config .config
 rebuild
