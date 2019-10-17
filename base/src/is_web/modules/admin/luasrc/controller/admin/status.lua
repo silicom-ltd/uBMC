@@ -49,7 +49,7 @@ if product.verifyFeature('STATUS', 'MODULE') then
 	end
 end
 	entry({"admin", "status", "snmp"}, cbi("admin/status-snmp", {autoapply=true}), _("SNMP"), 80)
-	entry({"admin", "status", "session"}, cbi("admin/status-system", {autoapply=true}), _("Session"), 90)
+	entry({"admin", "status", "session"}, cbi("admin/status-session", {autoapply=true}), _("Session"), 90)
 	entry({"admin", "status", "syslog"}, call("action_syslog"), _("System Log"), 100)
 end
 
