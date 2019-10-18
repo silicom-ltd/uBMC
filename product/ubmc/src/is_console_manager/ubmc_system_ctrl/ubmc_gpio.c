@@ -64,7 +64,7 @@ static int export_un_export(ubmc_gpio_pin *pin, int export)
 	ret = access(gpio_path,F_OK);
 	if(ret == 0)
 	{
-		syslog(LOG_WARNING, "%s has been exist \n",gpio_path);
+		//syslog(LOG_WARNING, "%s has been exist \n",gpio_path);
 		goto close_out;
 	}
 	ret = snprintf(c, STR_LEN, "%d", pin->no);

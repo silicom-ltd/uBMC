@@ -1733,7 +1733,7 @@ int ubmc_ipmi_event_check(struct ubmc_ipmi_sel* ubmc_ipmi_sel,struct sel_event_r
 	if(ret == 1)
 	{
 		ubmc_ipmi_sel->state = 0; //the last one sel when system down
-		UBMC_IPMI_NOTE("SEL is disable \n");
+		//UBMC_IPMI_NOTE("SEL is disable \n");
 	}
 	return ret;
 }
@@ -2050,7 +2050,7 @@ int ubmc_ipmi_poll_gpio_events(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 				if(ubmc_ipmi_read_gpio_value_by_name(ubmc_ipmi_sel,"HOST_S45_N") == 1 && ubmc_ipmi_read_gpio_value_by_name(ubmc_ipmi_sel,"HOST_PLTRST_N") == 1)
 				{
 					ubmc_ipmi_sel->state = 1;
-					UBMC_IPMI_NOTE("SEL is reable \n");
+					//UBMC_IPMI_NOTE("SEL is reable \n");
 				}
 			}
 			//UBMC_IPMI_DEBUG_INFO("POLL TIME OUT \n");
