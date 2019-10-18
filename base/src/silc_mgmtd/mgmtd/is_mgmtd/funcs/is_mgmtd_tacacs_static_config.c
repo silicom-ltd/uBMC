@@ -254,6 +254,17 @@ int is_mgmtd_tacacs_check_req(silc_mgmtd_if_req_type type, void* p_db_node, void
 		}
 	}
 
+	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_TACACS_STATIC_PATH"/timeout");
+	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
+	{
+		uint32_t to = p_node->tmp_value.val.uint32_val;
+		if (to < 1 || to > 60)
+		{
+			SILC_ERR("TACACS+ timeout should be 1-60");
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
+	}
+
 	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_TACACS_STATIC_PATH"/service");
 	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
 		val = p_node->tmp_value.val.string_val;

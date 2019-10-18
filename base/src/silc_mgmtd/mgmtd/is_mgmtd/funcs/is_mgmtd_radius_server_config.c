@@ -112,6 +112,17 @@ int is_mgmtd_radius_server_check_req(silc_mgmtd_if_req_type type, silc_mgmtd_nod
 	uint32_t port;
 	silc_bool server_changed = silc_false;
 
+	p_node = silc_mgmtd_memdb_find_sub_node(server_node, "timeout");
+	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
+	{
+		uint32_t to = p_node->tmp_value.val.uint32_val;
+		if (to < 1 || to > 60)
+		{
+			SILC_ERR("RADIUS server timeout should be 1-60");
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
+	}
+
 	p_node = silc_mgmtd_memdb_find_sub_node(server_node, "server-ip");
 	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
 	{

@@ -780,7 +780,7 @@ static int silc_mgmtd_memdb_get_running_config_from_file(silc_cstr buff, int len
 			"cp -f %s /dev/shm/conf.templet;"
 			"cp -f %s /dev/shm/conf.running;"
 			"/usr/bin/diff /dev/shm/conf.templet /dev/shm/conf.running"
-			"|grep +/config|sed \"s/+//g\";rm -f /dev/shm/conf.*", silc_mgmtd_cfg_get_running_config_filename(), filename);
+			"|grep +/config|sed \"s/+\\/config/\\/config/g\";rm -f /dev/shm/conf.*", silc_mgmtd_cfg_get_running_config_filename(), filename);
 #endif
 #else
 	sprintf(cmd,
