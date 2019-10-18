@@ -35,6 +35,11 @@ else
 	loop = loop + 1
 end
 
+if product.verifyFeature('SYSTEM_MGMT', 'PERMIT_LIST') then
+	section_cfg[loop] = {name="permit-list", tag="Permitted IP List", note="", multiple=true, addremove=true}
+	loop = loop + 1
+end
+
 if product.verifyFeature('SYSTEM_MGMT', 'VRF_LIST') then
 	section_cfg[loop] = {name="vrf-list", tag="VRF List", note="", multiple=true, addremove=true}
 	loop = loop + 1
@@ -52,11 +57,6 @@ end
 
 if product.verifyFeature('SYSTEM_MGMT', 'ADDRESS_LIST') then
 	section_cfg[loop] = {name="address-list", tag="Address List", note="", multiple=true, addremove=true}
-	loop = loop + 1
-end
-
-if product.verifyFeature('SYSTEM_MGMT', 'PERMIT_LIST') then
-	section_cfg[loop] = {name="permit-list", tag="Permitted IP List", note="", multiple=true, addremove=true}
 	loop = loop + 1
 end
 
