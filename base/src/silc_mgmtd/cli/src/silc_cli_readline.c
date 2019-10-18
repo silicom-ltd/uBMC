@@ -110,9 +110,11 @@ void silc_rl_keyboard_input_hook(void)
 	silc_cli_session_timeout_update();
 }
 
+#define MAX_CMD_LEN	8192
+
 silc_cstr silc_cli_rl_readline()
 {
-	static char last_cmd[1000]="";
+	static char last_cmd[MAX_CMD_LEN]="";
 	silc_cstr line, text;
 	rl_keyboard_input_hook = silc_rl_keyboard_input_hook;
 	while((line = readline(silc_cli_mode_get_curr_prompt())))
@@ -152,7 +154,7 @@ silc_cstr silc_cli_rl_readline()
 	}
 	if(line)
 	{
-		if(strncmp(last_cmd, line, 1000) != 0)
+		if(strncmp(last_cmd, line, MAX_CMD_LEN) != 0)
 		{
 			silc_cli_rl_add_history(line);
 			strcpy(last_cmd, line);
