@@ -322,10 +322,13 @@ static inline void is_cli_show_mgmt_status_cb(silc_mgmtd_if_rsp* p_rsp)
 			is_cli_show_mgmt_if_status(p_node);
 		else if(strcmp(p_node->name, "dhcp") == 0)
 			is_cli_show_mgmt_dhcp_status(p_node);
-		else if(strcmp(p_node->name, "iptables") == 0)
-			is_cli_show_mgmt_iptables_status(p_node);
-		else if(strcmp(p_node->name, "ipsec") == 0)
-			is_cli_show_mgmt_ipsec_status(p_node);
+		else if(silc_cli_get_product_info()->multi_eth_support)
+		{
+			if(strcmp(p_node->name, "iptables") == 0)
+				is_cli_show_mgmt_iptables_status(p_node);
+			else if(strcmp(p_node->name, "ipsec") == 0)
+				is_cli_show_mgmt_ipsec_status(p_node);
+		}
 	}
 }
 
