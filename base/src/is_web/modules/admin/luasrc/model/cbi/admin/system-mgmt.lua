@@ -23,7 +23,7 @@ if product.verifyFeature('SYSTEM_MGMT', 'INTERFACE') then
 end
 
 if product.verifyFeature('SYSTEM_MGMT', 'INTERFACE_LIST') then
-	section_cfg[loop] = {name="interface-list", tag="Interface", note="", multiple=true, addremove=false}
+	section_cfg[loop] = {name="interface-list", tag="Interfaces", note="", multiple=true, addremove=false}
 	loop = loop + 1
 end
 
