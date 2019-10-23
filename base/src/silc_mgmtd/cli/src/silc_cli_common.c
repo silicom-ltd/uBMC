@@ -1321,7 +1321,7 @@ int silc_cli_show_log(silc_cstr log, silc_cstr filter)
 	system(cmd);
 
 	if (filter)
-		sprintf(cmd, "grep '%s' %s|less", filter, filename);
+		sprintf(cmd, "grep -i '%s' %s|less", filter, filename);
 	else
 		sprintf(cmd, "less %s", filename);
 	system(cmd);

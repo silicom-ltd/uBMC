@@ -816,7 +816,7 @@ int is_mgmtd_system_mgmt_check_interface(silc_mgmtd_if_req_type type, silc_mgmtd
 		p_sub_node = silc_mgmtd_memdb_find_node(node_path);
 		if(!p_sub_node)
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
-		if(p_vlan->tmp_value.val.uint32_val < 2)
+		if(p_vlan->tmp_value.val.uint32_val < 2 || p_vlan->tmp_value.val.uint32_val > 4094)
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 	}
 	else if(SILC_MGMTD_IF_REQ_CHECK_DELETE == type)
@@ -938,6 +938,34 @@ int is_mgmtd_system_mgmt_config_address(silc_mgmtd_if_req_type req_type, silc_mg
 	return 0;
 }
 
+int is_mgmtd_system_mgmt_check_address(silc_mgmtd_if_req_type type, silc_mgmtd_node* p_node)
+{
+	silc_mgmtd_node* p_sub_node;
+	silc_cstr inf;
+	char node_path[256];
+
+	if(SILC_MGMTD_IF_REQ_CHECK_DELETE == type)
+		return 0;
+
+	p_sub_node = silc_mgmtd_memdb_find_sub_node(p_node, "interface");
+	inf = p_sub_node->tmp_value.val.string_val;
+	if(!inf[0])
+	{
+		SILC_ERR("Interface name is empty");
+		return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+	}
+
+	sprintf(node_path, "%s/interface-list/%s", IS_MGMTD_SYSTEM_MGMT_PATH, inf);
+	p_sub_node = silc_mgmtd_memdb_find_node(node_path);
+	if(!p_sub_node)
+	{
+		SILC_ERR("Interface name %s is invalid", inf);
+		return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+	}
+
+	return 0;
+}
+
 int is_mgmtd_system_mgmt_config_vrf(silc_mgmtd_if_req_type req_type, silc_mgmtd_node* p_node, void* conn_entry)
 {
 	silc_mgmtd_node* p_sub_node;
@@ -1050,6 +1078,25 @@ int is_mgmtd_system_mgmt_check_vrf(silc_mgmtd_if_req_type type, silc_mgmtd_node*
 	char cmd[128], out[512];
 	int len = 512, ret;
 
+	if(SILC_MGMTD_IF_REQ_CHECK_DELETE == type)
+	{
+		silc_mgmtd_node *p_list, *p_child, *p_sub_node;
+
+		p_list = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_MGMT_PATH"/vrf-process-list");
+		silc_list_for_each_entry(p_child, &p_list->sub_node_list, node)
+		{
+			if(p_child->type != MEMDB_NODE_TYPE_DYNAMIC)
+				continue;
+			p_sub_node = silc_mgmtd_memdb_find_sub_node(p_child, "vrf");
+			if(strcmp(p_sub_node->value.val.string_val, vrf) == 0)
+			{
+				SILC_ERR("VRF %s is still in use", vrf);
+				return IS_MGMTD_ERR_BASE_FORBIDDEN;
+			}
+		}
+		return 0;
+	}
+
 	sprintf(cmd, "ip link show | grep -w '%s:'", vrf);
 	ret = silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 3000, silc_false);
 	if(ret == 0 && strstr(out, vrf) != NULL)
@@ -1076,6 +1123,9 @@ int is_mgmtd_system_mgmt_check_vrf_process(silc_mgmtd_if_req_type type, silc_mgm
 	silc_cstr proc="", vrf="";
 	int i, num = sizeof(names)/sizeof(silc_cstr);
 	int found = 0;
+
+	if(SILC_MGMTD_IF_REQ_CHECK_DELETE == type)
+		return 0;
 
 	p_sub_node = silc_mgmtd_memdb_find_sub_node(p_node, "process");
 	if(p_sub_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
@@ -1351,6 +1401,9 @@ int is_mgmtd_system_mgmt_check_iptables_rule(silc_mgmtd_if_req_type type, silc_m
 	};
 	int i, j, num;
 
+	if(SILC_MGMTD_IF_REQ_CHECK_DELETE == type)
+		return 0;
+
 	p_sub_node = silc_mgmtd_memdb_find_sub_node(p_node, "table");
 	if(p_sub_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
 	{
@@ -1599,12 +1652,14 @@ int is_mgmtd_system_mgmt_check_req(silc_mgmtd_if_req_type type, silc_mgmtd_node*
 				is_mgmtd_match_apply_node(p_req_node, "rule-name", &p_node))
 			return IS_MGMTD_ERR_BASE_NOT_SUPPORT;
 	}
-	else if(type == SILC_MGMTD_IF_REQ_CHECK_ADD)
+	else
 	{
 		if(is_mgmtd_match_apply_node(p_req_node, "vrf-name", &p_node))
 			return is_mgmtd_system_mgmt_check_vrf(type, p_node);
 		else if(is_mgmtd_match_apply_node(p_req_node, "vrf-process-name", &p_node))
 			return is_mgmtd_system_mgmt_check_vrf_process(type, p_node);
+		else if(is_mgmtd_match_apply_node(p_req_node, "address-name", &p_node))
+			return is_mgmtd_system_mgmt_check_address(type, p_node);
 		else if(is_mgmtd_match_apply_node(p_req_node, "rule-name", &p_node))
 			return is_mgmtd_system_mgmt_check_iptables_rule(type, p_node);
 	}

@@ -199,7 +199,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 		{"management eth-if default-gateway ?", {{"/config/system/mgmt/interface/ip-default-gateway"}}},
 		{"management eth-if ?", {{"/config/system/mgmt/interface/dhcp-sendname", "false,dhcp-sendname"TAG_CMD_TRANS_FALSE2NO",true,dhcp-sendname"}}, FLAG_CMD_TRANS_FALSE2NO},
 
-		{"management dns ?", {{"/config/system/mgmt/dns/*", NULL, {4}}}},
+		{"management dns server ?", {{"/config/system/mgmt/dns/*", NULL, {4}}}},
 		{"management permitted ?", {{"/config/system/mgmt/permit-enabled", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"management permitted ip ? mask ?", {{"/config/system/mgmt/permit-list/*", NULL, {4}},
 											  {"/config/system/mgmt/permit-list/*/mask"}}},
