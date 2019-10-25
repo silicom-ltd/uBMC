@@ -798,10 +798,11 @@ int is_mgmtd_system_mgmt_check_ipsec_secret(silc_mgmtd_if_req_type type, silc_mg
 
 int is_mgmtd_system_mgmt_check_interface(silc_mgmtd_if_req_type type, silc_mgmtd_node* p_node)
 {
-	silc_mgmtd_node *p_dev, *p_vlan;
+	silc_mgmtd_node *p_dev, *p_vlan, *p_master;
 
 	p_dev = silc_mgmtd_memdb_find_sub_node(p_node, "dev");
 	p_vlan = silc_mgmtd_memdb_find_sub_node(p_node, "vlan");
+	p_master = silc_mgmtd_memdb_find_sub_node(p_node, "master");
 	if(SILC_MGMTD_IF_REQ_CHECK_ADD == type)
 	{
 		silc_mgmtd_node *p_sub_node;
@@ -809,31 +810,65 @@ int is_mgmtd_system_mgmt_check_interface(silc_mgmtd_if_req_type type, silc_mgmtd
 		// it should be a vlan inf on a valid netdev
 		if(p_dev->tmp_value.type == SILC_MGMTD_VAR_NULL ||
 				p_vlan->tmp_value.type == SILC_MGMTD_VAR_NULL)
+		{
+			SILC_ERR("Missing dev or vlan when adding interface");
 			return IS_MGMTD_ERR_BASE_MISS_PARAM;
+		}
 		if(!p_dev->tmp_value.val.string_val[0])
+		{
+			SILC_ERR("Missing dev when adding interface");
 			return IS_MGMTD_ERR_BASE_NOT_SUPPORT;
+		}
 		sprintf(node_path, "%s/netdev-list/%s/type", IS_MGMTD_SYSTEM_MGMT_PATH, p_dev->tmp_value.val.string_val);
 		p_sub_node = silc_mgmtd_memdb_find_node(node_path);
 		if(!p_sub_node)
+		{
+			SILC_ERR("Invalid dev %s when adding interface", p_dev->tmp_value.val.string_val);
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
 		if(p_vlan->tmp_value.val.uint32_val < 2 || p_vlan->tmp_value.val.uint32_val > 4094)
+		{
+			SILC_ERR("Invalid vlan %u when adding interface", p_vlan->tmp_value.val.uint32_val);
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
 	}
 	else if(SILC_MGMTD_IF_REQ_CHECK_DELETE == type)
 	{
 		// netdev can't be deleted
 		if(!p_dev->value.val.string_val[0])
+		{
+			SILC_ERR("Interface device can't be deleted");
 			return IS_MGMTD_ERR_BASE_NOT_SUPPORT;
+		}
 	}
 	else if(SILC_MGMTD_IF_REQ_CHECK_MODIFY == type)
 	{
 		// dev and vlan can't be modified when running
 		if(p_dev->tmp_value.type != SILC_MGMTD_VAR_NULL &&
 				!silc_mgmtd_var_equal(&p_dev->tmp_value, &p_dev->value))
+		{
+			SILC_ERR("Interface device can't be modified");
 			return IS_MGMTD_ERR_BASE_NOT_SUPPORT;
+		}
 		if(p_vlan->tmp_value.type != SILC_MGMTD_VAR_NULL &&
 				!silc_mgmtd_var_equal(&p_vlan->tmp_value, &p_vlan->value))
+		{
+			SILC_ERR("Interface vlan can't be modified");
 			return IS_MGMTD_ERR_BASE_NOT_SUPPORT;
+		}
+	}
+
+	if(p_master->tmp_value.type != SILC_MGMTD_VAR_NULL &&
+			p_master->tmp_value.val.string_val[0])
+	{
+		silc_cstr vrf = p_master->tmp_value.val.string_val;
+		char node_path[256];
+		sprintf(node_path, "%s/vrf-list/%s", IS_MGMTD_SYSTEM_MGMT_PATH, vrf);
+		if(NULL == silc_mgmtd_memdb_find_node(node_path))
+		{
+			SILC_ERR("Invalid interface master %s", vrf);
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
 	}
 	return 0;
 }
@@ -1090,7 +1125,19 @@ int is_mgmtd_system_mgmt_check_vrf(silc_mgmtd_if_req_type type, silc_mgmtd_node*
 			p_sub_node = silc_mgmtd_memdb_find_sub_node(p_child, "vrf");
 			if(strcmp(p_sub_node->value.val.string_val, vrf) == 0)
 			{
-				SILC_ERR("VRF %s is still in use", vrf);
+				SILC_ERR("VRF %s still has process %s", vrf, p_child->value.val.string_val);
+				return IS_MGMTD_ERR_BASE_FORBIDDEN;
+			}
+		}
+		p_list = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_MGMT_PATH"/interface-list");
+		silc_list_for_each_entry(p_child, &p_list->sub_node_list, node)
+		{
+			if(p_child->type != MEMDB_NODE_TYPE_DYNAMIC)
+				continue;
+			p_sub_node = silc_mgmtd_memdb_find_sub_node(p_child, "master");
+			if(strcmp(p_sub_node->value.val.string_val, vrf) == 0)
+			{
+				SILC_ERR("VRF %s still has interface %s", vrf, p_child->value.val.string_val);
 				return IS_MGMTD_ERR_BASE_FORBIDDEN;
 			}
 		}
@@ -1157,8 +1204,7 @@ int is_mgmtd_system_mgmt_check_vrf_process(silc_mgmtd_if_req_type type, silc_mgm
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 		}
 		sprintf(node_path, "%s/vrf-list/%s", IS_MGMTD_SYSTEM_MGMT_PATH, vrf);
-		p_sub_node = silc_mgmtd_memdb_find_node(node_path);
-		if(!p_sub_node)
+		if(NULL == silc_mgmtd_memdb_find_node(node_path))
 		{
 			SILC_ERR("VRF name %s is invalid", vrf);
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
@@ -1204,7 +1250,7 @@ int is_mgmtd_system_mgmt_config_route(silc_mgmtd_if_req_type req_type, silc_mgmt
 	if(table[0])
 		sprintf(cmd+strlen(cmd), " table %s", table);
 
-	SILC_LOG("Configure route cmd: %s", cmd);
+	SILC_INFO("Configure route cmd: %s", cmd);
 	system(cmd);
 	return 0;
 }
@@ -1600,7 +1646,7 @@ int is_mgmtd_system_mgmt_config_iptables_rule(silc_mgmtd_if_req_type req_type, s
 	}
 	silc_cstr_array_destroy(arg_list);
 
-	SILC_LOG("iptables command: %s", cmd);
+	SILC_INFO("iptables command: %s", cmd);
 	if (silc_mgmtd_if_exec_system_cmd(cmd, output, &len, 1000, silc_false) != 0)
 	{
 		SILC_ERR("Fail to exec cmd: %s, out: %s", cmd, output);

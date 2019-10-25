@@ -512,6 +512,7 @@ static silc_cli_token_info s_silc_cli_token_info_list[] = {
 {"configure upgrade manufacture file-url", "Upgrade with an upgrade image from an HTTP/HTTPS/SCP/FTP URL", "url such as http://xxx/file or scp://xxx@x.x.x.x:/path/file", NULL, NULL, TOKEN_MODE_OPTIONAL, TOKEN_TYPE_VARIABLE, NULL, NULL, 0, 0, 0},
 {"configure upgrade manufacture file-url ftp-user", "FTP user name", "user name", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_VARIABLE, NULL, NULL, 0, 0, 0},
 {"configure upgrade manufacture file-url ftp-user ftp-password", "FTP user password", "plain text", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_VARIABLE, NULL, NULL, 0, 0, 0},
+{"configure upgrade image", "Upgrade with a local image", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_DYNAMIC, NULL, is_cli_dync_get_image_list, 2048, 0, 1},
 {"configure user", "Configure local user account", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, is_cli_cmd_aaa_config, NULL, 0, 0, 0},
 {"configure user change-password", "Change local user password", "", NULL, NULL, TOKEN_MODE_OPTIONAL, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},
 {"configure user change-password new-password", "Change the login user password with plain text", "maximum 40 characters", NULL, NULL, TOKEN_MODE_OPTIONAL, TOKEN_TYPE_VARIABLE, NULL, NULL, 0, 0, 0},

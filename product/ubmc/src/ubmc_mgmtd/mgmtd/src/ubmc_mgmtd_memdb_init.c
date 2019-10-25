@@ -120,15 +120,15 @@ static int ubmc_mgmtd_get_cberr(silc_mgmtd_cberr_info** p_cberr_list, int* p_cbe
 
 static silc_mgmtd_config_cmd_map s_ubmc_mgmtd_config_2_cmds[] = {
 		/* BMC */
-		{"bmc console log to file ?",		{{"/config/bmc/console/log-to-file", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
+		{"bmc console log ?",		{{"/config/bmc/console/log-to-file", "false,to-file"TAG_CMD_TRANS_FALSE2NO",true,to-file"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"bmc console log rotate-num ?",	{{"/config/bmc/console/log-rotate-num"}}},
 		{"bmc console log rotate-size ?",	{{"/config/bmc/console/log-rotate-size"}}},
 		{"bmc console speed ?",			{{"/config/bmc/console/com-speed"}}},
 		{"bmc console data ?",			{{"/config/bmc/console/com-data"}}},
 		{"bmc console parity ?",		{{"/config/bmc/console/com-parity"}}},
 		{"bmc console stopbits ?",		{{"/config/bmc/console/com-stopbits"}}},
-		{"bmc console hw-flowctrl ?",	{{"/config/bmc/console/com-hwflowctrl", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
-		{"bmc console sw-flowctrl ?",	{{"/config/bmc/console/com-swflowctrl", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
+		{"bmc console ?",	{{"/config/bmc/console/com-hwflowctrl", "false,hw-flowctrl"TAG_CMD_TRANS_FALSE2NO",true,hw-flowctrl"}}, FLAG_CMD_TRANS_FALSE2NO},
+		{"bmc console ?",	{{"/config/bmc/console/com-swflowctrl", "false,sw-flowctrl"TAG_CMD_TRANS_FALSE2NO",true,sw-flowctrl"}}, FLAG_CMD_TRANS_FALSE2NO},
 };
 
 static int ubmc_mgmtd_get_config_cmd(silc_mgmtd_config_cmd_map** p_config_list, int* p_config_cnt)

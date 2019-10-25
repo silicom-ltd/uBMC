@@ -151,7 +151,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 		{"snmp trap ?", {{"/config/snmp/trap/bypass", "false,bypass"TAG_CMD_TRANS_FALSE2NO",true,bypass"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"snmp trap ?", {{"/config/snmp/trap/mon-link", "false,mon-link"TAG_CMD_TRANS_FALSE2NO",true,mon-link"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"snmp trap ?", {{"/config/snmp/trap/net-link", "false,net-link"TAG_CMD_TRANS_FALSE2NO",true,net-link"}}, FLAG_CMD_TRANS_FALSE2NO},
-		{"snmp trap ?", {{"/config/snmp/trap/error", "false,bypass"TAG_CMD_TRANS_FALSE2NO",true,error"}}, FLAG_CMD_TRANS_FALSE2NO},
+		{"snmp trap ?", {{"/config/snmp/trap/error", "false,error"TAG_CMD_TRANS_FALSE2NO",true,error"}}, FLAG_CMD_TRANS_FALSE2NO},
 //		{"snmp threshold sensor i2c-max ?", {{"/config/snmp/threshold/sensor/i2c-max"}}},
 		{"snmp threshold sensor bcm-max ?", {{"/config/snmp/threshold/sensor/bcm-max"}}},
 		{"snmp threshold sensor switch-max ?", {{"/config/snmp/threshold/sensor/switch-max"}}},
@@ -180,10 +180,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 											  	  {"/config/tacacs/server/*/server-ip"},
 												  {"/config/tacacs/server/*/server-port"},
 												  {"/config/tacacs/server/*/secret"}}},
-#if 0
-		{"user change-password new-encrypt-password ? user-name is_admin", {{"/config/unix/user/is_admin/shadow", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt}}},
-		{"user change-password new-encrypt-password ? user-name mdg_admin", {{"/config/unix/user/mdg_admin/shadow", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt}}},
-#endif
+
 		{"user name ? full-name ? encrypt-password ? privilege ?", {{"/config/unix/user/*", NULL, {3}},
 													   {"/config/unix/user/*/full-name"},
 													   {"/config/unix/user/*/shadow", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt},
@@ -740,6 +737,12 @@ static int is_mgmtd_config_transfer(silc_cstr diff_config, silc_cstr cmd_buff, i
 		{
 			SILC_ERR("[%s] silc_cstr_split error!", __func__);
 			return -1;
+		}
+		if(p_param_arr->length > 2)
+		{
+			//the value str has ','
+			silc_cstr val = strchr(config_line, ',')+1;
+			silc_cstr_array_set_no_copy(p_param_arr, 1, val);
 		}
 		if(is_mgmtd_config_insert_to_cmd(&cmd_list, p_param_arr) != 0)
 		{

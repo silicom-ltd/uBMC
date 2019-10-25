@@ -324,7 +324,8 @@ int is_mgmtd_unix_check_req(silc_mgmtd_if_req_type type, silc_mgmtd_node* p_node
 	}
 
 	p_privil_node = silc_mgmtd_memdb_find_sub_node(p_node, "privilege");
-	if (p_privil_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
+	if (p_privil_node->tmp_value.type != SILC_MGMTD_VAR_NULL &&
+			!silc_mgmtd_var_equal(&p_privil_node->value, &p_privil_node->tmp_value))
 	{
 		uint32_t privil;
 		if (is_change_self)

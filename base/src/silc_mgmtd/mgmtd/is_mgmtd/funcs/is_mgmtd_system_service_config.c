@@ -1222,6 +1222,7 @@ int is_mgmtd_system_service_config_nginx(void* conn_entry)
 				has_key = 1;
 			}
 		}
+		ssl_modified = silc_false;
 		if (has_cert && has_key)
 		{
 			if (0 == is_verify_ssl_cert_key(IS_NGINX_CERT_FILE_TMP, IS_NGINX_KEY_FILE_TMP))
@@ -1229,18 +1230,14 @@ int is_mgmtd_system_service_config_nginx(void* conn_entry)
 				SILC_LOG("SSL cert and key are matched, update them.\n");
 				rename(IS_NGINX_CERT_FILE_TMP, IS_NGINX_CERT_FILE);
 				rename(IS_NGINX_KEY_FILE_TMP, IS_NGINX_KEY_FILE);
+				ssl_modified = silc_true;
 			}
 			else
-			{
 				SILC_LOG("SSL cert and key are mismatched, ignore them.\n");
-				ssl_modified = silc_false;
-			}
 		}
-		else
-		{
+		else if (has_cert || has_key)
 			SILC_LOG("SSL cert and key are not ready yet, use original cert and key.\n");
-			ssl_modified = silc_false;
-		}
+
 		if (!ssl_modified && !modified)
 			return 0;
 	}
