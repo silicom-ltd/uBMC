@@ -214,6 +214,7 @@ if product.verifyFeature('SYSTEM_MGMT', 'VRF_PROCESS_LIST') then
 	process:value('ntp', 'ntp')
 	process:value('syslog', 'syslog')
 
+local vrf_ret, vrf_list = mgmtdclient.query_child("/config/system/mgmt/vrf-list")
 vrfList = vrfprocess:option(ListValue, 'vrf', translate("VRF"))
 vrfList:value('', '--')
 if vrf_ret == 'OK' then

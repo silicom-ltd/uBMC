@@ -76,6 +76,7 @@ ipsecConfig:option(Value, "lifetime", translate("Lifetime"))
 
 ipsecConfig:option(Value, "local-ip", translate("Local IP"))
 ipsecConfig:option(Value, "local-id", translate("Local ID"))
+ipsecConfig:option(Value, "local-id2", translate("Local ID2"))
 ipsecConfig:option(Value, "local-src", translate("Local Source IP"))
 ipsecConfig:option(Value, "local-sub", translate("Local Subnet"))
 
@@ -124,6 +125,7 @@ end
 
 ipsecConfig:option(Value, "peer-ip", translate("Peer IP"))
 ipsecConfig:option(Value, "peer-id", translate("Peer ID"))
+ipsecConfig:option(Value, "peer-id2", translate("Peer ID2"))
 ipsecConfig:option(Value, "peer-src", translate("Peer Source IP"))
 ipsecConfig:option(Value, "peer-sub", translate("Peer Subnet"))
 
