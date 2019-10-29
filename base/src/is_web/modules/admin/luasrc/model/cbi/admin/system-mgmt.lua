@@ -197,7 +197,19 @@ if product.verifyFeature('SYSTEM_MGMT', 'VRF_LIST') then
 	vrf.sectionhead = translate("VRF Name")
 
 	vrf:option(Value, 'table', translate("Table")).datatype = "uinteger"
-	vrf:option(TfFlag, 'state', translate("State"))
+	vrfState = vrf:option(TfFlag, 'state', translate("State"))
+	vrfState.readonly = true
+	vrfState.default = "true" 
+
+	local vrf_list = {}
+	local base = 0
+	for seg, seg_v in pairs(mdForm.curr_data["vrf-list"]) do
+		vrf_list[seg] = seg_v
+		base = base + 1
+	end
+
+	routeList = mdForm:section(Table, vrf_list, translate(""))
+	routeList.config = 'vrf-id'
 end
 
 if product.verifyFeature('SYSTEM_MGMT', 'VRF_PROCESS_LIST') then
@@ -213,6 +225,7 @@ if product.verifyFeature('SYSTEM_MGMT', 'VRF_PROCESS_LIST') then
 	process:value('dying-gasp', 'dying-gasp')
 	process:value('ntp', 'ntp')
 	process:value('syslog', 'syslog')
+	process:value('phonehome', 'phonehome')
 
 local vrf_ret, vrf_list = mgmtdclient.query_child("/config/system/mgmt/vrf-list")
 vrfList = vrfprocess:option(ListValue, 'vrf', translate("VRF"))
@@ -239,6 +252,16 @@ if product.verifyFeature('SYSTEM_MGMT', 'ROUTE_LIST') then
 	route:option(Value, 'via', translate("Via Address"))
 	route:option(Value, 'table', translate("Table"))
 	route:option(Value, 'dev', translate("Device"))
+
+	local route_list = {}
+	local base = 0
+	for seg, seg_v in pairs(mdForm.curr_data["route-list"]) do
+		route_list[seg] = seg_v
+		base = base + 1
+	end
+
+	routeList = mdForm:section(Table, route_list, translate(""))
+	routeList.config = 'route-id'
 end
 
 if product.verifyFeature('SYSTEM_MGMT', 'ADDRESS_LIST') then
@@ -258,6 +281,7 @@ if product.verifyFeature('SYSTEM_MGMT', 'ADDRESS_LIST') then
 	end
 
 	addressList = mdForm:section(Table, address_list, translate(""))
+	addressList.config = 'address-id'
 end
 
 --[[
