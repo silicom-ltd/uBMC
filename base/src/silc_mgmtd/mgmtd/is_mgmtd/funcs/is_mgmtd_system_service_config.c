@@ -257,8 +257,8 @@ int is_mgmtd_system_service_ssh_sync_key2db()
 
 	if (!is_file_exist(IS_SSH_CONFIG_DIR"/ssh_host_rsa_key"))
 	{
-		SILC_LOG("SSH key files are absent, start sshd to generate them!\n");
-		system("/etc/init.d/IS_S50sshd start");
+		SILC_LOG("SSH key files are absent, generate them!\n");
+		system("ssh-keygen -A");
 	}
 
 	for (i=0; i<IS_SSH_KEY_FILE_NUM; i++)

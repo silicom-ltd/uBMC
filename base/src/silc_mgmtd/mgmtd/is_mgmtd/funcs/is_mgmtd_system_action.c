@@ -199,7 +199,7 @@ int is_mgmtd_system_action(silc_mgmtd_if_req_type type, void* p_db_node, void* c
 	{
 		int ret;
 		SILC_LOG("System generate ssh key");
-		system("rm -rf /etc/ssh/*key* ; /etc/init.d/IS_S50sshd restart");
+		system("rm -rf /etc/ssh/*key*; ssh-keygen -A");
 		ret = is_mgmtd_system_service_ssh_sync_key2db();
 		return ret;
 	}
