@@ -57,14 +57,39 @@
 	</div>
 <!--</form> -->
 <script type="text/javascript">
-		var addressList = document.getElementById('cbi-table-table');
-		var list = addressList.getElementsByClassName('cbi-section-table-row');
+		var vrfList = document.getElementById('cbi-vrf-id-table');
+		var list = vrfList.getElementsByClassName('cbi-section-table-row');
 		if (list.length > 0) {
 			for (loop in list) {
 				var child = list[loop];
 				console.log(child.id);
 				if (child.id != undefined) {
-					addressName = child.id.replace('cbi-table-', '');
+					vrfName = child.id.replace('cbi-vrf-id-', '');
+					document.getElementById('cbid.vrf-list.'+vrfName+'.table').disabled = 'disabled';
+				}
+			}
+		}
+		var routeList = document.getElementById('cbi-route-id-table');
+		list = routeList.getElementsByClassName('cbi-section-table-row');
+		if (list.length > 0) {
+			for (loop in list) {
+				var child = list[loop];
+				if (child.id != undefined) {
+					routeName = child.id.replace('cbi-route-id-', '');
+					document.getElementById('cbid.route-list.'+routeName+'.dest').disabled = 'disabled';
+					document.getElementById('cbid.route-list.'+routeName+'.via').disabled = 'disabled';
+					document.getElementById('cbid.route-list.'+routeName+'.table').disabled = 'disabled';
+					document.getElementById('cbid.route-list.'+routeName+'.dev').disabled = 'disabled';
+				}
+			}
+		}
+		var addressList = document.getElementById('cbi-address-id-table');
+		list = addressList.getElementsByClassName('cbi-section-table-row');
+		if (list.length > 0) {
+			for (loop in list) {
+				var child = list[loop];
+				if (child.id != undefined) {
+					addressName = child.id.replace('cbi-address-id-', '');
 					document.getElementById('cbid.address-list.'+addressName+'.address').disabled = 'disabled';
 					document.getElementById('cbid.address-list.'+addressName+'.prefix').disabled = 'disabled';
 					document.getElementById('cbid.address-list.'+addressName+'.interface').disabled = 'disabled';
