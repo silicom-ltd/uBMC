@@ -535,10 +535,11 @@ function action_upgrade()
 			if luci.http.formvalue("manufacture") then
 				local currentInfo = get_current_info()
 				local output = currentInfo.output
-				if output:find("MANUFACTURE") then 
+				if output:find("MANUFACTURE") or output:find("ATT") then 
 					upgrade_image_m()
 				else
 					nixio.fs.unlink(tmpfile)
+					local verify_ret = verify_image()
 					luci.template.render("admin/upgrade", {
 						step=1,
 						current_info=get_current_info(),
