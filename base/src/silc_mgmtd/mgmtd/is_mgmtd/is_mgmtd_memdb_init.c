@@ -386,7 +386,7 @@ static silc_mgmtd_cberr_info s_silc_mgmtd_cberr_list[] = {
 {"/", IS_MGMTD_ERR_SYSTEM_TERMINAL_TYPE_INVALID, "Invalid terminal type, support xterm/vt100/vt102/vt200/vt220/ansi/linux"},
 {"/", IS_MGMTD_ERR_SYSTEM_COM_SPEED_INVALID, "Invalid COM speed, support 9600/38400/115200"},
 {"/", IS_MGMTD_ERR_SYSTEM_SET_COM_FAILED, "Set COM configuration failed"},
-{"/", IS_MGMTD_ERR_AAA_USER_NAME_LEN, "Invalid user name length, must be between 2 - 30"},
+{"/", IS_MGMTD_ERR_AAA_USER_NAME_LEN, "Invalid user name length, must be between 2 - 31"},
 {"/", IS_MGMTD_ERR_AAA_USER_NAME_CHAR, "Invalid character for user name, only [a~z][0~9][_][-] are allowed"},
 {"/", IS_MGMTD_ERR_AAA_USER_FORBIDDEN, "User name is reserved by system"},
 {"/", IS_MGMTD_ERR_AAA_USER_NO_PRIVIL, "The current user has not enough privilege for this operation"},
