@@ -123,7 +123,7 @@ int is_mgmtd_reset_admin_passwd()
 	ret = is_mgmtd_unix_user_passwd_set(p_admin_node, silc_false);
 	if (ret)
 		return ret;
-	silc_mgmtd_memdb_set_config_unsave();
+	silc_mgmtd_cfg_save_config_to_file();
 	return 0;
 }
 
