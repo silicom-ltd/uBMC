@@ -1405,7 +1405,9 @@ function AbstractValue.parse(self, section, novld)
 		fvalue = self:transform(fvalue)
 
 		if not fvalue and not novld then
-			self:add_error(section, "invalid", val_err)
+			if luci.http.formvalue("cbi.commit") then
+				self:add_error(section, "invalid", val_err)
+			end
 		end
 
 		if fvalue and (self.forcewrite or not (fvalue == cvalue)) then
@@ -1996,12 +1998,14 @@ function DynTable.parse(self, readinput)
 			self.data[origin] = nil
 		else
 			-- remove and add can't be submitted together
-			origin, name = next(self.map:formvaluetable(crval))
-			if name and name ~= "" then
-				if self.data[name] then
-					self.duplicated_cts = true
-				else
-					self.data[name] = {}
+			if not luci.http.formvalue("cbi.commit") then
+				origin, name = next(self.map:formvaluetable(crval))
+				if name and name ~= "" then
+					if self.data[name] then
+						self.duplicated_cts = true
+					else
+						self.data[name] = {}
+					end
 				end
 			end
 		end

@@ -103,7 +103,7 @@ version = hostsConfig:option(ListValue, "version", translate("Version"))
 version:value('v1', 'SNMP V1')
 version:value('v2c', 'SNMP V2C')
 version:value('v3', 'SNMP V3')
-version:depends({state="true"})
+--version:depends({state="true"})
 
 communityConfig = hostsConfig:option(Value, "community", translate("Community/SNMPv3 User"))
 --[[
@@ -119,13 +119,14 @@ communityConfig.datatype = "minlength(1)"
 communityConfig:depends({state="true"})
 
 auth = hostsConfig:option(ListValue, "auth", translate("Auth"))
+auth:value('', '')
 auth:value('sha', 'sha')
 auth:value('md5', 'md5')
-auth:depends({state="true"})
+--auth:depends({state="true"})
 
 pw = hostsConfig:option(Value, "password", translate("Password"))
 pw.password = true
-pw:depends({state="true"})
+--pw:depends({state="true"})
 
 function mdForm.post_commit()
 	local mgmtdclient = require "mgmtdclient"

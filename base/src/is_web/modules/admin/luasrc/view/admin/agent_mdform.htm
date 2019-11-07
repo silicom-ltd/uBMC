@@ -41,7 +41,13 @@
 	" />
 <% end %>
 <%- if self.reset ~= false then %>
-	<input class="cbi-button cbi-button-reset" type="reset" name="cbi.reset" value="
+<%
+	local params = ""
+	for i, v in pairs(luci.dispatcher.context.requestpath) do
+		params = params .. v .. "/"
+	end
+%>
+	<input class="cbi-button cbi-button-reset" type="reset" name="cbi.reset" onclick="location.href='<%=luci.dispatcher.build_url(params)%>'; return false;" value="
 		<%- if not self.reset then -%><%-:Reset-%><%-else-%><%=self.reset%><%end-%>
 	" />
 <% end %>
@@ -85,6 +91,15 @@ var EventUtil = {
 			element.attachEvent("on" + type, handler);
 		} else {
 			element["on" + type] = handler;
+		}
+	},
+	removeHandler: function(element, type, handler) {
+		if (element.removeEventListener) {
+			element.removeEventListener(type, handler, false);
+		} else if (element.detachEvent) {
+			element.detachEvent("on" + type, handler);
+		} else {
+			element["on" + type] = null;
 		}
 	}
 };
@@ -139,12 +154,20 @@ function version_changed(event) {
 		index = version_array.indexOf(event.target);
 	var selectedIndex = version_array[index].selectedIndex;
 	if (selectedIndex == 2) {
-		auth_array[index].disabled = false;
-		password_array[index].disabled = false;
+		var op = auth_array[index].getElementsByTagName('option');
+		for (var loop in op) {
+			op[loop].disabled = parseInt(loop) == 0;
+		}
+		password_array[index].readOnly = false;
+		auth_array[index].selectedIndex = 1;
 	} else {
-		password_array[index].disabled = true;
-		auth_array[index].disabled = true;
+		password_array[index].readOnly = true;
+		var op = auth_array[index].getElementsByTagName('option');
+		for (var loop in op) {
+			op[loop].disabled = parseInt(loop) != 0;
+		}
 		password_array[index].value = '';
+		auth_array[index].value = '';
 	}
 }
 
@@ -182,9 +205,18 @@ function collect_component() {
 	if (version_array.length > 0) {
 		for (i in version_array) {
 			if (version_array[i].selectedIndex != 2) {
-				password_array[i].disabled = 'disabled';
-				auth_array[i].disabled = 'disabled';
+				password_array[i].readOnly = true;
+				var op = auth_array[i].getElementsByTagName('option');
+				for (var loop in op) {
+					op[loop].disabled = (parseInt(loop) != 0);
+				}
+				auth_array[i].value = '';
 				password_array[i].value = '';
+			} else {
+				var op = auth_array[i].getElementsByTagName('option');
+				for (var loop in op) {
+					op[loop].disabled = (parseInt(loop) == 0);
+				}
 			}
 
 			EventUtil.addHandler(version_array[i], 'change', version_changed);
@@ -204,8 +236,25 @@ function validate_pwd(word) {
 	return false;
 }
 
-function validate_form(event) {
+function cbi_validate_form(form, errmsg) {
 	var correct = true;
+
+	console.log(form.cbi_state);
+	if( form.cbi_state == 'del-section' || form.cbi_state == 'add-section' )
+		return true;
+
+	if( form.cbi_validators )
+	{
+		for( var i = 0; i < form.cbi_validators.length; i++ )
+		{
+			var validator = form.cbi_validators[i];
+			if( !validator() && errmsg )
+			{
+				alert(errmsg);
+				return false;
+			}
+		}
+	}
 	
 	if (version_array.length > 0) {
 		for (var i=0; i<version_array.length; i++) {
@@ -231,13 +280,12 @@ function validate_form(event) {
 		}
 
 		if (!correct) {
-			event.preventDefault ? event.preventDefault() : (event.returnValue = false);
-			alert('Some fields are invalid!');
+			alert(errmsg);
+			return false;
 		}
 	}
 }
 
 collect_component();
-EventUtil.addHandler(document.forms[0], 'submit', validate_form);
 </script>
 <% end %>
