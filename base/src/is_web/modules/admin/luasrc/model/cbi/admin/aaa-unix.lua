@@ -29,7 +29,7 @@ f:prepare_all()
 t = f:get_section_obj("user")
 t.template = "cbi/tblsection"
 t.sectionhead = translate("Username")
-t.keydesc = translate("Username: 1-31 characters, [a-z][0-9][_-]")
+t.keydesc = translate("Username: 2-31 characters, [a-z][0-9][_-]")
 t.keydatatype = "usrname"
 t.keymaxlen = "31"
 
