@@ -22,6 +22,7 @@ function index()
 	local dpt = require "luci.dispatcher"
 	entry({"admin", "bmc"}, alias("admin", "bmc", "index"), _("BMC"), 45).index = true
 	entry({"admin", "bmc", "index"}, cbi("admin/bmc-host", {autoapply=true}), _("Console Redirection"), 1)
+	entry({"admin", "bmc", "shell"}, call("action_console"), _("Console Shell"), 2)
 	entry({"admin", "bmc", "console"}, call("host_serial"), _("Console Log"), 2)
 	entry({"admin", "bmc", "power"}, call("action_power"), _("Power Control"), 3)
 if string.find(dpt.vendor, 'ATT') == nil then
@@ -56,6 +57,10 @@ function set_file_handler(f)
 			end
 		end
 	)
+end
+
+function action_console()
+    luci.template.render("admin/console", {})
 end
 
 function action_bios()
