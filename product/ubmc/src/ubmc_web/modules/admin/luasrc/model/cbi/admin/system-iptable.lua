@@ -31,7 +31,7 @@ iptableConfig = mdForm:get_section_obj("iptables-rule")
 iptableConfig.template = "cbi/tsection"
 iptableConfig.sectionhead = translate("Name")
 
-iptableConfig:option(Value, "priority", translate("Priority"))
+iptableConfig:option(Value, "priority", translate("Priority")).datatype = "uinteger"
 
 iptable = iptableConfig:option(ListValue, "table", translate("Table"))
 iptable:value('filter', 'filter')
