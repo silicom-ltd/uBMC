@@ -60,7 +60,16 @@ function set_file_handler(f)
 end
 
 function action_console()
-    luci.template.render("admin/console", {})
+	local TOKEN_PATH = "/tmp/ubmc-web-console-token"
+	os.execute("mkdir -p " .. TOKEN_PATH .. " > /dev/null 2>&1")
+
+	function gmtime()
+		return os.time(os.date("!*t"))
+	end
+
+	auth_token = luci.sys.uniqueid(16)
+	os.execute("echo " .. gmtime() .. " > " .. TOKEN_PATH .. "/" .. auth_token)
+    luci.template.render("admin/console", {["auth_token"] = auth_token})
 end
 
 function action_bios()
