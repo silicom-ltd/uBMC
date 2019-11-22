@@ -147,6 +147,7 @@ typedef int (*silc_mgmtd_custom_sys_halt_func)(void);
 typedef int (*silc_mgmtd_custom_sync_hw_clock)(void);
 typedef int (*silc_mgmtd_custom_user_password_chk)(silc_cstr pass, int len);
 typedef silc_cstr (*silc_mgmtd_snmp_get_sysoid)(void);
+typedef silc_cstr (*silc_mgmtd_get_ttyd_cmd)(void);
 
 typedef struct silc_mgmtd_storage_path_s
 {
@@ -193,6 +194,8 @@ typedef struct silc_mgmtd_product_info_s
 	silc_mgmtd_custom_user_password_chk custom_user_password_chk_func;
 
 	silc_mgmtd_snmp_get_sysoid get_snmp_sysoid_func;//can return NULL
+
+	silc_mgmtd_get_ttyd_cmd get_ttyd_cmd_func;//can return NULL
 
 }silc_mgmtd_product_info;
 

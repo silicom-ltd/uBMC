@@ -212,6 +212,12 @@ static int ubmc_mgmtd_action_sync_hw_clock(void)
 	return 0;
 }
 
+static silc_cstr ubmc_mgmtd_get_ttyd_cmd(void)
+{
+	static silc_cstr cmd = "/usr/bin/serial_socket_client";
+	return cmd;
+}
+
 static silc_cstr ubmc_mgmtd_vendor_list[] = {UBMC_MGMTD_VENDOR_LIST};
 static int ubmc_mgmtd_vendor_cnt = sizeof(ubmc_mgmtd_vendor_list)/sizeof(silc_cstr);
 
@@ -245,5 +251,6 @@ silc_mgmtd_product_info mgmtd_product_info = {
 		ubmc_mgmtd_action_sync_hw_clock,
 		NULL,  //password check
 		NULL,  //snmp_get_sysoid
+		ubmc_mgmtd_get_ttyd_cmd,
 };
 

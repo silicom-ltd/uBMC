@@ -340,154 +340,6 @@ int is_mgmtd_system_service_ssh_sync_db2key()
 	return 0;
 }
 
-#if 0
-#define IS_VRF_NUM_MAX	8
-
-int is_mgmtd_check_vrf_address(silc_cstr vrf, silc_cstr_array* addr_list)
-{
-	int len = 2048;
-	static char out[2048];
-	char cmd[128], addr_tag[128];
-	int ret, i;
-	silc_cstr addr;
-
-	if(vrf && vrf[0])
-		sprintf(cmd, "ip route show vrf %s", vrf);
-	else
-		strcpy(cmd, "ip route show");
-	ret = silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 3000, silc_false);
-	if(ret)
-	{
-		SILC_ERR("Fail to exec cmd: '%s', ret: %d", cmd, ret);
-		return ret;
-	}
-	for(i=0; i<addr_list->length; i++)
-	{
-		addr = silc_cstr_array_get_quick(addr_list, i);
-		sprintf(addr_tag, "src %s", addr);
-		if(strstr(out, addr_tag) == NULL)
-		{
-			SILC_LOG("VRF [%s] address %s is not ready yet", vrf, addr);
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-int is_mgmtd_start_vrf_ssh(silc_cstr vrf, silc_cstr_array* addr_list, int ssh_port)
-{
-	char conf[64], cmd[256];
-	FILE* fp_orig;
-	FILE* fp_conf;
-	char buff[512];
-	int i;
-
-	system("/usr/bin/ssh-keygen -A");
-	if (vrf && vrf[0])
-	{
-		sprintf(conf, "/etc/ssh/sshd_vrf_%s_config", vrf);
-		sprintf(cmd, "ip vrf exec %s /usr/sbin/sshd -f %s", vrf, conf);
-	}
-	else
-	{
-		sprintf(conf, "/etc/ssh/sshd_new_config");
-		sprintf(cmd, "/usr/sbin/sshd -f %s", conf);
-	}
-
-	fp_orig = fopen(IS_SSH_CONFIG_FILE, "r");
-	fp_conf = fopen(conf, "w");
-	while (fgets(buff, 512, fp_orig))
-	{
-		if (strncmp(buff, "Port", strlen("Port")) == 0 ||
-				strncmp(buff, "ListenAddress", strlen("ListenAddress")) == 0)
-		{
-			continue;
-		}
-		fprintf(fp_conf, "%s", buff);
-	}
-	fprintf(fp_conf, "Port %d\n", ssh_port);
-	for(i=0; addr_list && i<addr_list->length; i++)
-	{
-		fprintf(fp_conf, "ListenAddress %s\n", silc_cstr_array_get_quick(addr_list, i));
-	}
-
-	fflush(fp_conf);
-	fclose(fp_conf);
-	fclose(fp_orig);
-
-	system(cmd);
-
-	return 0;
-}
-
-void* is_mgmtd_start_ssh_thread(void* thread_arg)
-{
-	silc_cstr vrf_list[IS_VRF_NUM_MAX]={NULL}, bind_addr_list[IS_VRF_NUM_MAX]={NULL};
-	silc_cstr_array* addr_list[IS_VRF_NUM_MAX] = {NULL};
-	int ready[IS_VRF_NUM_MAX] = {0};
-	int i, vrf_num, not_ready;
-	int ssh_port = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_SERVICE_PATH"/ssh/port")->value.val.uint32_val;
-
-	system("killall -q sshd");
-
-	vrf_num = is_mgmtd_get_vrf_process_config("ssh", vrf_list, bind_addr_list, IS_VRF_NUM_MAX);
-	if(0 == vrf_num)
-	{
-		is_mgmtd_start_vrf_ssh(NULL, NULL, ssh_port);
-		return NULL;
-	}
-	for(i=0; i<vrf_num; i++)
-	{
-		addr_list[i] = silc_cstr_split(bind_addr_list[i], ",");
-		if(!addr_list[i])
-		{
-			SILC_ERR("silc_cstr_split error");
-			return NULL;
-		}
-	}
-
-	while (1)
-	{
-		not_ready = 0;
-		for(i=0; i<vrf_num; i++)
-		{
-			if(ready[i])
-				continue;
-			if(is_mgmtd_check_vrf_address(vrf_list[i], addr_list[i]))
-			{
-				not_ready = 1;
-				continue;
-			}
-			if(is_mgmtd_start_vrf_ssh(vrf_list[i], addr_list[i], ssh_port))
-			{
-				SILC_ERR("Fail to start sshd");
-				not_ready = 1;
-			}
-			else
-				ready[i] = 1;
-		}
-		if(not_ready)
-			sleep(3);
-		else
-			break;
-	}
-	SILC_LOG("SSH is ready");
-
-	for(i=0; i<vrf_num; i++)
-	{
-		silc_cstr_array_destroy(addr_list[i]);
-		addr_list[i] = NULL;
-	}
-	return NULL;
-}
-
-int is_mgmtd_start_ssh()
-{
-	// start a thread to wait listen address to be ready
-	return silc_thread_create_detached(is_mgmtd_start_ssh_thread, NULL);
-}
-#endif
 int is_mgmtd_start_ssh(int ssh_port)
 {
 	FILE* fp;
@@ -558,6 +410,7 @@ int is_mgmtd_system_service_config_ssh(void* conn_entry)
 #define IS_LUCI_UHTTPD_PORT		58080
 #define IS_LUCI_CONFIG_FILE		"/opt/silc-web/host/etc/config/luci"
 #define IS_NGINX_CONFIG_FILE	"/etc/nginx/nginx.conf"
+#define IS_TTYD_PORT			7681
 
 int is_mgmtd_get_reserved_iptables_rule_num(silc_cstr version)
 {
@@ -584,7 +437,7 @@ int is_mgmtd_start_luci()
 	int num, i;
 	char cmd[256];
 
-	system("killall -q uhttpd");
+	system("killall -q uhttpd ttyd");
 
 	num = is_mgmtd_get_vrf_process_config("web", vrf_list, 4);
 	if(num > 0)
@@ -605,6 +458,13 @@ int is_mgmtd_start_luci()
 
 	sprintf(cmd, "/opt/silc-web/silc-web-start.sh %s:%d &", backend, IS_LUCI_UHTTPD_PORT);
 	is_mgmtd_run_vrf_process_cmd("web", cmd);
+
+	if(silc_mgmtd_memdb_get_product_info()->get_ttyd_cmd_func)
+	{
+		silc_cstr ttyd_cmd = silc_mgmtd_memdb_get_product_info()->get_ttyd_cmd_func();
+		sprintf(cmd, "ttyd %s &", ttyd_cmd);
+		is_mgmtd_run_vrf_process_cmd("web", cmd);
+	}
 
 	return 0;
 }
@@ -652,381 +512,7 @@ int is_mgmtd_system_service_config_luci(void* conn_entry)
 	is_mgmtd_start_luci();
 	return 0;
 }
-#if 0
-int is_mgmtd_get_vrf_local_addr(silc_cstr vrf, silc_cstr addr)
-{
-	int len = 256;
-	char cmd[256], out[256];
-	int ret;
 
-	sprintf(cmd, "ip route show vrf %s|head -n 1|awk '{print $9}'", vrf);
-	ret = silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 3000, silc_false);
-	if(ret)
-	{
-		SILC_ERR("Fail to exec cmd: '%s', ret: %d", cmd, ret);
-		return ret;
-	}
-	is_trip_last_lf(out);
-	if(!out[0])
-	{
-		SILC_ERR("Fail to get VRF %s local address", vrf);
-		return -1;
-	}
-	strcpy(addr, out);
-	return 0;
-}
-
-int is_mgmtd_start_vrf_luci(silc_cstr vrf, silc_cstr addr)
-{
-	char cmd[256];
-
-	if(!vrf || !vrf[0])
-	{
-		system("/opt/silc-web/silc-web-start.sh &");
-		return 0;
-	}
-
-	SILC_LOG("Start luci with VRF=%s", vrf);
-	// only accept local traffic
-	sprintf(cmd, "iptables -I INPUT -p tcp -d %s --dport %d ! -s %s -j DROP", addr, IS_LUCI_UHTTPD_PORT, addr);
-	system(cmd);
-	sprintf(cmd, "ip vrf exec %s /opt/silc-web/silc-web-start.sh %s:%d &", vrf, addr, IS_LUCI_UHTTPD_PORT);
-	system(cmd);
-	return 0;
-}
-
-void is_mgmtd_get_nginx_conf_addr(silc_cstr addr, silc_cstr conf_addr)
-{
-	if(strstr(addr, ":"))
-		sprintf(conf_addr, "[%s]", addr);
-	else
-		sprintf(conf_addr, "%s", addr);
-}
-
-int is_mgmtd_start_vrf_nginx(silc_cstr vrf, silc_cstr_array* addr_list, silc_cstr luci_addr,
-		silc_bool http_en, int http_port, silc_bool https_en, int https_port)
-{
-	char conf[64], cmd[256], backend[64], conf_addr[64];
-	FILE* fp;
-	time_t t;
-	int i;
-
-	system("mkdir -p /var/log/nginx /var/tmp/nginx");
-	if (vrf && vrf[0])
-	{
-		sprintf(conf, "/etc/nginx/nginx-vrf-%s.conf", vrf);
-		sprintf(cmd, "ip vrf exec %s /usr/sbin/nginx -c %s", vrf, conf);
-		is_mgmtd_get_nginx_conf_addr(luci_addr, backend);
-	}
-	else
-	{
-		strcpy(conf, "/etc/nginx/nginx.conf");
-		strcpy(cmd, "/usr/sbin/nginx");
-		strcpy(backend, "127.0.0.1");
-	}
-
-	fp = fopen(conf, "w");
-	time(&t);
-	fprintf(fp, "##\n"
-				"## This file was AUTOMATICALLY GENERATED. DO NOT MODIFY IT.\n"
-				"## All changes will be lost.\n"
-				"##\n"
-				"## Generated by %s at %s"
-				"##\n", __func__, ctime(&t));
-
-	fprintf(fp, "worker_processes  1;\n"
-				"events {\n"
-				"    worker_connections  1024;\n"
-				"}\n"
-				"http {\n"
-				"    access_log     off;\n"
-				"    error_log      /tmp/nginx_error.log;\n"
-				"    include        mime.types;\n"
-				"    default_type   application/octet-stream;\n"
-				"    sendfile       off;\n"
-				"    keepalive_timeout           600;\n"
-				"    proxy_connect_timeout       600;\n"
-				"    proxy_send_timeout          600;\n"
-				"    proxy_read_timeout          600;\n"
-				"    send_timeout                600;\n");
-
-	if (http_en)
-	{
-		fprintf(fp, "    server {\n");
-		if(!addr_list)
-		{
-			fprintf(fp,
-				    "        listen       %d;\n"
-			    	"        listen  [::]:%d;\n"
-					, http_port, http_port);
-		}
-		else
-		{
-			for(i=0; i<addr_list->length; i++)
-			{
-				is_mgmtd_get_nginx_conf_addr(silc_cstr_array_get_quick(addr_list, i), conf_addr);
-				fprintf(fp,
-					"        listen  %s:%d;\n"
-						, conf_addr, http_port);
-			}
-		}
-		fprintf(fp,
-			    	"        server_name  localhost;\n"
-#ifdef IS_DIRECT_HTTP_ENABLE
-				    "        client_max_body_size 100m;\n"
-					"        add_header X-Frame-Options \"SAMEORIGIN\";\n"
-				    "        location / {\n"
-				    "            proxy_pass http://127.0.0.1:8080;\n"
-				    "            proxy_redirect default;\n"
-				    "        }\n"
-				    "        error_page   500 502 503 504  /50x.html;\n"
-				    "        location = /50x.html {\n"
-				    "            root   html;\n"
-				    "        }\n"
-#else
-					"        return 301 https://$host$request_uri;\n"
-#endif
-				    "    }\n");
-	}
-
-	if (https_en)
-	{
-		fprintf(fp, "    # HTTPS server\n"
-					"    #\n"
-					"    server {\n");
-		if(!addr_list)
-		{
-			fprintf(fp,
-					"        listen       %d ssl;\n"
-					"        listen  [::]:%d ssl;\n"
-				, https_port, https_port);
-#ifndef IS_DIRECT_HTTP_ENABLE
-			if (http_en && https_port != 443)
-			{
-				// http redirect to https on standard 443 port
-				fprintf(fp,
-					"        listen       443 ssl;\n"
-					"        listen  [::]:443 ssl;\n");
-			}
-#endif
-		}
-		else
-		{
-			for(i=0; i<addr_list->length; i++)
-			{
-				is_mgmtd_get_nginx_conf_addr(silc_cstr_array_get_quick(addr_list, i), conf_addr);
-				fprintf(fp,
-					"        listen  %s:%d ssl;\n"
-						, conf_addr, https_port);
-#ifndef IS_DIRECT_HTTP_ENABLE
-				if (http_en && https_port != 443)
-				{
-					// http redirect to https on standard 443 port
-					fprintf(fp,
-					"        listen  %s:443 ssl;\n"
-							, conf_addr);
-				}
-#endif
-			}
-		}
-		fprintf(fp,	"        server_name  localhost;\n"
-				    "        client_max_body_size 1000m;\n"
-					"        ssl_certificate      nginx_ssl.crt;\n"
-					"        ssl_certificate_key  nginx_ssl.key;\n"
-					"        ssl_session_cache    shared:SSL:1m;\n"
-					"        ssl_session_timeout  10m;\n"
-					"        ssl_ciphers  HIGH:!aNULL:!MD5;\n"
-					"        ssl_prefer_server_ciphers  on;\n"
-					"        ssl_protocols TLSv1.2 TLSv1.1;\n"
-					"        add_header X-Frame-Options \"SAMEORIGIN\";\n"
-					"        location / {\n"
-					"            proxy_set_header Host $host;\n"
-					"            proxy_set_header X-Real-IP $remote_addr;\n"
-					"            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"
-					"            proxy_pass http://%s:%d;\n"
-					"            proxy_redirect default;\n"
-					"       }\n"
-					"    }\n", backend, IS_LUCI_UHTTPD_PORT);
-	}
-	fprintf(fp, "}\n");
-
-	fflush(fp);
-	fclose(fp);
-
-	system(cmd);
-	return 0;
-}
-
-void* is_mgmtd_start_web_thread(void* thread_arg)
-{
-	silc_cstr vrf_list[IS_VRF_NUM_MAX] = {NULL}, bind_addr_list[IS_VRF_NUM_MAX] = {NULL};
-	silc_cstr_array* addr_list[IS_VRF_NUM_MAX] = {NULL};
-	int ready[IS_VRF_NUM_MAX] = {0};
-	int i, vrf_num, not_ready;
-	silc_bool http_en = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_SERVICE_PATH"/http/enabled")->value.val.bool_val;
-	int http_port = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_SERVICE_PATH"/http/port")->value.val.uint32_val;
-	silc_bool https_en = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_SERVICE_PATH"/https/enabled")->value.val.bool_val;
-	int https_port = silc_mgmtd_memdb_find_node(IS_MGMTD_SYSTEM_SERVICE_PATH"/https/port")->value.val.uint32_val;
-	char local_addr[64];
-
-	system("killall -q nginx uhttpd");
-	if (!http_en && !https_en)
-	{
-		return 0;
-	}
-
-	vrf_num = is_mgmtd_get_vrf_process_config("web", vrf_list, bind_addr_list, IS_VRF_NUM_MAX);
-	if(0 == vrf_num)
-	{
-		is_mgmtd_start_vrf_luci(NULL, NULL);
-		is_mgmtd_start_vrf_nginx(NULL, NULL, NULL, http_en, http_port, https_en, https_port);
-		return NULL;
-	}
-	for(i=0; i<vrf_num; i++)
-	{
-		addr_list[i] = silc_cstr_split(bind_addr_list[i], ",");
-		if(!addr_list[i])
-		{
-			SILC_ERR("silc_cstr_split error");
-			return NULL;
-		}
-	}
-
-	while (1)
-	{
-		not_ready = 0;
-		for(i=0; i<vrf_num; i++)
-		{
-			if(ready[i])
-				continue;
-			if(is_mgmtd_check_vrf_address(vrf_list[i], addr_list[i]))
-			{
-				not_ready = 1;
-				continue;
-			}
-			if(vrf_list[i] && vrf_list[i][0] &&
-					is_mgmtd_get_vrf_local_addr(vrf_list[i], local_addr))
-			{
-				not_ready = 1;
-				continue;
-			}
-			if(is_mgmtd_start_vrf_luci(vrf_list[i], local_addr) ||
-					is_mgmtd_start_vrf_nginx(vrf_list[i], addr_list[i], local_addr,
-							http_en, http_port, https_en, https_port))
-			{
-				SILC_ERR("Fail to start luci/nginx");
-				not_ready = 1;
-			}
-			else
-				ready[i] = 1;
-		}
-		if(not_ready)
-			sleep(3);
-		else
-			break;
-	}
-	SILC_LOG("Web is ready");
-
-	for(i=0; i<vrf_num; i++)
-	{
-		silc_cstr_array_destroy(addr_list[i]);
-		addr_list[i] = NULL;
-	}
-	return NULL;
-}
-
-int is_mgmtd_start_web()
-{
-	// start a thread to wait listen address to be ready
-	return silc_thread_create_detached(is_mgmtd_start_web_thread, NULL);
-}
-
-silc_cstr_array* is_mgmtd_get_cmd_output_array(silc_cstr cmd)
-{
-	static char out[2048];
-	int len = 2048, ret;
-	silc_cstr_array* p_list = NULL;
-
-	ret = silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 3000, silc_false);
-	if(ret)
-	{
-		SILC_ERR("Fail to exec cmd: '%s', ret: %d", cmd, ret);
-		return NULL;
-	}
-	if(!out[0])
-		return NULL;
-	p_list = silc_cstr_split(out, "\n");
-	if(!p_list)
-	{
-		SILC_ERR("silc_cstr_split error");
-		return NULL;
-	}
-	return p_list;
-}
-int is_mgmtd_filter_vrf_address(silc_cstr vrf)
-{
-	char cmd[256];
-	silc_cstr_array* p_addr_list = NULL;
-	silc_cstr addr;
-	int i;
-
-	sprintf(cmd, "ip route show vrf %s|grep -w src|awk '{print $9}'", vrf);
-	p_addr_list = is_mgmtd_get_cmd_output_array(cmd);
-	if(!p_addr_list)
-	{
-		SILC_LOG("VRF %s doesn't have valid address", vrf);
-		return 0;
-	}
-	for(i=0; i<p_addr_list->length; i++)
-	{
-		addr = silc_cstr_array_get_quick(p_addr_list, i);
-		SILC_LOG("Filter vrf %s addr %s", vrf, addr);
-	}
-	silc_cstr_array_destroy(p_addr_list);
-
-	return 0;
-}
-
-void* is_mgmtd_vrf_scan_thread(void* thread_arg)
-{
-	silc_cstr_array* p_vrf_list = NULL;
-	silc_cstr vrf;
-	int i;
-
-	p_vrf_list = is_mgmtd_get_cmd_output_array("ip vrf show|grep -v Name|grep -v '\\-----------------------'|awk '{print $1}'");
-	if(!p_vrf_list)
-	{
-		SILC_LOG("No VRF is configured");
-		return NULL;
-	}
-
-	while (1)
-	{
-		for(i=0; i<p_vrf_list->length; i++)
-		{
-			vrf = silc_cstr_array_get_quick(p_vrf_list, i);
-			SILC_LOG("Filter vrf %s addr", vrf);
-			is_mgmtd_filter_vrf_address(vrf);
-		}
-		sleep(3);
-	}
-	silc_cstr_array_destroy(p_vrf_list);
-
-	return NULL;
-}
-
-int is_mgmtd_start_vrf_scan_thread()
-{
-	static int started = 0;
-	// start a thread to scan vrf source address and set iptables rule to protect IS_LUCI_UHTTPD_PORT
-	if(!started)
-	{
-		started = 1;
-		return silc_thread_create_detached(is_mgmtd_vrf_scan_thread, NULL);
-	}
-	return 0;
-}
-#endif
 int is_mgmtd_start_nginx(silc_bool http_en, int http_port, silc_bool https_en, int https_port)
 {
 	char* conf = "/etc/nginx/nginx.conf";
@@ -1126,8 +612,21 @@ int is_mgmtd_start_nginx(silc_bool http_en, int http_port, silc_bool https_en, i
 				"            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n"
 				"            proxy_pass http://%s:%d;\n"
 				"            proxy_redirect default;\n"
-				"       }\n"
-				"    }\n", backend, IS_LUCI_UHTTPD_PORT);
+				"        }\n",
+				backend, IS_LUCI_UHTTPD_PORT);
+		if(silc_mgmtd_memdb_get_product_info()->get_ttyd_cmd_func)
+		{
+			fprintf(fp,
+				"        location ^~ /ws {\n"
+				"            proxy_pass http://%s:%d/ws;\n"
+				"            proxy_http_version 1.1;\n"
+				"            proxy_set_header Upgrade $http_upgrade;\n"
+				"            proxy_set_header Connection \"upgrade\";\n"
+				"        }\n",
+				backend, IS_TTYD_PORT);
+		}
+		fprintf(fp,
+				"    }\n");
 	}
 	fprintf(fp, "}\n");
 
