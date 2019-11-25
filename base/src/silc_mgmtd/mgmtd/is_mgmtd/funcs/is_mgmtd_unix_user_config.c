@@ -66,7 +66,8 @@ int is_mgmtd_unix_check_pass(silc_cstr pass)
 	if(silc_mgmtd_memdb_get_product_info()->custom_user_password_chk_func)
 	{
 		ret = silc_mgmtd_memdb_get_product_info()->custom_user_password_chk_func(pass, len);
-		return ret;
+		if(ret)
+			return ret;
 	}
 	if (len < 6 || len > 40)
 	{

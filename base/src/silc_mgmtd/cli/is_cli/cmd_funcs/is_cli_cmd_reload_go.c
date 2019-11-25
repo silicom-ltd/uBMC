@@ -31,7 +31,7 @@ int is_cli_cmd_reboot()
 int is_cli_cmd_reload_go_confirm()
 {
 	silc_bool saved;
-	silc_cstr reboot_warn_msg = "%% The uBMC will reboot, Continue (y|n) ?";
+	silc_cstr reboot_warn_msg = "%% The system will reboot, Continue (y|n) ?";
 
 	if(silc_cli_get_mgmtd_bool_node_value(IS_CLI_PATH_STATUS_CONFIG_SAVED, &saved) == 0)
 	{
