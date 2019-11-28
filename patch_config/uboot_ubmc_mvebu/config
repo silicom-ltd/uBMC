@@ -1,0 +1,20 @@
+#!/bin/bash
+set -x
+PKG_NAME=uboot_ubmc_marvell
+PKG_VERSION=custom
+PKG_TAR_NAME=sources-uboot-2018.03-ga-19.06.3.tar.bz2
+PKG_DIR_NAME=uboot-${PKG_VERSION}
+
+PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/mvebu_esp/uboot/patches
+
+PATCH_NAME_MAIN=
+PATCH_MAIN_EXCEPT_FILE=
+
+PATCH_NAME[1]=uboot-marvell-0001-dts.patch
+PATCH_FLIST[1]=files_marvell_uboot_dts.txt
+PATCH_NAME[2]=uboot-marvell-0002-autoboot.patch
+PATCH_FLIST[2]=files_marvell_uboot_autoboot.txt
+PATCH_GEN_REQ_CLEAN=0
+PATCH_GEN_REQ_DIST_CLEAN=1
+
+

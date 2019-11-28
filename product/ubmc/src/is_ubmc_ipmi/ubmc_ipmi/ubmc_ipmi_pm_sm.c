@@ -882,11 +882,11 @@ struct ubmc_sensor_config_s ubmc_s_m_sensor_cfg[S_M_SENSOR_MAX_NUM] =
 				.sync_sensor_kernel_shm = sm_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = sm_sync_sensor_state_to_gui,
 				.sensor_event_handler = sm_event_handler,
-				.ipmitool_factor.m	= 15,
+				.ipmitool_factor.m	= 30,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
 				.ipmitool_factor.k2 = -3,
-				.ipmitool_factor.minification = 150
+				.ipmitool_factor.minification = 300
 		},
 		{
 				.dev_name = VOL_DEV_PAC1014A_NAME,
@@ -948,11 +948,11 @@ struct ubmc_sensor_config_s ubmc_s_m_sensor_cfg[S_M_SENSOR_MAX_NUM] =
 				.sync_sensor_kernel_shm = sm_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = sm_sync_sensor_state_to_gui,
 				.sensor_event_handler = sm_event_handler,
-				.ipmitool_factor.m	= 15,
+				.ipmitool_factor.m	= 50,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
 				.ipmitool_factor.k2 = -3,
-				.ipmitool_factor.minification = 150
+				.ipmitool_factor.minification = 500
 		},
 
 };

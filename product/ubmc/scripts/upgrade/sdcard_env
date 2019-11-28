@@ -25,7 +25,12 @@ is_sd_partition()
   sudo mkfs.fat ${SDCARD}1 || error_quit "Failed to create vfat on ${SDCARD}1"
   
 }
-
+is_sd_mount()
+{
+  SD_PART=$1
+  SDTMP=$2
+  sudo mount ${SD_PART} ${SDTMP} -o dmask=0000,fmask=0000 || error_quit "Failed to mount ${SD_PART}"
+}
 is_sd_get_img_part()
 {
   echo "1"

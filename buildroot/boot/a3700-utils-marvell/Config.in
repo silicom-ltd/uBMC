@@ -1,0 +1,46 @@
+config BR2_TARGET_A3700_UTILS_MARVELL
+	bool "a3700-utils-marvell"
+	depends on BR2_aarch64
+	help
+	  Marvell Armada 37xx firmware code and utilities are kept in
+	  a separate repository. This code is needed as a dependency
+	  to build ATF firmware for Marvell Armada 37xx SoCs.
+
+	  https://github.com/MarvellEmbeddedProcessors/A3700-utils-marvell/
+
+choice
+	bool "a3700-utils-marvell-version"
+
+config BR2_TARGET_A3700_UTILS_MARVELL_CUSTOM_GIT
+	bool "Custom Git repository"
+	help
+	  Allows to specify custom repository for the component
+	  Useful for developers building out of bleeding edge sources
+
+config BR2_TARGET_A3700_UTILS_MARVELL_RELEASE
+	bool "Release repository on Github"
+	help
+	  Use the package sources specified in this buildroot release
+
+config BR2_TARGET_A3700_UTILS_MARVELL_CUSTOM_TARBALL
+	bool "Release sources supplied as archives"
+	help
+	  Use the package sources from local archive
+
+endchoice
+
+if BR2_TARGET_A3700_UTILS_MARVELL_CUSTOM_GIT
+
+config BR2_TARGET_A3700_UTILS_MARVELL_CUSTOM_REPO_URL
+	string "URL of custom repository"
+
+config BR2_TARGET_A3700_UTILS_MARVELL_CUSTOM_REPO_VERSION
+	string "Custom repository version"
+	help
+	  Revision to use in the typical format used by Git
+	  E.G. a sha id, a tag, branch, ..
+
+endif
+
+config BR2_TARGET_A3700_UTILS_MARVELL_CUSTOM_TARBALL_LOCATION
+	string "Name of local archive file with release"

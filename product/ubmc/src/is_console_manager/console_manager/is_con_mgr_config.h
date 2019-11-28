@@ -54,7 +54,31 @@ typedef struct is_config_console_s
 	uint32_t com_stopbits;
 	char com_parity[32];
 
+
 } is_config_console;
+
+typedef enum
+{
+	BIOS_TYPE_UNKNOW = 0,
+	BIOS_TYPE_UBMC,
+} bios_boot_type;
+typedef enum
+{
+	BIOS_BOOT_START = 0,
+	BIOS_BOOT_STATE_1,
+	BIOS_BOOT_STATE_2,
+	BIOS_BOOT_STATE_3,
+	BIOS_BOOT_STATE_4,
+	BIOS_BOOT_END,
+} bios_boot_state;
+
+typedef struct host_console_match_str_s
+{
+	uint32_t match_str_pos; //record the match string position
+	bios_boot_type bios_type;
+	bios_boot_state bios_state;
+	bool str_match_enable;
+}host_console_match_str;
 
 is_config_console* is_config_alloc(void);
 void is_config_init(is_config_console* p_cfg_console);

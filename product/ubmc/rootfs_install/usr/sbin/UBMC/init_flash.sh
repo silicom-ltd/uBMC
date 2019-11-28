@@ -9,6 +9,7 @@ TARGET_DEV=/dev/mmcblk0
 if [ ! -b ${TARGET_DEV} ]; then
 	TARGET_DEV=/dev/mmcblk1
 fi
+TARGET_NAME=${TARGET_DEV##*/}
 test -z "$1" || TARGET_DEV=$1
 
 test -z ${TARGET_DEV} && error_quit "must specify disk to device to operate on"
@@ -16,7 +17,13 @@ test -b ${TARGET_DEV} || error_quit "Specified device must be a block device"
 
 #zero out 
 dd if=/dev/zero of=$TARGET_DEV bs=1024 count=1024
-
+PRODUCT_SUB=$(get_product_sub_name)
+#UBMC_ESP boot from /dev/mmcblkxboo0,so let's init the partition
+if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+	echo 0 > /sys/block/$TARGET_NAME"boot0"/force_ro
+	dd if=/dev/zero of=$TARGET_DEV"boot0" bs=1024 count=2048 conv=fdatasync
+	echo 1 > /sys/block/$TARGET_NAME"boot0"/force_ro
+fi
 SIZE=`fdisk -l $TARGET_DEV | grep Disk | awk '{print $5}'`
 
 echo DISK SIZE - $SIZE bytes
@@ -41,11 +48,15 @@ FIRMWARE_PART_START=${PART_START}
 FIRMWARE_PART_END=$((${FIRMWARE_PART_START}+${FIRMWARE_PART_SIZE}))
 FIRMWARE_PART_TYPE=primary
 FIRMWARE_PART_NUM=1
+#ubmc TI use fat as partition format
+#ubmc Marvell use ext4 as partition format
+if [ "${PRODUCT_SUB}" != "UBMC_ESP" ]; then
 FIRMWARE_PART_FS=fat16
 FIRMWARE_PART_MKFS=fat
 FIRMWARE_PART_MKFS_OPT=none
 FIRMWARE_PART_LABEL=fatlabel
 FIRMWARE_PART_LABEL_OPT=n
+fi
 
 SYSTEM1_PART_START=${FIRMWARE_PART_END}
 SYSTEM1_PART_END=$((${SYSTEM1_PART_START}+${SYSTEM_PART_SIZE}))

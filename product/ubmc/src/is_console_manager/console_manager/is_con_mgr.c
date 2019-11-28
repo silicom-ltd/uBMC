@@ -846,16 +846,69 @@ int32_t console_manager_flush_to_log(int32_t serial_dev_no, char *buf, uint * bu
 
 }
 
+
+#define BIOS_BOOT_LOG1 "Do you want to recovery ROM part? (Caution: Not every OS is bootable in Recovery Mode.)"
+#define BIOS_BOOT_LOG2 "YES,this choice will flash Rom part."
+#define BIOS_BOOT_LOG3 "NO, abort Recovery mode and restart system."
+#define BIOS_BOOT_LOG4 "      Update Progress: Completed"  /*32Byte*/
+#define BIOS_UPGRADE_STARTED "/tmp/h2o_bios_upgrade_started"
+#define BIOS_UPGRADE_DONE "/tmp/h2o_bios_upgrade_done"
+#define BIOS_UPGRADE_TIMEOUT "/tmp/h2o_bios_upgrade_timeout"
+bool console_manager_match_str(const char *str,char *buf,uint buf_len)
+{
+
+	uint i = 0,j = 0,buf_pos = 0;
+	uint str_len = 0;
+	str_len = strlen(str);
+	uint32_t* str_pos = NULL;
+	str_pos = &g_is_console.match_str.match_str_pos;
+    //console_m_debug("len is %d buf is %s \n",buf_len,buf);
+	while(i < buf_len)
+	{
+		j = i;
+		while(buf_pos + j < buf_len)
+		{
+			//console_m_debug("buf_pos is %d char is %c str is %c *str_pos is %d\n",buf_pos + j,buf[buf_pos + j],str[*str_pos],*str_pos);
+			if(str[*str_pos] == buf[buf_pos + j])
+			{
+				(*str_pos) ++;
+				j ++;
+				if(*str_pos == str_len)
+				{
+					//console_m_debug("localtion is %d \n",buf_pos);
+					*str_pos = 0;
+					return 1;
+				}
+				if(buf_pos + j >= buf_len)
+				{
+					/*current has no complete string ,so just return to find in next buf*/
+					return 0;
+				}
+				//console_m_debug("match char %c str_pos is %d \n",buf[buf_pos + j - 1],*str_pos);
+			}
+			else
+			{
+				*str_pos = 0;
+				j = 0;
+				buf_pos ++;
+			}
+
+		}
+		i ++ ;
+	}
+	return 0;
+}
 int32_t console_manager_flush_to_output(int32_t serial_dev_no)
 {
 	uint *serial_in_bufpos;
 	uint *serial_in_socket_bufpos;
 	uint *log_bufpos;
-
+	uint wlen = 0 ,buf_len = 0;
+	bool is_matched = 0;
+	char bios_boot_type = 0;
 	char * serial_in_buf;
 	char * serial_in_socket_buf;
 	char * log_buf;
-	//printf("console_manager_flush_to_output :serial_dev_no is %d \n",serial_dev_no);
 	is_config_console *p_config;
 	p_config = g_is_console.p_config;
 
@@ -878,11 +931,96 @@ int32_t console_manager_flush_to_output(int32_t serial_dev_no)
 	if (p_config->is_log_to_file)
 #endif
 	{
-
 		log_bufpos = &(g_con_mgr_serial_dev[serial_s_tty_n_1].log_bufpos);
+		buf_len = *log_bufpos;
 		log_buf = g_con_mgr_serial_dev[serial_s_tty_n_1].log_buf;
 		console_manager_flush_to_log(serial_s_tty_n_1, log_buf, log_bufpos);
-		//printf("write log done \n");
+		/*We can check the key word within host log here*/
+		/*
+		 * Host log string match function will start when str_match_enable was set
+		 *
+		 */
+		if(!access(BIOS_UPGRADE_STARTED,F_OK))
+		{
+			g_is_console.match_str.str_match_enable = 1;
+			console_m_debug("Found the file %s ,str match started \n",BIOS_UPGRADE_STARTED);
+			system("rm "BIOS_UPGRADE_STARTED);
+
+		}
+		if(g_is_console.match_str.str_match_enable)
+		{
+			if( g_is_console.match_str.bios_type == BIOS_TYPE_UNKNOW)
+			{
+				/*setting the bios type and init some value*/
+				g_is_console.match_str.bios_type = BIOS_TYPE_UBMC;
+				g_is_console.match_str.bios_state = BIOS_BOOT_START;
+				g_is_console.match_str.match_str_pos = 0;
+
+			}
+			if(g_is_console.match_str.bios_type == BIOS_TYPE_UBMC)
+			{
+				if(g_is_console.match_str.bios_state == BIOS_BOOT_START)
+				{
+					is_matched = console_manager_match_str(BIOS_BOOT_LOG1,log_buf,buf_len);
+					if(is_matched)
+					{
+						g_is_console.match_str.bios_state = BIOS_BOOT_STATE_1;
+						console_m_debug("match the str %s \n",BIOS_BOOT_LOG1);
+					}
+				}
+				if(g_is_console.match_str.bios_state == BIOS_BOOT_STATE_1)
+				{
+					is_matched = console_manager_match_str(BIOS_BOOT_LOG2,log_buf,buf_len);
+					if(is_matched)
+					{
+						g_is_console.match_str.bios_state = BIOS_BOOT_STATE_2;
+						console_m_debug("match the str %s \n",BIOS_BOOT_LOG2);
+					}
+				}
+				if(g_is_console.match_str.bios_state == BIOS_BOOT_STATE_2)
+				{
+					is_matched = console_manager_match_str(BIOS_BOOT_LOG3,log_buf,buf_len);
+					if(is_matched)
+					{
+						wlen = 1;
+						console_manager_flush_to_serial_source(serial_s_tty_n_1, "\r", &wlen);	/*answer a "Enter" key when receive all information*/
+						g_is_console.match_str.bios_state = BIOS_BOOT_STATE_3;
+						console_m_debug("match the str %s \n",BIOS_BOOT_LOG3);
+					}
+				}
+				if(g_is_console.match_str.bios_state == BIOS_BOOT_STATE_3)
+				{
+					is_matched = console_manager_match_str(BIOS_BOOT_LOG4,log_buf,buf_len);
+					if(is_matched)
+					{
+						console_m_debug("match all str \n");
+						g_is_console.match_str.bios_state = BIOS_BOOT_END;
+					}
+				}
+				if(g_is_console.match_str.bios_state == BIOS_BOOT_END)
+				{
+					/*Todo :BIOS startup has been finished, do some deinit*/
+					g_is_console.match_str.bios_type = BIOS_TYPE_UNKNOW;
+					g_is_console.match_str.str_match_enable = 0;
+					g_is_console.match_str.match_str_pos = 0;
+					if(!access(BIOS_UPGRADE_DONE,F_OK))
+					{
+						console_m_err("%s has been exist ,please check %s\n",BIOS_UPGRADE_DONE);
+					}
+					system("touch "BIOS_UPGRADE_DONE);
+				}
+			}
+			/*Handle the thing when BIOS upgrade time out*/
+			if(!access(BIOS_UPGRADE_TIMEOUT,F_OK))
+			{
+				console_m_err("BIOS upgrade time out ,state is in %d ,disable string match \n",g_is_console.match_str.bios_state);
+				g_is_console.match_str.bios_type = BIOS_TYPE_UNKNOW;
+				g_is_console.match_str.str_match_enable = 0;
+				g_is_console.match_str.match_str_pos = 0;
+				system("rm "BIOS_UPGRADE_TIMEOUT);
+			}
+
+		}
 	}
 
 	return 0;

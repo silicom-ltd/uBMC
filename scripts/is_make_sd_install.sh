@@ -71,7 +71,8 @@ is_sd_partition ${SDCARD}
 SD_PART=${SDCARD}$(is_sd_get_img_part)
 echo "--> Copying images to ${SD_PART}"
 
-sudo mount ${SD_PART} ${SDTMP} -o dmask=0000,fmask=0000 || error_quit "Failed to mount ${SD_PART}"
+#sudo mount ${SD_PART} ${SDTMP} -o dmask=0000,fmask=0000 || error_quit "Failed to mount ${SD_PART}"
+is_sd_mount ${SD_PART} ${SDTMP} 
 for CP_SRC_NAME in ${INSTALL_CP_SRC_NAMES}; do
   CP_SRC="$(eval echo \$${CP_SRC_NAME})"
   test -z "${CP_SRC}" && error_quit "${CP_SRC_NAME} is not defined or empty in ${SDCARD_ENV}"

@@ -1,10 +1,11 @@
+set -x
 PKG_NAME=linux
 PKG_VERSION=custom
 #PKG_TAR_NAME=linux-4.9.41+gitAUTOINC+e3a80a1c5c-ge3a80a1c5c.tar.gz
 PKG_TAR_NAME=linux-4.14.y-ti.tar.gz
 PKG_DIR_NAME=${PKG_NAME}-${PKG_VERSION}
 
-PATCH_LOCATION=${BR2_ROOT}/ti/${PKG_NAME}-patches
+PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/ti/kernel/patches
 
 PATCH_NAME_MAIN=
 PATCH_MAIN_EXCEPT_FILE=

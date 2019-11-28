@@ -6,7 +6,7 @@ PKG_VERSION=custom
 PKG_TAR_NAME=u-boot-2017.01+gitAUTOINC+590c7d7fe1-g590c7d7fe1.tar.gz
 PKG_DIR_NAME=uboot-${PKG_VERSION}
 
-PATCH_LOCATION=${BR2_ROOT}/ti/uboot-patches
+PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/ti/uboot/patches
 
 PATCH_NAME_MAIN=uboot-0001-main.patch
 PATCH_MAIN_EXCEPT_FILE=files_uboot_ubmc_main_exc.txt

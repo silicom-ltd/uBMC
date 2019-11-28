@@ -19,5 +19,6 @@ source "boot/ts4800-mbrboot/Config.in"
 source "boot/uboot/Config.in"
 source "boot/vexpress-firmware/Config.in"
 source "boot/xloader/Config.in"
+source "boot/a3700-utils-marvell/Config.in"
 
 endmenu

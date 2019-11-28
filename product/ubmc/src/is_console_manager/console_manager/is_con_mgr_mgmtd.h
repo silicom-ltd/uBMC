@@ -15,6 +15,7 @@
 typedef struct is_console_s
 {
     is_config_console *   p_config;
+    host_console_match_str match_str;
     bool is_status_changed;
     bool is_initalized;
 }is_console;
