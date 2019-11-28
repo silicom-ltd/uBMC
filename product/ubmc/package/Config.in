@@ -1,8 +1,10 @@
 
 config BR2_PACKAGE_SILC_PRODUCT_NAME
-    string "Product name"
-    default UBMC
-
+	string "Product name"
+	default UBMC
+config BR2_PACKAGE_SILC_PRODUCT_SUB
+	string "Product sub name"
+	default ""
 	source "../product/ubmc/package/ubmc_mgmtd/Config.in"
 	source "../product/ubmc/package/ubmc_netconf/Config.in"
 	source "../product/ubmc/package/ubmc_web/Config.in"

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -x
 BR2_ROOT=$(pwd)
 IMAGE_PATH=$(pwd)
 
@@ -31,12 +31,11 @@ fi
 BR2_OUT=${BR2_ROOT}/output
 #set -x
 PRODUCT=$(cat ${BR2_OUT}/target/etc/product.txt)
-
+PRODUCT_SUB=$(cat ${BR2_OUT}/target/etc/product_sub.txt)
 echo "Building SD card for ${PRODUCT}"
 SDCARD=$1
 IMGDIR=$2
 INSTALL_IMG=$3
-
 
 SDTMP=$(mktemp -d) || error_quit "Failed to create temp mount dir"
 
@@ -44,8 +43,11 @@ SDTMP=$(mktemp -d) || error_quit "Failed to create temp mount dir"
 test -z "$1" && error_quit "Please specify the sd card device"
 test -z "$2" && error_quit "Please specify the image dir"
 test -z "$3" && error_quit "Please specify the image to install"
-
-${BR2_ROOT}/scripts/is_make_sd_install.sh $1 $2 $3 ${BR2_ROOT}/product/scripts/upgrade/sdcard_env
+if [ ${PRODUCT_SUB} == "UBMC_ESP" ]; then
+${BASE_ROOT}/scripts/is_make_sd_install.sh $1 $2 $3 ${BR2_ROOT}/product/scripts/upgrade/esp_sd_env
+else
+${BASE_ROOT}/scripts/is_make_sd_install.sh $1 $2 $3 ${BR2_ROOT}/product/scripts/upgrade/sdcard_env
+fi
 
 
 

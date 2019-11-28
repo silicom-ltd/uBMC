@@ -8,3 +8,40 @@ config BR2_TARGET_MV_DDR_MARVELL
 	  and 8040 SoCs.
 
 	  https://github.com/MarvellEmbeddedProcessors/mv-ddr-marvell/
+
+choice
+	bool "mv-ddr-marvell-version"
+
+config BR2_TARGET_MV_DDR_MARVELL_CUSTOM_GIT
+	bool "Custom Git repository"
+	help
+	  Allows to specify custom repository for the component
+	  Useful for developers building out of bleeding edge sources
+
+config BR2_TARGET_MV_DDR_MARVELL_RELEASE
+	bool "Release repository on Github"
+	help
+	  Use the package sources specified in this buildroot release
+
+config BR2_TARGET_MV_DDR_MARVELL_CUSTOM_TARBALL
+	bool "Release sources supplied as archives"
+	help
+	  Use the package sources from local archive
+
+endchoice
+
+if BR2_TARGET_MV_DDR_MARVELL_CUSTOM_GIT
+
+config BR2_TARGET_MV_DDR_MARVELL_CUSTOM_REPO_URL
+	string "URL of custom repository"
+
+config BR2_TARGET_MV_DDR_MARVELL_CUSTOM_REPO_VERSION
+	string "Custom repository version"
+	help
+	  Revision to use in the typical format used by Git
+	  E.G. a sha id, a tag, branch, ..
+
+endif
+
+config BR2_TARGET_MV_DDR_MARVELL_CUSTOM_TARBALL_LOCATION
+	string "Name of local archive file with release"

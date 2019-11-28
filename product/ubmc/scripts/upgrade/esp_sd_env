@@ -1,0 +1,32 @@
+#set -x
+UBOOTBIN=${IMGDIR_UBOOT}/flash-image.bin
+UBOOTSCR=${IMGDIR_UBOOT}/boot.scr
+UIMAGE=${IMGDIR}/Image
+DTB=${IMGDIR_UBOOT}/dt.dtb
+ROOTFS=${IMGDIR}/rootfs.cpio.uboot
+
+INSTALL_SRC_NAMES="UBOOTBIN UBOOTSCR UIMAGE DTB ROOTFS"
+INSTALL_CP_SRC_NAMES="${INSTALL_SRC_NAMES}"
+
+
+is_sd_partition()
+{
+  SDCARD=$1
+  echo "--> Zero out first 1MB"
+  sudo dd if=/dev/zero of=${SDCARD} bs=1M count=1 || error_quit "Failed to zero out 1M on ${SDCARD}"
+  echo "--> repartitioning ${SDCARD}"
+  (echo n; echo p; echo 1; echo ''; echo ''; echo w) | sudo fdisk ${SDCARD}
+  sudo mkfs.ext4 ${SDCARD}1
+  
+}
+is_sd_mount()
+{
+  SD_PART=$1
+  SDTMP=$2
+  sudo mount ${SD_PART} ${SDTMP} || error_quit "Failed to mount ${SD_PART}"
+  sudo chmod a+wr ${SDTMP}
+}
+is_sd_get_img_part()
+{
+  echo "1"
+}

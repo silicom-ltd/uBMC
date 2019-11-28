@@ -59,7 +59,7 @@ is_upgrade.sh -t fw-boot -v 0 || error_quit "Failed to update boot flag"
 is_upgrade.sh -t fw-upgrade -v 0 || error_quit "Failed to update boot flag"
 is_upgrade.sh -S || error_quit "Failed to read system info"
 is_upgrade.sh -s || error_quit "Failed to read system info"
-
+export IMG_FILE
 /usr/sbin/${PRODUCT}/post_install.sh
 
 echo "Installation of ${PRODUCT} image finished, you can now reboot"

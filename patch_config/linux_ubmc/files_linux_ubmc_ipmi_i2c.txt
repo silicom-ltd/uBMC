@@ -17,3 +17,7 @@
 /drivers/i2c/busses/ubmc-ipmi-sel.h
 /drivers/i2c/busses/ubmc-ipmi-lan.h
 /drivers/i2c/busses/ubmc-ipmi-lan.c
+/drivers/i2c/busses/ubmc-ipmi-omap.c
+/drivers/i2c/busses/ubmc-ipmi-pxa.c
+/drivers/i2c/busses/i2c-pxa.h
+/drivers/i2c/busses/i2c-pxa.c
