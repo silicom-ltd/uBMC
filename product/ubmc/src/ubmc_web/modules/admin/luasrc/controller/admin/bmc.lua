@@ -25,9 +25,7 @@ function index()
 	entry({"admin", "bmc", "shell"}, call("action_console"), _("Console Shell"), 2)
 	entry({"admin", "bmc", "console"}, call("host_serial"), _("Console Log"), 2)
 	entry({"admin", "bmc", "power"}, call("action_power"), _("Power Control"), 3)
-if string.find(dpt.vendor, 'ATT') == nil then
 	entry({"admin", "bmc", "bios"}, call("action_bios"), _("BIOS"), 4)
-end
 	entry({"admin", "bmc", "usb"}, call("usb_config"), _("USB CDROM"), 5)
 	entry({"admin", "bmc", "eventlog"}, call("action_eventlog"), _("System Event Log"), 100)
 end
@@ -87,7 +85,7 @@ function action_bios()
 	local _verify_result = {}
 
 	if has_image then
-		if nixio.fs.stat(tmpfile).size == 16777216 then
+		if nixio.fs.stat(tmpfile).size >= 16777216 then
 			if _step == 3 then
 				luci.http.prepare_content("application/json")
 				ret, _status = mgmtdclient.query_child("/status/bmc/bios/upgrade")

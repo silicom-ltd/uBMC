@@ -1,4 +1,3 @@
-configure bmc bios=0
 configure phonehome=1
 configure show phonehome=1
 
