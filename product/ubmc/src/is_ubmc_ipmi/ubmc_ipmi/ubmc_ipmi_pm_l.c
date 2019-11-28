@@ -529,7 +529,7 @@ static int large_sensor_read_file_value(void* sensor_data ,void* private_date,ui
 	ret = ubmc_get_sys_file_content(ubmc_sensor_arry->sensor_value_path,&temp);
 	if(ret < 0)
 	{
-		if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_file_content Error ! file path:%s \n",ubmc_sensor_arry->sensor_value_path);
+		//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_file_content Error ! file path:%s \n",ubmc_sensor_arry->sensor_value_path);
 		return -1;
 	}
 	*(int *)value = temp;
@@ -653,14 +653,14 @@ static int large_update_sensor_state_callback(void* sensor_data ,void* private_d
 	if( !ubmc_is_file_exist(ubmc_sensor_arry->sensor_value_path) )
 	{
 		//just log this do not return;
-		if(g_debug_info_cnt ++ <= 10) ubmc_debug(" Path : %s is not exist ! \n",ubmc_sensor_arry->sensor_value_path);
+		//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" Path : %s is not exist ! \n",ubmc_sensor_arry->sensor_value_path);
 	}
 	//get the value from sys, the way to get value depend on the device form.you can add  read_value_mode if needed
 	if(ubmc_sensor_arry->read_value_mode == FILE_MODE)
 	{
 		if( ubmc_sensor_arry->sensor_read_file_value_handler(ubmc_sensor_arry ,NULL,0,&value) < 0)
 		{
-			if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_file_content Error ! \n");
+			//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_file_content Error ! \n");
 			//do not return ,just set value to -1,means can not get the value ,N/A
 			value = -1;
 		}
@@ -669,7 +669,7 @@ static int large_update_sensor_state_callback(void* sensor_data ,void* private_d
 	{
 		if( ubmc_sensor_arry->sensor_read_dev_value_handler(ubmc_sensor_arry ,NULL,0,&value) < 0)
 		{
-			if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_dev_content Error ! \n");
+			//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_dev_content Error ! \n");
 			//do not return ,just set value to -1,means can not get the value ,N/A
 			value = -1;
 		}

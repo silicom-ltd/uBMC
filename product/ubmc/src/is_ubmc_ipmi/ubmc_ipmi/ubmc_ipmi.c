@@ -557,7 +557,7 @@ int get_machine_model(void)
 		device_type = UNKNOW;
 
 	}
-	ubmc_debug("model is %s\n",buf);
+	//ubmc_debug("model is %s\n",buf);
 	fclose(fp);
 	return device_type;
 }
