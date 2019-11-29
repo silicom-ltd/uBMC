@@ -245,12 +245,23 @@ int is_mgmtd_system_mgmt_modify_if(silc_mgmtd_node* p_node, void* conn_entry)
 			return 0;
 		}
 		else
+		{
 			USER_OP_LOG(conn_entry, "Management interface is enabled");
+			sprintf(cmd, "ip link show %s|grep -w UP", IS_MGMTD_MGMT_IF_NAME);
+			if(silc_mgmtd_if_system(cmd) != 0)
+			{
+				// if the inf is re-enabled, apply all config
+				origin_change = 1;
+				ip_change = 1;
+				gw_change = 1;
+			}
+		}
 	}
 
 	silc_mgmtd_var_to_str(&p_origin->value, origin, str_len);
 	silc_mgmtd_var_to_str(&p_sendname->value, sendname, str_len);
-	if(p_origin->tmp_value.type != SILC_MGMTD_VAR_NULL)	// modified
+	if(p_origin->tmp_value.type != SILC_MGMTD_VAR_NULL ||
+			p_sendname->tmp_value.type != SILC_MGMTD_VAR_NULL)	// modified
 	{
 		origin_change = 1;
 		silc_mgmtd_var_clear(&p_origin->tmp_value);
