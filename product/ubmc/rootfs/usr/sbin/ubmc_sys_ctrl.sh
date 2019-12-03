@@ -187,8 +187,12 @@ upgrade_flash()
 {
 	PRODUCT_SUB=$(get_product_sub_name)
 	if [ "${PRODUCT_SUB}" != "" ]; then
-		output_bios_upg_status "Product ${PRODUCT_SUB} not supported yet"
-		exit 1
+		output_bios_upg_status "Error: Product ${PRODUCT_SUB} not supported yet" "1"
+	fi
+
+	model=$(cat /etc/product/UBMC/OEMI/model.txt)
+	if [ "${model}" == "ATT-V150" ]; then
+		output_bios_upg_status "Error: Module ${model} not supported yet" "1"
 	fi
 
 	output_bios_upg_status "Processing: verify flash image file"

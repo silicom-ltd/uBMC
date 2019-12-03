@@ -876,7 +876,7 @@ void silc_mgmtd_memdb_remove_ext_conf_file(silc_cstr filename)
 
 int silc_mgmtd_memdb_save_ext_conf_file(silc_cstr filename, silc_cstr output_filename)
 {
-	int len = 4096;
+	int len = 1024*256;
 	silc_cstr running_buff;
 	char name[128];
 
