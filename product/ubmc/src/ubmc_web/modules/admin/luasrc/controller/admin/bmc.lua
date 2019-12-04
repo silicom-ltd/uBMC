@@ -20,12 +20,15 @@ local mgmtdclient = require "mgmtdclient"
 
 function index()
 	local dpt = require "luci.dispatcher"
+	local oem_model = luci.util.exec("cat /etc/product/UBMC/OEMI/model.txt")
 	entry({"admin", "bmc"}, alias("admin", "bmc", "index"), _("BMC"), 45).index = true
 	entry({"admin", "bmc", "index"}, cbi("admin/bmc-host", {autoapply=true}), _("Console Redirection"), 1)
 	entry({"admin", "bmc", "shell"}, call("action_console"), _("Console Shell"), 2)
 	entry({"admin", "bmc", "console"}, call("host_serial"), _("Console Log"), 2)
 	entry({"admin", "bmc", "power"}, call("action_power"), _("Power Control"), 3)
-	entry({"admin", "bmc", "bios"}, call("action_bios"), _("BIOS"), 4)
+	if oem_model ~= 'ATT-V150' then
+		entry({"admin", "bmc", "bios"}, call("action_bios"), _("BIOS"), 4)
+	end
 	entry({"admin", "bmc", "usb"}, call("usb_config"), _("USB CDROM"), 5)
 	entry({"admin", "bmc", "eventlog"}, call("action_eventlog"), _("System Event Log"), 100)
 end
