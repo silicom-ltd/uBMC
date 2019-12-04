@@ -26,13 +26,14 @@
 
 int is_cli_cmd_show_file(silc_cstr filename)
 {
+#if 0
 	struct stat fs;
 	silc_cstr buff = NULL;
 	int fd;
 
 	if(stat(filename, &fs) < 0)
 	{
-		silc_cli_err_cmd_set_err_info("Invalid file name %s", filename);
+		silc_cli_err_cmd_set_err_info("Invalid file %s", filename);
 		return -1;
 	}
 	buff = malloc(fs.st_size);
@@ -58,6 +59,16 @@ int is_cli_cmd_show_file(silc_cstr filename)
 	close(fd);
 	silc_cli_print(buff);
 	free(buff);
+#else
+	char cmd[256];
+	if(access(filename, F_OK) != 0)
+	{
+		silc_cli_err_cmd_set_err_info("Invalid file %s", filename);
+		return -1;
+	}
+	sprintf(cmd, "cat '%s'", filename);
+	system(cmd);
+#endif
 	return 0;
 }
 
