@@ -128,6 +128,10 @@ upgrade_signed_image()
 	################################################
 	flash_img=$1
 
+	if [ "$(strings ${flash_img}|grep 'InsydeFlash')" == "" ]; then
+		output_bios_upg_status "Error: it is not an Insyde H2O image" "1"
+	fi
+
 	if [ "$(/usr/sbin/ubmc_usb_cdrom_ctrl.sh -s)" == "CDROM is occupied" ]; then
 		output_bios_upg_status "Error: usb-cdrom is occupied, please detach it first" "1"
 	fi
@@ -207,10 +211,10 @@ upgrade_flash()
 	img_size=$(du -b ${flash_img} |cut -f1)
 	if [ "${img_size}" -eq 16777216 ]; then
 		upgrade_raw_image ${flash_img} $2
-	elif [ "${img_size}" -gt 16777216 ]; then
+	elif [ "${img_size}" -gt 16777216 ] && [ "${img_size}" -lt 18874368 ]; then
 		upgrade_signed_image ${flash_img}
 	else
-		output_bios_upg_status "Error: ${flash_img} size < 16777216" "1"
+		output_bios_upg_status "Error: ${flash_img} size ${img_size} is not right" "1"
 	fi
 }
 
