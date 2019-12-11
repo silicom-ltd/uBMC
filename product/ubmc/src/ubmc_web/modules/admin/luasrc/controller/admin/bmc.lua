@@ -94,7 +94,7 @@ function action_bios()
 				ret, _status = mgmtdclient.query_child("/status/bmc/bios/upgrade")
 				local array = {}
 				if ret == 'OK' then
-					if _status == '' or string.find(_status, "OK") ~= nil then
+					if string.find(_status, "Processing") == nil then
 						ret = mgmtdclient.action('/action/bmc/bios/upgrade', {["image"]=tmpfile})
 						array[1] = {status=1}
 					else
