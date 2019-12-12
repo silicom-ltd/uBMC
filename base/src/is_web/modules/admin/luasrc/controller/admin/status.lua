@@ -253,8 +253,9 @@ function log_message(filename, target, size, word)
 					line = line .. record[cnt] .. "\n"
 					cnt = cnt + 1
 				end
+				line = string.sub(line, 0, string.len(line)-1)
 				if word == "" then
-					if target ~= 1 and #record < size then
+					if i> 1 and #record < size then
 						elements = luci_util.split(luci_util.trim(lines[i-1]), " ")
 						line = line .. luci_util.exec("head -n " .. (size-#record) .. " " .. elements[2])
 						--luci_util.exec("echo head -n " .. (size-#record) .. " " .. elements[2] .. " >> /tmp/console")

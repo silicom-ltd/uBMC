@@ -398,7 +398,7 @@ function log_message(filename, target, size, word)
 				line = luci_util.exec("tail -n +" .. start .. " " .. elements[2] .. " | head -n " .. size)
 				record = luci_util.split(line)
 				if word == "" then
-					if target ~= 1 and #record < size then
+					if i> 1 and #record < size then
 						elements = luci_util.split(luci_util.trim(lines[i-1]), " ")
 						line = line .. luci_util.exec("head -n " .. (size-#record) .. " " .. elements[2])
 					end
