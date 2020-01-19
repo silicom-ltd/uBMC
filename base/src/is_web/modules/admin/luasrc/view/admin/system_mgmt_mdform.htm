@@ -63,6 +63,32 @@
 	</div>
 <!--</form> -->
 <script type="text/javascript">
+var EventUtil = {
+	addHandler: function(element, type, handler) {
+        if (element == null) {
+          return ;
+        }
+		if (element.addEventListener) {
+			element.addEventListener(type, handler, false);
+		} else if (element.attachEvent) {
+			element.attachEvent("on" + type, handler);
+		} else {
+			element["on" + type] = handler;
+		}
+	},
+	removeHandler: function(element, type, handler) {
+        if (element == null) {
+          return ;
+        }
+		if (element.removeEventListener) {
+			element.removeEventListener(type, handler, false);
+		} else if (element.detachEvent) {
+			element.detachEvent("on" + type, handler);
+		} else {
+			element["on" + type] = null;
+		}
+	}
+};
 	var vrfList = document.getElementById('cbi-vrf-id-table');
 	if (vrfList) {
 		var list = vrfList.getElementsByClassName('cbi-section-table-row');
@@ -107,5 +133,32 @@
 			}
 		}
 	}
+	var ipOrigin = document.getElementById('cbid.interface.1.ip-origin');
+	if (ipOrigin) {
+		var state = document.getElementById('cbid.interface.1.state');
+		var changeState = function() {
+			if (state.checked) {
+				if (ipOrigin.value == 'static') {
+					document.getElementById('cbid.interface.1.ip-address').disabled = false;
+					document.getElementById('cbid.interface.1.ip-address').style.backgroundColor = '';
+					document.getElementById('cbid.interface.1.ip-mask').disabled = false;
+					document.getElementById('cbid.interface.1.ip-mask').style.backgroundColor = '';
+					document.getElementById('cbid.interface.1.ip-default-gateway').disabled = false;
+					document.getElementById('cbid.interface.1.ip-default-gateway').style.backgroundColor = '';
+				} else {
+					document.getElementById('cbid.interface.1.dhcp-sendname').disabled = false;
+				}
+			} else {
+				document.getElementById('cbid.interface.1.ip-address').disabled = true;
+				document.getElementById('cbid.interface.1.ip-address').style.backgroundColor = 'rgb(190, 190, 190)';
+				document.getElementById('cbid.interface.1.ip-mask').disabled = true;
+				document.getElementById('cbid.interface.1.ip-mask').style.backgroundColor = 'rgb(190, 190, 190)';
+				document.getElementById('cbid.interface.1.ip-default-gateway').disabled = true;
+				document.getElementById('cbid.interface.1.ip-default-gateway').style.backgroundColor = 'rgb(190, 190, 190)';
+				document.getElementById('cbid.interface.1.dhcp-sendname').disabled = true;
+			}
+        }
+		EventUtil.addHandler(state, 'change', changeState);
+    }
 </script>
 <% end %>

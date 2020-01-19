@@ -56,7 +56,7 @@ list the communities for snmp agent
 if product.verifyFeature('SNMP_AGENT', 'COMMUNITIES') then
 		communitiesConfig = mdForm:get_section_obj("communities")
 		communitiesConfig.sectionhead = translate("Community Name")
-		communitiesConfig.keydesc = "Community Name: 1-31 characters, [a-z][A-Z][0-9][_.-]"
+		communitiesConfig.keydesc = "Community Name: 1-31 characters, [a-z][A-Z][0-9][_.]"
 		communitiesConfig.keymaxlen = "31"
 		communitiesConfig:option(TfFlag, "state", translate("Enabled")).default = "true"
 
@@ -70,7 +70,7 @@ list the users for snmp agent
 if product.verifyFeature('SNMP_AGENT', 'USERS') then
 		usersConfig = mdForm:get_section_obj("users")
 		usersConfig.sectionhead = translate("Username")
-		usersConfig.keydesc = translate("Username: 1-31 characters, [a-z][A-Z][0-9][_.-]")
+		usersConfig.keydesc = translate("Username: 1-31 characters, [a-z][A-Z][0-9][_.]")
 		usersConfig.keymaxlen = "31"
 		usersConfig:option(TfFlag, "state", translate("Enabled")).default = "true"
 
