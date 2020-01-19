@@ -461,9 +461,9 @@ int is_mgmtd_system_status_level_get_level_3(silc_mgmtd_if_node* p_parent_node, 
 		silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "interface-list", "interface-list", str, silc_true);
 		silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "dhcp", "dhcp", str, silc_true);
 
-		if(!silc_mgmtd_memdb_get_product_info()->iptables_support)
+		if(silc_mgmtd_memdb_get_product_info()->iptables_support)
 			silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "iptables", "iptables", str, silc_true);
-		if(!silc_mgmtd_memdb_get_product_info()->ipsec_support)
+		if(silc_mgmtd_memdb_get_product_info()->ipsec_support)
 			silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "ipsec", "ipsec", str, silc_true);
 	}
 	return 0;

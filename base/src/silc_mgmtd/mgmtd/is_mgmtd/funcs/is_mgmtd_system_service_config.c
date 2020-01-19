@@ -698,7 +698,7 @@ int is_mgmtd_system_service_config_nginx(void* conn_entry)
 	if (!http_en && !https_en)
 	{
 		//system("/etc/init.d/IS_S50nginx stop");
-		system("killall -q nginx uhttpd");
+		system("killall -q nginx");
 		return 0;
 	}
 
