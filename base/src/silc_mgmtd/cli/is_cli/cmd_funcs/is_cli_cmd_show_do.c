@@ -408,6 +408,28 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 			silc_cli_print(output);
 			return 0;
 		}
+		else if(strcmp(p_token->name, "upgrade") == 0)
+		{
+			#define IS_UPGRADE_TOOL         "/usr/sbin/is_upgrade"
+			if(p_l1_token && strcmp(p_l1_token->name, "state") == 0)
+			{
+				int ret = silc_mgmtd_if_system(IS_UPGRADE_TOOL" -a");
+				if(ret == 1)
+				{
+					silc_cli_print("The upgraded is in progress, please don't power off the device.\n");
+					silc_mgmtd_if_system(IS_UPGRADE_TOOL" -r");
+				}
+				else if(ret == 2)
+				{
+		       			silc_cli_print("The upgrade is done, please reload the device to complete the upgrade.\n");
+				}
+                                else if(ret == 0)
+                                {
+                                        silc_cli_print("The system is ready for upgrade.\n");
+                                }
+				return 0;
+			}
+		}
 		else if(strcmp(p_token->name, "cpu") == 0)
 		{
 			sprintf(p_req_info->path, IS_CLI_PATH_QUERY_SYSTEM_STATUS"/cpu");

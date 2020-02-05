@@ -868,10 +868,20 @@ int silc_mgmtd_var_set_by_str(silc_mgmtd_var* p_var, const silc_cstr val_str)
 		ret = 0;
 		break;
 	case SILC_MGMTD_VAR_UINT32:
+		if(val_str[0] == '-')
+		{
+			silc_mgmtd_lib_err_set(LIB_ERR_VAR_INVALID_VAL_STR);
+                        return -1;
+		}
 	case SILC_MGMTD_VAR_INT32:
 		ret= silc_mgmtd_var_str2l(val_str, &p_var->val.int32_val);
 		break;
 	case SILC_MGMTD_VAR_UINT64:
+                if(val_str[0] == '-')
+                {
+                        silc_mgmtd_lib_err_set(LIB_ERR_VAR_INVALID_VAL_STR);
+                        return -1;
+                }
 	case SILC_MGMTD_VAR_INT64:
 		ret= silc_mgmtd_var_str2ll(val_str, &p_var->val.int64_val);
 		break;
