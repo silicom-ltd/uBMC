@@ -12,6 +12,11 @@ int ubmc_cli_cmd_phonehome_config(silc_list* p_token_list)
 	silc_cli_token *p_token;
 	char path[200], err_info[200];
 
+	if(silc_cli_cmd_do_simple_action("/action/system/check-is-admin", "true", NULL, 0) != 0)
+        {
+                silc_cli_err_cmd_set_err_info("no privilege to control PhoneHome service");
+                return -1;
+        }
 	silc_list_for_each_entry(p_token, p_token_list, rl_node)
 	{
 		if(strcmp(p_token->name, "start") == 0 || strcmp(p_token->name, "stop") == 0)

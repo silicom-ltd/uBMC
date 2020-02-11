@@ -150,6 +150,11 @@ int ubmc_cli_cmd_bmc_config(silc_list* p_token_list)
 			}
 			if(strcmp(p_l1_token->name, "upgrade") == 0)
 			{
+				if(silc_cli_cmd_do_simple_action("/action/system/check-is-admin", "true", NULL, 0) != 0)
+        			{
+                			silc_cli_err_cmd_set_err_info("no privilege to upgrade host BIOS");
+                			return -1;
+        			}
 				p_l2_token = is_cli_cmd_get_next_rl_token(p_token_list, p_l1_token);
 				if(!p_l2_token)
 				{
@@ -180,7 +185,10 @@ int ubmc_cli_cmd_bmc_config(silc_list* p_token_list)
 					silc_cli_print("%% Warning: Make sure the host is powered on and not in reboot. "
 							"Also make sure the host will not reboot during the BIOS upgrade process.\n");
 					if (0 != silc_cli_cmd_confirm("Continue (y|n) ?", NULL, "%% Cancelled"))
+					{
+						unlink(LOCAL_BIOS_IMAGE_FILE);
 						return 0;
+					}
 
 					free(p_l2_token->val_str);
 					p_l2_token->val_str = malloc(strlen(LOCAL_BIOS_IMAGE_FILE)+1);

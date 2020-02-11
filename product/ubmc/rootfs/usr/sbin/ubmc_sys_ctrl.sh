@@ -5,6 +5,7 @@
 prog_name=ubmc_sys_ctrl
 prog=/usr/bin/$prog_name
 bios_upg_status=/tmp/bmc_bios_upgrade.status
+flash_img=/tmp/bmc_cli_upload_bios.img
 
 prepare_init()
 {
@@ -41,6 +42,9 @@ output_bios_upg_status()
 		umount_mtd
 	fi
 	if [ "$2" != "" ]; then
+		if [ -e "${flash_img}" ]; then
+			rm -rf ${flash_img}
+		fi
 		exit 1
 	fi
 }
@@ -216,6 +220,7 @@ upgrade_flash()
 	else
 		output_bios_upg_status "Error: ${flash_img} size ${img_size} is not right" "1"
 	fi
+	rm -rf ${flash_img}
 }
 
 case "$1" in

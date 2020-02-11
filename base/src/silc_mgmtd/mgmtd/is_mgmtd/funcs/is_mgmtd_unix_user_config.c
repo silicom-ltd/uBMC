@@ -417,7 +417,7 @@ int is_mgmtd_unix_user_add(silc_mgmtd_node* p_node, void* conn_entry)
 
 	p_sub_node = silc_mgmtd_memdb_find_sub_node(p_node, "privilege");
 	privilege = p_sub_node->value.val.int32_val;
-	if(privilege == SILC_MGMTD_IF_LEVEL_ADMIN)
+	if(privilege > SILC_MGMTD_IF_LEVEL_READONLY)
 	{
 		gid = UNIX_IS_ADMIN_GID;
 	}

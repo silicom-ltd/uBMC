@@ -1090,6 +1090,37 @@ silc_cli_token* is_cli_cmd_get_next_rl_token(silc_list* p_token_list, silc_cli_t
 	return silc_list_entry(p_token->rl_node.next, silc_cli_token, rl_node);
 }
 
+silc_bool is_cli_cmd_validate_index(silc_cstr val)
+{
+	silc_cstr start, end;
+	char c;
+
+	if(!val || !val[0])
+		return silc_false;
+
+	start = val;
+	end = val+strlen(val)-1;
+	if(start[0] == '\'' || start[0] == '"')
+	{
+		start++;
+		if(start == end)
+			return silc_false;
+		end--;
+	}
+
+	do
+	{
+		c = *start;
+		if ((c < '0' || c > '9') &&
+				(c < 'a' || c > 'z') &&
+				(c < 'A' || c > 'Z') &&
+				(c != '-') && (c != '_') && (c != '.'))
+			return silc_false;
+		start++;
+	} while (start < end);
+
+	return silc_true;
+}
 
 int is_cli_cmd_do_request_core(is_cli_cmd_req_info* p_req_info, silc_list* p_token_list, int timeout_sec)
 {
@@ -1102,6 +1133,13 @@ int is_cli_cmd_do_request_core(is_cli_cmd_req_info* p_req_info, silc_list* p_tok
 	silc_cstr node_val, node_name;
 	silc_cstr_array* p_arr;
 
+	if(p_req_info->type == SILC_MGMTD_IF_REQ_ADD &&
+			!is_cli_cmd_validate_index(p_req_info->root_val))
+	{
+		// index can't be empty or space-prefix
+		silc_cli_err_cmd_set_err_info("Invalid index value");
+		return -1;
+	}
 	p_req = silc_mgmtd_if_req_create(p_req_info->path, p_req_info->type, p_req_info->root_val);
 	if(!p_req)
 	{
