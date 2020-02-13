@@ -22,7 +22,7 @@ section_cfg =
 --[[
 initial mdForm
 ]]--
-mdForm = MdForm("bmc", "/config/bmc", PRIVILEGE_SUPER, section_cfg, translate("BMC Console Redirection"))
+mdForm = MdForm("bmc", "/config/bmc", PRIVILEGE_ADMIN, section_cfg, translate("BMC Console Redirection"))
 mdForm:prepare_all()
 
 hostStatus = mdForm:get_section_obj(ROOTNODE)

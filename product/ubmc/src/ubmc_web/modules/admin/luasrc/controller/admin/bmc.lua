@@ -42,6 +42,15 @@ function check_privil()
 	return true
 end
 
+function check_normal()
+	if dpt.context.user_privil < dpt.PRIVILEGE_ADMIN then
+		luci.template.render("admin/forbidden")
+		return false
+	end
+	mgmtdclient.set_login(dpt.context.authuser, dpt.context.user_privil, dpt.context.auth_proto)
+	return true
+end
+
 function set_file_handler(f)
 	-- Install upload handler
 	local file
@@ -61,6 +70,10 @@ function set_file_handler(f)
 end
 
 function action_console()
+
+	if not check_normal() then
+		return false
+	end
 	local TOKEN_PATH = "/tmp/ubmc-web-console-token"
 	os.execute("mkdir -p " .. TOKEN_PATH .. " > /dev/null 2>&1")
 
@@ -146,7 +159,8 @@ function action_bios()
 end
 
 function action_eventlog()
-	if not check_privil() then
+
+	if not check_normal() then
 		return false
 	end
 
@@ -203,7 +217,8 @@ function action_eventlog()
 end
 
 function usb_config()
-	if not check_privil() then
+
+	if not check_normal() then
 		return false
 	end
 
@@ -302,7 +317,7 @@ end
 
 function action_power()
 
-	if not check_privil() then
+	if not check_normal() then
 		return false
 	end
 
@@ -322,6 +337,10 @@ function action_power()
 end
 
 function host_serial()
+
+	if not check_normal() then
+		return false
+	end
 
 	local total = 120
 	local luci_http = require "luci.http"
