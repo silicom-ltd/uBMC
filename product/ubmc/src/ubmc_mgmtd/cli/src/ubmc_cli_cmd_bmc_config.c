@@ -12,10 +12,12 @@
 
 #include "ubmc_mgmtd_common.h"
 
-#define PATH_CONFIG_BMC	"/config/bmc"
+#define PATH_CONFIG_BMC			"/config/bmc"
 #define LOCAL_BIOS_IMAGE_FILE	"/tmp/bmc_cli_upload_bios.img"
 #define LOCAL_IMAGE_PATH		"/var/images"
 #define CMD_BUFFER_SIZE			512
+#define BIOS_MANUAL_BACKUP		"/var/images/host_bios_manual_backup.bin"
+#define BIOS_AUTO_BACKUP		"/var/images/host_bios_auto_backup.bin"
 
 extern int ubmc_cli_show_cdrom_storage();
 
@@ -148,13 +150,13 @@ int ubmc_cli_cmd_bmc_config(silc_list* p_token_list)
 				silc_cli_err_cmd_set_invalid_cmd();
 				return -1;
 			}
+			if(silc_cli_cmd_do_simple_action("/action/system/check-is-admin", "true", NULL, 0) != 0)
+			{
+				silc_cli_err_cmd_set_err_info("no privilege to operate the host BIOS");
+				return -1;
+			}
 			if(strcmp(p_l1_token->name, "upgrade") == 0)
 			{
-				if(silc_cli_cmd_do_simple_action("/action/system/check-is-admin", "true", NULL, 0) != 0)
-        			{
-                			silc_cli_err_cmd_set_err_info("no privilege to upgrade host BIOS");
-                			return -1;
-        			}
 				p_l2_token = is_cli_cmd_get_next_rl_token(p_token_list, p_l1_token);
 				if(!p_l2_token)
 				{
@@ -199,6 +201,40 @@ int ubmc_cli_cmd_bmc_config(silc_list* p_token_list)
 					show_progress = 2;
 					break;
 				}
+			}
+			else if(strcmp(p_l1_token->name, "backup") == 0)
+			{
+				if(access(BIOS_MANUAL_BACKUP, F_OK) == 0)
+				{
+					silc_cli_print("%% A previous backup is found, and the operation will overwrite it.\n");
+					if (0 != silc_cli_cmd_confirm("Continue (y|n) ?", NULL, "%% Cancelled"))
+					{
+						return 0;
+					}
+				}
+				req_info.type = SILC_MGMTD_IF_REQ_ACTION;
+				strcpy(req_info.path, "/action/bmc/bios/backup");
+				req_info.root_val = "";
+				show_progress = 2;
+				break;
+			}
+			else if(strcmp(p_l1_token->name, "restore") == 0)
+			{
+				if(access(BIOS_MANUAL_BACKUP, F_OK) != 0 && (access(BIOS_AUTO_BACKUP, F_OK) != 0))
+				{
+					silc_cli_err_cmd_set_err_info("No available BIOS backup");
+					return -1;
+				}
+				silc_cli_print("%% The operation will restore the host BIOS to a previous backup.\n");
+				if (0 != silc_cli_cmd_confirm("Continue (y|n) ?", NULL, "%% Cancelled"))
+				{
+					return 0;
+				}
+				req_info.type = SILC_MGMTD_IF_REQ_ACTION;
+				strcpy(req_info.path, "/action/bmc/bios/restore");
+				req_info.root_val = "";
+				show_progress = 2;
+				break;
 			}
 		}
 		else if(strcmp(p_token->name, "usb-cdrom") == 0)
@@ -285,7 +321,7 @@ int ubmc_cli_cmd_bmc_config(silc_list* p_token_list)
 
 	if(show_progress)
 	{
-		silc_cli_print("This may take about 2 minutes, please wait.\nOperation progress: \n");
+		silc_cli_print("This may take about several minutes, please wait.\nOperation progress: \n");
 		memset(&req_info, 0, sizeof(req_info));
 		req_info.type = SILC_MGMTD_IF_REQ_QUERY_SUB;
 		if(show_progress == 1)

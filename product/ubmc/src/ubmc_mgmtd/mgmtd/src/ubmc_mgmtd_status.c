@@ -384,7 +384,7 @@ int is_mgmtd_bmc_status_level_get_level_3(silc_mgmtd_if_node* p_parent_node, uin
 		if(!p_match_node || strcmp(p_match_node, "upgrade") == 0)
 		{
 			len = 256;
-			cmd = "ubmc_sys_ctrl.sh -up";
+			cmd = "ubmc_sys_ctrl.sh -su";
 			if(silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 1000, silc_false) != 0)
 			{
 				sprintf(out, "Error: fail to execute '%s'", cmd);

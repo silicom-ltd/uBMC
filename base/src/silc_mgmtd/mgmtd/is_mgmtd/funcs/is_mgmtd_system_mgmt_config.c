@@ -444,6 +444,28 @@ int is_mgmtd_system_mgmt_check_perimit(silc_mgmtd_node* p_node)
 	return 0;
 }
 
+int is_check_filename(silc_cstr name)
+{
+	int i, len = strlen(name);
+	char c;
+
+	if(len == 0 || len > MAX_FILENAME_LEN)
+	{
+		return -1;
+	}
+	for(i=0; i<len; i++)
+	{
+		c = name[i];
+		if ((c < '0' || c > '9') &&
+			(c < 'a' || c > 'z') &&
+			(c < 'A' || c > 'Z') &&
+			(c != '-') && (c != '_') && (c != '.'))
+			return -1;
+	}
+
+	return 0;
+}
+
 int ipsec_secret_use_keyfile(silc_cstr secret_type)
 {
 	return (strcmp("RSA", secret_type) == 0 ||
@@ -479,9 +501,9 @@ int is_mgmtd_system_mgmt_check_key(silc_mgmtd_if_req_type type, silc_mgmtd_node*
 	if(SILC_MGMTD_IF_REQ_CHECK_ADD == type)
 	{
 		silc_mgmtd_node *p_content;
-		if(strlen(p_node->value.val.string_val) > MAX_FILENAME_LEN)
+		if(is_check_filename(p_node->value.val.string_val))
 		{
-			SILC_ERR("Key ID %s is too long", p_node->value.val.string_val);
+			SILC_ERR("Key ID %s is invalid", p_node->value.val.string_val);
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 		}
 		p_content = silc_mgmtd_memdb_find_sub_node(p_node, "key-content");
@@ -538,9 +560,9 @@ int is_mgmtd_system_mgmt_check_cert(silc_mgmtd_if_req_type type, silc_mgmtd_node
 	if(SILC_MGMTD_IF_REQ_CHECK_ADD == type)
 	{
 		silc_mgmtd_node *p_content;
-		if(strlen(p_node->value.val.string_val) > MAX_FILENAME_LEN)
+		if(is_check_filename(p_node->value.val.string_val))
 		{
-			SILC_ERR("Cert ID %s is too long", p_node->value.val.string_val);
+			SILC_ERR("Cert ID %s is invalid", p_node->value.val.string_val);
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 		}
 		p_content = silc_mgmtd_memdb_find_sub_node(p_node, "cert-content");

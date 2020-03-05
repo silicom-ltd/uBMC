@@ -53,7 +53,7 @@ int is_mgmtd_bmc_action_power(silc_mgmtd_node* p_node)
 	return 0;
 }
 
-int is_mgmtd_bmc_action_bios(silc_mgmtd_node* p_node)
+int is_mgmtd_bmc_action_bios_upgrade(silc_mgmtd_node* p_node)
 {
 	silc_mgmtd_node *p_image, *p_all;
 	silc_cstr img;
@@ -61,8 +61,6 @@ int is_mgmtd_bmc_action_bios(silc_mgmtd_node* p_node)
 	char cmd[64], out[64];
 	int len=64;
 
-	if(strcmp(p_node->name, "upgrade"))
-		return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 	p_image = silc_mgmtd_memdb_find_sub_node(p_node, "image");
 	if(!p_image || p_image->tmp_value.type == SILC_MGMTD_VAR_NULL)
 		return IS_MGMTD_ERR_BASE_INVALID_PARAM;
@@ -81,6 +79,52 @@ int is_mgmtd_bmc_action_bios(silc_mgmtd_node* p_node)
 		return IS_MGMTD_ERR_BASE_EXEC_FAILED;
 	}
 	SILC_LOG("Upgrade the host BIOS flash");
+
+	return 0;
+}
+
+int is_mgmtd_bmc_action_bios_backup(silc_mgmtd_node* p_node)
+{
+	char cmd[64], out[64];
+	int len=64;
+
+	sprintf(cmd, "ubmc_sys_ctrl.sh -bb &");
+	if(silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 10000, silc_false) != 0)
+	{
+		SILC_ERR("Fail to exec '%s' error '%s'", cmd, silc_mgmtd_lib_err_str());
+		return IS_MGMTD_ERR_BASE_EXEC_FAILED;
+	}
+	SILC_LOG("Back up the host BIOS flash");
+
+	return 0;
+}
+
+int is_mgmtd_bmc_action_bios_restore(silc_mgmtd_node* p_node)
+{
+	char cmd[64], out[64];
+	int len=64;
+
+	sprintf(cmd, "ubmc_sys_ctrl.sh -rb &");
+	if(silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 10000, silc_false) != 0)
+	{
+		SILC_ERR("Fail to exec '%s' error '%s'", cmd, silc_mgmtd_lib_err_str());
+		return IS_MGMTD_ERR_BASE_EXEC_FAILED;
+	}
+	SILC_LOG("Restore the host BIOS flash");
+
+	return 0;	
+}
+
+int is_mgmtd_bmc_action_bios(silc_mgmtd_node* p_node)
+{
+	 if(0 == strcmp(p_node->name, "upgrade"))
+		return is_mgmtd_bmc_action_bios_upgrade(p_node);
+	else if(0 == strcmp(p_node->name, "backup"))
+		return is_mgmtd_bmc_action_bios_backup(p_node);
+	else if(0 == strcmp(p_node->name, "restore"))
+		return is_mgmtd_bmc_action_bios_restore(p_node);
+	else
+		return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 
 	return 0;
 }

@@ -76,6 +76,8 @@ static silc_mgmtd_node_info s_ubmc_mgmtd_node_list[] = {
 {"/action/bmc/sel", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_NULL, "None", is_mgmtd_bmc_action, 5},
 {"/action/bmc/sel/clear", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_NULL, "None", is_mgmtd_bmc_action, 5},
 {"/action/bmc/bios", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_NULL, "None", is_mgmtd_bmc_action, 5},
+{"/action/bmc/bios/backup", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_ADMIN, SILC_MGMTD_VAR_NULL, "None", is_mgmtd_bmc_action, 5},
+{"/action/bmc/bios/restore", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_ADMIN, SILC_MGMTD_VAR_NULL, "None", is_mgmtd_bmc_action, 5},
 {"/action/bmc/bios/upgrade", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_ADMIN, SILC_MGMTD_VAR_NULL, "None", is_mgmtd_bmc_action, 5},
 {"/action/bmc/bios/upgrade/image", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_ADMIN, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_bmc_action, 5},
 {"/action/bmc/bios/upgrade/all", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_ADMIN, SILC_MGMTD_VAR_BOOL, "None", is_mgmtd_bmc_action, 5},
