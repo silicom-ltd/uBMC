@@ -1,5 +1,5 @@
---- linux-custom-orig/drivers/hwmon/ads7828.c	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/hwmon/ads7828.c	2018-07-16 13:51:24.687533165 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/hwmon/ads7828.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/hwmon/ads7828.c	2020-03-09 10:47:12.092803482 +0800
 @@ -45,6 +45,22 @@
  #define ADS7828_EXT_VREF_MV_MIN	50	/* External vref min value 0.05V */
  #define ADS7828_EXT_VREF_MV_MAX	5250	/* External vref max value 5.25V */

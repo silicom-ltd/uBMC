@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2019-11-11 09:38:49.238893769 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-02-27 15:33:46.983712654 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2019-11-11 09:38:49.277893559 +0800
-@@ -0,0 +1,276 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-03-05 16:06:28.064778535 +0800
+@@ -0,0 +1,321 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -64,11 +64,12 @@
 +#include "ubmc_esp.dtsi"
 +
 +/ {
-+	model = "Globalscale Marvell ESPRESSOBin Board";
++	model = "Globalscale Marvell ESPRESSOBin Board UART2 test";
 +	compatible = "globalscale,espressobin", "marvell,armada3720", "marvell,armada3710";
 +
 +	chosen {
-+		stdout-path = "serial0:115200n8";
++		/*stdout-path = "serial0:115200n8";*/
++		stdout-path = "serial1:115200n8";
 +	};
 +	aliases {
 +		ethernet0 = &eth0;
@@ -105,8 +106,32 @@
 +			port-mask = <0xf>;
 +		};
 +	};
++	
++	reg_usb3_vbus: usb3_vbus@0 {
++		compatible = "regulator-fixed";
++		regulator-name = "usb3-vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		shutdown-delay-us = <1000000>;
++		gpio = <&expander0 1 GPIO_ACTIVE_HIGH>;
++	};
++	reg_usb2_vbus: usb2-vbus {
++		compatible = "regulator-fixed";
++		regulator-name = "usb2-vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		enable-active-high;
++		regulator-always-on;
++		gpio = <&expander0 0 GPIO_ACTIVE_HIGH>;
++	};
++
++	usb2_phy: usb2-phy {
++		compatible = "usb-nop-xceiv";
++		vcc-supply = <&reg_usb2_vbus>;
++	};
++	
 +};
-+/*
++
 +&comphy {
 +	max-lanes = <3>;
 +	phy0 {
@@ -124,7 +149,7 @@
 +		phy-speed = <COMPHY_SPEED_6G>;
 +	};
 +};
-+*/
++
 +/* J9 */
 +
 +&pcie0 {
@@ -174,6 +199,12 @@
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&i2c1_pins>;
 +	status = "okay";
++	expander0: pca953x@22 {
++		compatible = "nxp,pca9555";
++                #gpio-cells = <2>;
++		reg = <0x22>;
++		status = "disabled";
++	};
 +};
 +&i2c1 {
 +	pinctrl-names = "default";
@@ -185,16 +216,30 @@
 +&uart0 {
 +	status = "okay";
 +};
-+
++&uart1 {
++	status = "okay";
++};
 +/* J7 */
 +&usb3 {
++	vbus-supply = <&reg_usb3_vbus>;
 +	status = "okay";
 +};
 +
-+/* J8 */
++
 +&usb2 {
 +	status = "okay";
++	usb-phy = <&usb2_phy>;
++	phys = <&utmi_usb2>;
++	phy-names = "usb";
 +};
++
++
++
++&utmi_usb2 {
++	status = "okay";
++};
++
++
 +/*
 +&mdio {
 +	switch0: switch0@1 {
@@ -291,8 +336,8 @@
 +};
 \ No newline at end of file
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2019-11-11 09:38:49.277893559 +0800
-@@ -0,0 +1,397 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-03-05 17:35:25.869318768 +0800
+@@ -0,0 +1,422 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
 + *
@@ -342,6 +387,7 @@
 +#include <dt-bindings/interrupt-controller/arm-gic.h>
 +#include <dt-bindings/comphy/comphy_data.h>
 +#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/phy/phy-utmi-mvebu.h>
 +/ {
 +	model = "Marvell Armada 37xx SoC";
 +	compatible = "marvell,armada3700";
@@ -351,6 +397,7 @@
 +
 +	aliases {
 +		serial0 = &uart0;
++		serial1 = &uart1;
 +	};
 +
 +	cpus {
@@ -405,6 +452,13 @@
 +				num-cs = <4>;
 +				status = "disabled";
 +			};
++			comphy: comphy@18300 {
++				compatible = "marvell,mvebu-comphy", "marvell,comphy-armada-3700";
++				reg = <0x18300 0x28>,
++				      <0x1f300 0x3d000>;
++				mux-bitcount = <4>;
++				max-lanes = <3>;
++			};
 +
 +			i2c0: i2c@11000 {
 +				compatible = "marvell,armada-3700-i2c";
@@ -434,7 +488,16 @@
 +				interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
 +				status = "disabled";
 +			};
-+
++			uart1: serial@12200 {
++				compatible = "marvell,armada-3700-uart-ext";
++				reg = <0x12200 0x30>;
++				clocks = <&xtalclk>;
++				interrupts =
++				<GIC_SPI 30 IRQ_TYPE_EDGE_RISING>,
++				<GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;
++				interrupt-names = "uart-tx", "uart-rx";
++				status = "disabled";
++			};
 +			nb_periph_clk: nb-periph-clk@13000 {
 +				compatible = "marvell,armada-3700-periph-clock-nb";
 +				reg = <0x13000 0x100>;
@@ -580,15 +643,22 @@
 +				compatible = "marvell,armada3700-xhci",
 +				"generic-xhci";
 +				reg = <0x58000 0x4000>;
-+				interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
-+				clocks = <&sb_periph_clk 12>;
++				interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
 +				status = "disabled";
 +			};
 +
 +			usb2: usb@5e000 {
-+				compatible = "marvell,armada-3700-ehci";
-+				reg = <0x5e000 0x2000>;
++				compatible = "marvell,armada-3700-ehci","marvell,armada3700-ehci";
++				reg = <0x5e000 0x450>;
 +				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
++				status = "disabled";
++			};
++
++			utmi_usb2: utmi@5f000 {
++				compatible = "marvell,armada-3700-utmi-phy";
++				reg = <0x5f000 0x1000>;
++				utmi-port = <UTMI_PHY_TO_USB2_HOST0>;
++				#phy-cells = <0>;
 +				status = "disabled";
 +			};
 +
@@ -690,3 +760,25 @@
 +		};*/
 +	};
 +};
+--- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-02-27 15:33:46.983712654 +0800
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (C) 2018 Marvell
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#ifndef _DT_BINDINGS_PHY_UTMI_MVEBU
++#define _DT_BINDINGS_PHY_UTMI_MVEBU
++
++#define UTMI_PHY_TO_USB3_HOST0		0
++#define UTMI_PHY_TO_USB3_HOST1		1
++#define UTMI_PHY_TO_USB3_DEVICE0	2
++#define UTMI_PHY_TO_USB2_HOST0		3
++#define UTMI_PHY_INVALID		0xff
++
++#endif /* _DT_BINDINGS_PHY_UTMI_MVEBU */

@@ -33,7 +33,7 @@ test -d "${IMGDIR}" || echo_quit "Can't find sdcard_env"
 test -z "${INSTALL_IMG}" && INSTALL_IMG=$(ls ./*.img|grep -v u-boot|head -n1)
 test -f "${INSTALL_IMG}" || echo_quit "Can't find image file to install in current path"
 
-test -z "${SDCARD_ENV}" && SDCARD_ENV=./sdcard_env
+test -z "${SDCARD_ENV}" && SDCARD_ENV=./*_env
 test -f "${SDCARD_ENV}" || echo_quit "Can't find sdcard_env"
 
 IMGDIR_UBOOT=${IMGDIR}

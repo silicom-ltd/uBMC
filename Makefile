@@ -15,6 +15,7 @@ prod_clean:
 	rm -rf buildroot/output/.product
 	rm -rf buildroot/output/.product_cfg
 	rm -rf buildroot/product
+	rm -rf buildroot/.config
 
 prod_change:
 	@make prod_clean

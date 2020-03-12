@@ -1,3 +1,4 @@
 arch/arm/dts/Makefile
 arch/arm/dts/ubmc_esp.dts
 arch/arm/dts/ubmc_esp.dtsi
+include/dt-bindings/phy/phy-utmi-mvebu.h
