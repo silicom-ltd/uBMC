@@ -57,7 +57,7 @@ function action_change_passwd()
 			if ret == "OK" then
 				msg = "Password for " .. user .. " has been changed!"
 			else
-				msg = "Failed to cange password for " .. user .. " error: " .. ret
+				msg = "Failed to change password for " .. user .. " error: " .. ret
 			end
 		else
 			msg = "Error! Password and confirmation password mismatch!"
