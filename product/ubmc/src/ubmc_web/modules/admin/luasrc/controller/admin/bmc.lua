@@ -137,7 +137,9 @@ function action_bios()
 				luci.http.write_json(array)
 				return
 			else 
-				_step = 2
+				if _step ~= 2 then
+					_step = 32
+				end
 			end
 		else 
 			_verify_result['err_code'] = 1
@@ -147,8 +149,83 @@ function action_bios()
 	else
 		if _step == 2 then
 			_verify_result['err_code'] = 1
+			_step = 1
+		elseif _step == 4 then
+			luci.http.prepare_content("application/json")
+			ret, _status = mgmtdclient.query_child("/status/bmc/bios/upgrade")
+			local array = {}
+			if ret == 'OK' then
+				array[1] = {status=_status}
+			else
+				array[1] = {}
+			end
+			luci.http.write_json(array)
+			return
+		elseif _step == 12 then
+		elseif _step == 13 then
+			luci.http.prepare_content("application/json")
+			local bios_manual_backup_file =	"/var/images/host_bios_manual_backup.bin"
+			local bios_manual_backup_exist = nixio.fs.access(bios_manual_backup_file)
+			local array = {}
+			if bios_manual_backup_exist ~= nil then
+				array[1]={exist=bios_manual_backup_exist}
+			else
+				array[1]={exist=false}
+			end
+			luci.http.write_json(array)
+			return
+		elseif _step == 14 then
+			luci.http.prepare_content("application/json")
+			_ret, status = mgmtdclient.query_child("/status/bmc/bios/upgrade")
+			local array = {}
+			if _ret == 'OK' then
+				if string.find(status, "Processing") == nil then
+					_ret = mgmtdclient.action('/action/bmc/bios/backup')
+				end
+			end
+			array[1] = {ret=_ret}
+			luci.http.write_json(array)
+			return
+		elseif _step == 22 then
+		elseif _step == 23 then
+			luci.http.prepare_content("application/json")
+			local bios_manual_backup_file =	"/var/images/host_bios_manual_backup.bin"
+			local bios_manual_backup_exist = nixio.fs.access(bios_manual_backup_file)
+			local bios_auto_backup_file = "/var/images/host_bios_auto_backup.bin"
+			local bios_auto_backup_exist = nixio.fs.access(bios_auto_backup_file)
+			local array = {}
+			if bios_manual_backup_exist ~= nil then
+				array[1]={manual_exist=bios_manual_backup_exist}
+			else
+				array[1]={manual_exist=false}
+			end
+			if bios_auto_backup_exist ~= nil then
+				array[2]={auto_exist=bios_auto_backup_exist}
+			else
+				array[2]={auto_exist=false}
+			end
+			luci.http.write_json(array)
+			return
+		elseif _step == 24 then
+			luci.http.prepare_content("application/json")
+			_ret, status = mgmtdclient.query_child("/status/bmc/bios/upgrade")
+			local array = {}
+			if _ret == 'OK' then
+				if string.find(status, "Processing") == nil then
+					_ret = mgmtdclient.action('/action/bmc/bios/restore')
+				end
+			end
+			array[1] = {ret=_ret}
+			luci.http.write_json(array)
+			return
 		end
-		_step = 1
+	end
+
+	ret, status = mgmtdclient.query_child("/status/bmc/bios/upgrade")
+	if ret == 'OK' then
+		if string.find(status, "Processing") ~= nil then
+			_step = 32
+		end
 	end
 
 	luci.template.render("admin/bios", {
