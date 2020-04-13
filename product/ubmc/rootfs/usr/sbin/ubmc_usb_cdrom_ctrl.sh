@@ -84,7 +84,7 @@ attach_windows_usb_cdrom()
     file_path=$2
     usr_name=$3
 
-    file_dir=$(dirname ${file_path})
+    file_dir=$(dirname ${file_path#/})
     file_name=$(basename ${file_path})
     local_file_path="${windows_mount_point}/${file_name}"
 

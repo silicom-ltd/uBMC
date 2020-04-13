@@ -13,12 +13,15 @@ $Id$
 
 -%>
 <%+header%>
-<h2><a id="content" name="content"><%:BIOS update%></a></h2>
+<h2><a id="content" name="content"><%:BIOS%></a></h2>
 
 	<fieldset class="cbi-section">
 		<div class="cbi-section-node">
 
 <% if step == 1 then %>
+	<fieldset class="cbi-section">
+		<legend>BIOS update</legend>
+		<div class="cbi-section-node">
 	<p>
 		<span><%:Upload a software bin file to update the bios. %></span>
 		<% if verify_result.err_code and verify_result.err_code ~= 0 then %>
@@ -40,9 +43,36 @@ $Id$
 		<span id="warning" style="display: none; color: red;">
 		<%:Overwrite all sections of the BIOS may result in network switch not working, proceed only if you know what you are doing.%>
 		</span>
-		<br/><br/><br/>
+		<br/>
 		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Start Update%>" />
 	</form>
+		</div>
+		<br>
+	</fieldset>
+	<fieldset class="cbi-section">
+		<legend>BIOS backup</legend>
+		<div class="cbi-section-node">
+	<p>
+		<span><%:Back up this current bios of the host. %></span>
+	</p>
+	<form method="post" action="<%=REQUEST_URI%>">
+		<input type="hidden" name="step" value="12" />
+		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Start Backup%>" />
+	</form>
+		</div>
+	</fieldset>
+	<fieldset class="cbi-section">
+		<legend>BIOS restore</legend>
+		<div class="cbi-section-node">
+	<p>
+		<span><%:Restore this current backup file to the bios. %></span>
+	</p>
+	<form method="post" action="<%=REQUEST_URI%>">
+		<input type="hidden" name="step" value="22" />
+		<input class="cbi-button cbi-button-apply" type="submit" value="<%:Start Restore%>" />
+	</form>
+		</div>
+	</fieldset>
 	<script type="text/javascript">
 		var EventUtil = {
 			addHandler: function(element, type, handler) {
@@ -76,7 +106,7 @@ $Id$
 
 		EventUtil.addHandler(document.getElementById('whole'), "change", selectWhole);
 	</script>
-<% elseif step == 2 then %>
+<% elseif step%10 == 2 then %>
 	<p>
 		<span><%:BIOS update running status. %></span>
 	</p>
@@ -92,9 +122,21 @@ $Id$
 			process_panel.scrollTop = process_panel.scrollHeight;
 		}
 
+		function fetch(step) {
+			return new Promise((resolve, reject) => {
+				apply_xhr.get("<%=controller%>/admin/bmc/bios", "step="+step, function(x, data) {
+					if (data != null) {
+						resolve(data);
+					} else {
+						location.href="<%=controller%>/admin/bmc/bios";
+					}
+				});
+			});
+		}
+
 		function percent(step, warning) {
 			apply_xhr.get("<%=controller%>/admin/bmc/bios", "step="+step, function(x, data) {
-				if (data[0].hasOwnProperty('status')) {
+				if (data != null && data[0].hasOwnProperty('status')) {
 					if (step == 4) {
 						if (warning == undefined) {
 							refresh(data[0].status);
@@ -104,7 +146,7 @@ $Id$
 						} else {
 							var index = data[0].status.indexOf(':');
 							if (warning == undefined) {
-								alert(data[0].status.substring(index+1));
+								alert('Info: '+data[0].status.substring(index+1));
 							}
 							location.href="<%=controller%>/admin/bmc/bios";
 						}
@@ -114,9 +156,14 @@ $Id$
 				}
 			});
 		}
+<% if step == 2 then %>
 <% if all == 0 then %>
-		percent(3);
-		setTimeout(function(){percent(4);}, 1000);
+		if (confirm('Make sure the host is powered on and not in reboot. Continue?')) {
+			percent(3);
+			setTimeout(function(){percent(4);}, 1000);
+		} else {
+			percent(4, 1);
+		}
 <% else %>
 		if (confirm('All host bios flash will be overwritten! Are you sure?')) {
 			percent(3);
@@ -124,6 +171,53 @@ $Id$
 		} else {
 			percent(4, 1);
 		}
+<% end %>
+<% elseif step == 12 then %>
+		fetch(13).then(function(data){
+			if (data[0].exist) {
+				if (confirm('A previous backup is found, and the operation will overwrite it. Continue?')) {
+					fetch(14).then(function(data) {
+						if (data[0].ret == 'OK') {
+							percent(4);
+						} else {
+							location.href="<%=controller%>/admin/bmc/bios";
+						}
+					});
+				} else {
+					location.href="<%=controller%>/admin/bmc/bios";
+				}
+			} else {
+				fetch(14).then(function(data) {
+					if (data[0].ret == 'OK') {
+						percent(4);
+					} else {
+						location.href="<%=controller%>/admin/bmc/bios";
+					}
+				});
+			}
+		});
+<% elseif step == 22 then %>
+		fetch(23).then(function(data){
+			console.log(data);
+			if (data[0].manual_exist || data[1].auto_exist) {
+				if (confirm('The operation will restore the host BIOS to a previous backup. Continue?')) {
+					fetch(24).then(function(data) {
+						if (data[0].ret == 'OK') {
+							percent(4);
+						} else {
+							location.href="<%=controller%>/admin/bmc/bios";
+						}
+					});
+				} else {
+					location.href="<%=controller%>/admin/bmc/bios";
+				}
+			} else {
+				alert('There is not any available BIOS backup');
+				location.href="<%=controller%>/admin/bmc/bios";
+			}
+		});
+<% elseif step == 32 then %>
+		percent(4);
 <% end %>
 	</script>
 <% end %>
