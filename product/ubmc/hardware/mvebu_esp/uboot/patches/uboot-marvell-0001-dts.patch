@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2019-11-11 09:38:49.238893769 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-03-18 15:41:09.466494822 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2019-11-11 09:38:49.277893559 +0800
-@@ -0,0 +1,276 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-04-10 17:45:17.000000000 +0800
+@@ -0,0 +1,413 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -64,11 +64,12 @@
 +#include "ubmc_esp.dtsi"
 +
 +/ {
-+	model = "Globalscale Marvell ESPRESSOBin Board";
++	model = "Globalscale Marvell ESPRESSOBin Board spi nor flash test";
 +	compatible = "globalscale,espressobin", "marvell,armada3720", "marvell,armada3710";
 +
 +	chosen {
 +		stdout-path = "serial0:115200n8";
++		/*stdout-path = "serial1:115200n8";*/
 +	};
 +	aliases {
 +		ethernet0 = &eth0;
@@ -77,8 +78,20 @@
 +	};
 +	memory@0 {
 +		device_type = "memory";
-+		reg = <0x00000000 0x00000000 0x00000000 0x20000000>;
++		reg = <0x00000000 0x00000000 0x00000000 0x40000000>;
++
 +	};
++	vcc_sd_reg0: regulator@0 {
++		compatible = "regulator-gpio";
++		regulator-name = "vcc_sd0";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <3300000>;
++		regulator-type = "voltage";
++		states = <1800000 0x1
++			  3300000 0x0>;
++		gpios = <&gpionb 4 GPIO_ACTIVE_HIGH>;
++	};
++	/*
 +	vcc_sd_reg1: regulator {
 +		compatible = "regulator-gpio";
 +		regulator-name = "vcc_sd1";
@@ -92,120 +105,20 @@
 +			  3300000 0x0>;
 +		enable-active-high;
 +	};
++	*/
++	
 +	mdio@32004 {
 +		#address-cells = <1>;
 +		#size-cells = <0>;
 +		status = "okay";
 +
 +		mvswitch: switch@000000{
-+			compatible = "marvell,mv88e6xxx";
++			compatible = "marvell,mv88e6085","marvell,mv88e6xxx","marvell,mv88e6341";
 +			status = "okay";
-+			phy-addr = <1>;
++			phy-addr = <0>;
 +			cpu-port = <0x0>;
 +			port-mask = <0xf>;
-+		};
-+	};
-+};
-+/*
-+&comphy {
-+	max-lanes = <3>;
-+	phy0 {
-+		phy-type = <COMPHY_TYPE_USB3>;
-+		phy-speed = <COMPHY_SPEED_5G>;
-+	};
-+
-+	phy1 {
-+		phy-type = <COMPHY_TYPE_PEX0>;
-+		phy-speed = <COMPHY_SPEED_2_5G>;
-+	};
-+
-+	phy2 {
-+		phy-type = <COMPHY_TYPE_SATA0>;
-+		phy-speed = <COMPHY_SPEED_6G>;
-+	};
-+};
-+*/
-+/* J9 */
-+
-+&pcie0 {
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&pcie_pins>;
-+	reset-gpio = <&gpiosb 3 GPIO_ACTIVE_HIGH>;
-+	status = "okay";
-+};
-+
-+
-+/* J6 */
-+&sata {
-+	status = "okay";
-+};
-+/* J1 */
-+/*sd card*/
-+
-+&sdhci1 {
-+	wp-inverted;
-+	bus-width = <4>;
-+	cd-gpios = <&gpionb 3 GPIO_ACTIVE_LOW>;
-+	marvell,pad-type = "sd";
-+	vqmmc-supply = <&vcc_sd_reg1>;
-+	status = "okay";
-+};
-+
-+/*emmc*/
-+&sdhci0 {
-+	non-removable;
-+	bus-width = <8>;
-+	mmc-ddr-1_8v;
-+	mmc-hs400-1_8v;
-+	marvell,pad-type = "fixed-1-8v";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&mmc_pins>;
-+	status = "okay";
-+	#address-cells = <1>;
-+	#size-cells = <0>;
-+	mmccard: mmccard@0 {
-+		compatible = "mmc-card";
-+		reg = <0>;
-+	};
-+	
-+};
-+
-+&i2c0 {
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&i2c1_pins>;
-+	status = "okay";
-+};
-+&i2c1 {
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&i2c2_pins>;
-+	status = "okay";
-+};
-+
-+/* Exported on the micro USB connector J5 through an FTDI */
-+&uart0 {
-+	status = "okay";
-+};
-+
-+/* J7 */
-+&usb3 {
-+	status = "okay";
-+};
-+
-+/* J8 */
-+&usb2 {
-+	status = "okay";
-+};
-+/*
-+&mdio {
-+	switch0: switch0@1 {
-+		compatible = "marvell,mv88e6085";
-+		#address-cells = <1>;
-+		#size-cells = <0>;
-+		reg = <1>;
-+
-+		dsa,member = <0 0>;
-+
-+		ports {
++			ports {
 +			#address-cells = <1>;
 +			#size-cells = <0>;
 +
@@ -249,9 +162,172 @@
 +				reg = <0x13>;
 +			};
 +		};
++		};
++	};
++	
++	reg_usb3_vbus: usb3_vbus@0 {
++		compatible = "regulator-fixed";
++		regulator-name = "usb3-vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		shutdown-delay-us = <1000000>;
++		gpio = <&expander0 1 GPIO_ACTIVE_HIGH>;
++	};
++	reg_usb2_vbus: usb2-vbus {
++		compatible = "regulator-fixed";
++		regulator-name = "usb2-vbus";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		enable-active-high;
++		regulator-always-on;
++		gpio = <&expander0 0 GPIO_ACTIVE_HIGH>;
++	};
++	usb3_phy: usb3-phy {
++		compatible = "usb-nop-xceiv";
++		vcc-supply = <&reg_usb3_vbus>;
++	};
++	usb2_phy: usb2-phy {
++		compatible = "usb-nop-xceiv";
++		vcc-supply = <&reg_usb2_vbus>;
++	};
++	
++};
++
++&comphy {
++	max-lanes = <3>;
++	phy0 {
++							reg = <0>;
++					#phy-cells = <1>;
++		phy-type = <COMPHY_TYPE_USB3_DEVICE>;
++		phy-speed = <COMPHY_SPEED_5G>;
++	};
++
++	phy1 {
++							reg = <1>;
++					#phy-cells = <1>;
++		phy-type = <COMPHY_TYPE_PEX0>;
++		phy-speed = <COMPHY_SPEED_2_5G>;
++	};
++
++	phy2 {
++							reg = <2>;
++					#phy-cells = <1>;
++		phy-type = <COMPHY_TYPE_SATA0>;
++		phy-speed = <COMPHY_SPEED_6G>;
 +	};
 +};
++
++/* J9 */
++
++&pcie0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&pcie_pins>;
++	reset-gpio = <&gpiosb 3 GPIO_ACTIVE_HIGH>;
++	status = "disabled";
++};
++
++
++/* J6 */
++&sata {
++	status = "okay";
++};
++/* J1 */
++/*sd card not used*/
++/*
++&sdhci1 {
++	wp-inverted;
++	bus-width = <4>;
++	cd-gpios = <&gpionb 3 GPIO_ACTIVE_LOW>;
++	marvell,pad-type = "sd";
++	vqmmc-supply = <&vcc_sd_reg1>;
++	status = "disabled";
++};
 +*/
++/*emmc*/
++&sdhci1 {
++	non-removable;
++	bus-width = <4>;
++	/*mmc-hs200-1_8v;*/
++	mmc-ddr-1_8v;
++	/*max-frequency = <50000000>;*/
++	mmc-hs400-1_8v;
++	marvell,pad-type = "fixed-1-8v";
++	/*marvell,xenon-phy-slow-mode;*/
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc_pins>;
++	status = "okay";
++	#address-cells = <1>;
++	#size-cells = <0>;
++	mmccard: mmccard@0 {
++		compatible = "mmc-card";
++		reg = <0>;
++	};
++	
++};
++
++&i2c0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c1_pins>;
++	status = "okay";
++	expander0: pca953x@22 {
++		compatible = "nxp,pca9555";
++                #gpio-cells = <2>;
++		reg = <0x22>;
++		status = "disabled";
++	};
++};
++&i2c1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c2_pins>;
++	status = "okay";
++};
++
++/* Exported on the micro USB connector J5 through an FTDI */
++&uart0 {
++	status = "okay";
++};
++&uart1 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart2_pins>;
++};
++/* J7 */
++#if 1
++&usb3 {
++	vbus-supply = <&reg_usb3_vbus>;
++	status = "disable";
++};
++#endif
++
++#if 0
++&usb3 {
++	status = "disabled";
++	usb-phy = <&usb3_phy>;
++	dr_mode = "device"
++	/* Generic PHY, providing serdes lanes */
++	phys = <&comphy 2>;
++	phy-names = "usb";
++};
++#endif
++
++&u3d{
++	status = "okay";
++};
++&usb2 {
++	status = "okay";
++	usb-phy = <&usb2_phy>;
++	phys = <&utmi_usb2>;
++	phy-names = "usb";
++};
++
++
++&utmi_usb32 {
++	status = "okay";
++};
++&utmi_usb2 {
++	status = "okay";
++};
++
 +/*&eth0 {
 +	phy-mode = "rgmii-id";
 +	status = "okay";
@@ -266,7 +342,7 @@
 +	status = "okay";
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&rgmii_pins>, <&smi_pins>;
-+	phy-mode = "rgmii";
++	phy-mode = "rgmii-id";
 +	phy_addr = <0x1>;
 +	phy = <&mvswitch>;
 +
@@ -277,22 +353,82 @@
 +};
 +&spi0 {
 +	status = "okay";
++
++	flash@0 {
++		reg = <0>;
++		compatible = "winbond,w25q32dw", "jedec,spi-flash";
++		spi-max-frequency = <104000000>;
++		m25p,fast-read;
++	};
++};
++
++#if 0
++/*for espressobin support*/
++&spi0 {
++	status = "okay";
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&spi_quad_pins>;
-+
++	clock-frequency = <20000000>;
++	spi-max-frequency = <20000000>;
++	flash@0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		mode = <0>;
++		reg = <0>;
++		compatible = "winbond,w25q32dw", "jedec,spi-flash";
++		spi-max-frequency = <10000000>;
++		m25p,fast-read;
++		};
++};
++#endif
++#if 0
++/*
++&spi0 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi_quad_pins>;
++	/*clock-frequency = <200000000>;*/
 +	spi-flash@0 {
 +		#address-cells = <1>;
 +		#size-cells = <1>;
 +		compatible = "st,m25p128", "spi-flash";
 +		reg = <0>; /* Chip select 0 */
 +		spi-max-frequency = <40000>;
++		/*spi-max-frequency = <133000000>;*/
 +		m25p,fast-read;
 +	};
 +};
-\ No newline at end of file
++*/
++#endif
++
++#if 0
++/*for uBMC spi flash*/
++&spi0 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi_quad_pins>;
++	/* sqf_clk is a /4 from 800MHz TBG_A_P clock, set here because default
++	 * in driver is 160MHz, which is wrong
++	 */
++	clock-frequency = <20000000>;
++	/* limit bus to 20Mhz since the level shifters add load */
++	spi-max-frequency = <20000000>;
++	spi-flash@0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		mode = <0>;
++		/*compatible = "winbond,w25q32", "jedec,spi-nor", "spi-flash";*/
++		compatible = "w25q32", "jedec,spi-nor", "spi-flash";
++		/*compatible = "w25q32jv,spi-nor";*/
++		reg = <0>; /* Chip select 0 */
++		spi-max-frequency = <10000000>;
++		m25p,fast-read;
++	};
++};
++#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2019-11-11 09:38:49.277893559 +0800
-@@ -0,0 +1,397 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-04-10 18:11:15.491870067 +0800
+@@ -0,0 +1,584 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
 + *
@@ -342,6 +478,7 @@
 +#include <dt-bindings/interrupt-controller/arm-gic.h>
 +#include <dt-bindings/comphy/comphy_data.h>
 +#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/phy/phy-utmi-mvebu.h>
 +/ {
 +	model = "Marvell Armada 37xx SoC";
 +	compatible = "marvell,armada3700";
@@ -351,6 +488,7 @@
 +
 +	aliases {
 +		serial0 = &uart0;
++		serial1 = &uart1;
 +	};
 +
 +	cpus {
@@ -405,7 +543,47 @@
 +				num-cs = <4>;
 +				status = "disabled";
 +			};
++#if 0		
++			comphy: comphy@18300 {
++				compatible = "marvell,mvebu-comphy", "marvell,comphy-armada-3700";
++				reg = <0x18300 0x28>,
++				      <0x1f300 0x3d000>;
++				mux-bitcount = <4>;
++				max-lanes = <3>;
++			};
++#endif
++			
++#if 1
++			/*Modifid as kernel dtsi*/
++			comphy: comphy@18300 {
++				compatible = "marvell,mvebu-comphy", "marvell,comphy-a3700", "marvell,comphy-armada-3700";
++				reg = <0x18300 0x28>,
++				      <0x1f300 0x3d000>,
++					  <0x5c000 0x1000>, <0xe0178 0x8>;
++				reg-names = "comphy", "serdes",
++					    "usb3_gbe1_phy", "indirect_ahci";
++				#address-cells = <1>;
++				#size-cells = <0>;
++				mux-bitcount = <4>;
++				/*max-lanes = <3>;*/
++#if 0
++				a3700_comphy0: phy@0 {
++					reg = <0>;
++					#phy-cells = <1>;
++				};
 +
++				a3700_comphy1: phy@1 {
++					reg = <1>;
++					#phy-cells = <1>;
++				};
++
++				a3700_comphy2: phy@2 {
++					reg = <2>;
++					#phy-cells = <1>;
++				};
++#endif
++			};
++#endif
 +			i2c0: i2c@11000 {
 +				compatible = "marvell,armada-3700-i2c";
 +				reg = <0x11000 0x24>;
@@ -430,11 +608,20 @@
 +
 +			uart0: serial@12000 {
 +				compatible = "marvell,armada-3700-uart";
-+				reg = <0x12000 0x400>;
++				reg = <0x12000 0x200>;
 +				interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
 +				status = "disabled";
 +			};
-+
++			uart1: serial@12200 {
++				compatible = "marvell,armada-3700-uart-ext";
++				reg = <0x12200 0x30>;
++				clocks = <&xtalclk>;
++				interrupts =
++				<GIC_SPI 30 IRQ_TYPE_EDGE_RISING>,
++				<GIC_SPI 31 IRQ_TYPE_EDGE_RISING>;
++				interrupt-names = "uart-tx", "uart-rx";
++				status = "disabled";
++			};
 +			nb_periph_clk: nb-periph-clk@13000 {
 +				compatible = "marvell,armada-3700-periph-clock-nb";
 +				reg = <0x13000 0x100>;
@@ -487,32 +674,83 @@
 +					clock-output-names = "xtal";
 +					#clock-cells = <0>;
 +				};
-+
++				/*GPIO1*/
++				/*pin15-pin16*/
 +				spi_quad_pins: spi-quad-pins {
 +					groups = "spi_quad";
-+					function = "spi";
++					function = "gpio";
 +				};
-+
++				/*pin17*/
++				spi_cs1_pins:spi-cs1-pins {
++					groups = "spi_cs1";
++					function = "gpio";
++				};
++				/*pin20-pin24*/
++				jtag_pins: jtag-pins {
++					groups = "jtag";
++					function = "jtag";
++				};
++				/*pin0-pin1*/
 +				i2c1_pins: i2c1-pins {
 +					groups = "i2c1";
 +					function = "i2c";
 +				};
-+
++				/*pin2-pin3*/
 +				i2c2_pins: i2c2-pins {
 +					groups = "i2c2";
 +					function = "i2c";
 +				};
-+
++				/*pin4*/
++				onewire_pins:onewire-pins{
++					groups = "onewire";
++					function = "gpio";
++				};
++				/*pin6*/
++				pmic0_pins:pmic0-pins{
++					groups = "pmic0";
++					function = "gpio";
++				};
++				/*pin8-pin10*/
++				sdio0_pins:sdio0-pins{
++					groups = "sdio0";
++					function = "gpio";	
++				};
++				/*pin7*/
++				pmic1_pins:pmic1-pins{
++					groups = "pmic1";
++					function = "gpio";
++				};
++				/*pin11*/
++				pwm0_pins:pwm0-pins{
++					groups = "pwm0";
++					function = "gpio";
++				};
++				/*pin12*/
++				pwm1_pins:pwm1-pins{
++					groups = "pwm1";
++					function = "gpio";
++				};
++				/*pin13*/
++				pwm2_pins:pwm2-pins{
++					groups = "pwm2";
++					function = "gpio";
++				};
++				/*pin14*/
++				pwm3_pins:pwm3-pins{
++					groups = "pwm3";
++					function = "gpio";
++				};
++				/*pin25-pin26*/
 +				uart1_pins: uart1-pins {
 +					groups = "uart1";
 +					function = "uart";
 +				};
-+
++				/*pin9-pin10 pin18-pin19*/
 +				uart2_pins: uart2-pins {
 +					groups = "uart2";
 +					function = "uart";
 +				};
-+
++				/*pin27-pin35*/
 +				mmc_pins: mmc-pins {
 +					groups = "emmc_nb";
 +					function = "emmc";
@@ -534,21 +772,49 @@
 +					<GIC_SPI 157 IRQ_TYPE_LEVEL_HIGH>,
 +					<GIC_SPI 156 IRQ_TYPE_LEVEL_HIGH>;
 +				};
++				/*GPIO2*/
++				/*pin0*/
++				usb32_drvvbus0_pins: usb32-drvvbus0-pins
++				{
++					groups = "usb32_drvvbus0";
++					function = "drvbus";
++				};
++				/*pin1*/
++				usb2_drvvbus1_pins: usb2-drvvbus1-pins
++				{
++					groups = "usb2_drvvbus1";
++					function = "drvbus";	
++				};
++				/*pin24-pin29*/
 +				sdio_pins: sdio-pins {
 +					groups = "sdio_sb";
-+					function = "sdio";
++					/*function = "sdio";*/
++					function = "gpio";
 +				};
++				/*pin20-pin22*/
++				ptp_pins: ptp-pins {
++					groups = "ptp";
++					function = "gpio";
++				};
++				/*pin6-pin17*/
 +				rgmii_pins: mii-pins {
 +					groups = "rgmii";
 +					function = "mii";
 +				};
++				/*pin3-pin5*/
 +				pcie_pins: pcie-pins {
 +					groups = "pcie1";
 +					function = "gpio";
 +				};
++				/*pin18-pin19*/
 +				smi_pins: smi-pins {
 +					groups = "smi";
 +					function = "smi";
++				};
++				/*pin23*/
++				mii_col_pins: mii-col-pins{
++					groups = "mii_col";
++					function = "gpio";
 +				};
 +
 +			};
@@ -575,22 +841,58 @@
 +				clocks = <&sb_periph_clk 7>;
 +				status = "disabled";
 +			};
-+
++			#if 0
++			u3d: u3d@50000 {
++				status = "disabled";
++				 /* NUM1 phys =  <&a3700_comphy 0 0x21fc>; */
++				/* NUM2 phys =  <&a3700_comphy 0 0x31fc>; */
++				phys = <&a3700_comphy0 0xa0fc>; /* NUM3 */
++				/* Either NUM1,NUM2,NUM3 corresponds to mode COMPHY_USB3 because
++				these are the only three modes and I have tested
++				phys = <&a3700_comphy 0 COMPHY_USB3> and the kernel does not complain
++                               */
++				phy-names = "usb";
++			};
++			#endif
++			/*see /Documentation/devicetree/bindings/phy/phy-mvebu.txt*/
++			u3d: u3d@50000 {
++				status = "disabled";
++				compatible = "marvell,armada3700-u3d";
++				 /* NUM1 phys =  <&a3700_comphy 0 0x21fc>; */
++				/* NUM2 phys =  <&a3700_comphy 0 0x31fc>; */
++				phys = <&utmi_usb32>; /* NUM3 */
++				phy-names = "usb";
++			};
 +			usb3: usb@58000 {
 +				compatible = "marvell,armada3700-xhci",
 +				"generic-xhci";
 +				reg = <0x58000 0x4000>;
-+				interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
-+				clocks = <&sb_periph_clk 12>;
++				interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
 +				status = "disabled";
 +			};
 +
 +			usb2: usb@5e000 {
-+				compatible = "marvell,armada-3700-ehci";
-+				reg = <0x5e000 0x2000>;
++				compatible = "marvell,armada-3700-ehci","marvell,armada3700-ehci";
++				reg = <0x5e000 0x450>;
 +				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
 +				status = "disabled";
 +			};
++            utmi_usb32: utmi@5d000 {
++                compatible = "marvell,armada-3700-utmi-phy";
++                reg = <0x5d000 0x1000>;
++               /* utmi-port = <UTMI_PHY_TO_USB3_HOST0>;*/
++                utmi-port = <UTMI_PHY_TO_USB3_DEVICE0>;
++                #phy-cells = <0>;
++                status = "disabled";
++            }; 
++			utmi_usb2: utmi@5f000 {
++				compatible = "marvell,armada-3700-utmi-phy";
++				reg = <0x5f000 0x1000>;
++				utmi-port = <UTMI_PHY_TO_USB2_HOST0>;
++				#phy-cells = <0>;
++				status = "disabled";
++			};
++
 +
 +			xor@60900 {
 +				compatible = "marvell,armada-3700-xor";
@@ -605,6 +907,28 @@
 +				};
 +			};
 +
++			sdhci0: sdhci@d0000 {
++				compatible = "marvell,armada-3700-sdhci",
++					     "marvell,sdhci-xenon";
++				reg = <0xd0000 0x300>,
++				      <0x1e808 0x4>;
++				interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
++				clocks = <&nb_periph_clk 0>;
++				clock-names = "core";
++				status = "disabled";
++			};
++
++			sdhci1: sdhci@d8000 {
++				compatible = "marvell,armada-3700-sdhci",
++					     "marvell,sdhci-xenon";
++				reg = <0xd8000 0x300>,
++				      <0x17808 0x4>;
++				interrupts = <GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>;
++				clocks = <&nb_periph_clk 0>;
++				clock-names = "core";
++				status = "disabled";
++			};
++/*
 +			sdhci1: sdhci@d0000 {
 +				compatible = "marvell,armada-3700-sdhci",
 +					     "marvell,sdhci-xenon";
@@ -612,9 +936,8 @@
 +				      <0x1e808 0x4>;
 +				interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
 +				clocks = <&sb_periph_clk 10>;
-+				/*clocks = <&nb_periph_clk 0>;*/
 +				clock-names = "core";
-+				status = "okay";
++				status = "disabled";
 +			};
 +
 +			sdhci0: sdhci@d8000 {
@@ -627,7 +950,7 @@
 +				clock-names = "core";
 +				status = "disabled";
 +			};
-+
++*/
 +			sata: sata@e0000 {
 +				compatible = "marvell,armada-3700-ahci";
 +				reg = <0xe0000 0x2000>;
@@ -690,3 +1013,25 @@
 +		};*/
 +	};
 +};
+--- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-03-18 15:41:09.467494822 +0800
+@@ -0,0 +1,19 @@
++/*
++ * Copyright (C) 2018 Marvell
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ */
++
++#ifndef _DT_BINDINGS_PHY_UTMI_MVEBU
++#define _DT_BINDINGS_PHY_UTMI_MVEBU
++
++#define UTMI_PHY_TO_USB3_HOST0		0
++#define UTMI_PHY_TO_USB3_HOST1		1
++#define UTMI_PHY_TO_USB3_DEVICE0	2
++#define UTMI_PHY_TO_USB2_HOST0		3
++#define UTMI_PHY_INVALID		0xff
++
++#endif /* _DT_BINDINGS_PHY_UTMI_MVEBU */

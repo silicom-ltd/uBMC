@@ -1,6 +1,7 @@
-set -x
+#set -x
 PKG_NAME=linux
-PKG_VERSION=custom
+#PKG_VERSION=custom
+PKG_VERSION=ti2018.02-rc4-int
 #PKG_TAR_NAME=linux-4.9.41+gitAUTOINC+e3a80a1c5c-ge3a80a1c5c.tar.gz
 PKG_TAR_NAME=linux-4.14.y-ti.tar.gz
 PKG_DIR_NAME=${PKG_NAME}-${PKG_VERSION}

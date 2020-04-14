@@ -1,5 +1,5 @@
---- linux-custom-orig/include/linux/peci.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/include/linux/peci.h	2018-04-25 22:35:37.950970249 +0800
+--- linux-ti2018.02-rc4-int-orig/include/linux/peci.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/include/linux/peci.h	2020-03-09 10:47:12.038803547 +0800
 @@ -0,0 +1,107 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2018 Intel Corporation */
@@ -108,8 +108,8 @@
 +int  peci_command(struct peci_adapter *adpater, enum peci_cmd cmd, void *vmsg);
 +
 +#endif /* __LINUX_PECI_H */
---- linux-custom-orig/include/uapi/linux/peci-ioctl.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/include/uapi/linux/peci-ioctl.h	2018-04-25 22:35:37.950970249 +0800
+--- linux-ti2018.02-rc4-int-orig/include/uapi/linux/peci-ioctl.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/include/uapi/linux/peci-ioctl.h	2020-03-09 10:47:12.038803547 +0800
 @@ -0,0 +1,200 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/* Copyright (c) 2018 Intel Corporation */
@@ -311,8 +311,8 @@
 +	      struct peci_wr_pci_cfg_local_msg)
 +
 +#endif /* __PECI_IOCTL_H */
---- linux-custom-orig/drivers/peci/peci-core.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/peci/peci-core.c	2018-04-28 13:22:18.336956059 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/peci/peci-core.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/peci/peci-core.c	2020-03-09 10:47:12.038803547 +0800
 @@ -0,0 +1,1295 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright (c) 2018 Intel Corporation
@@ -1609,8 +1609,8 @@
 +MODULE_AUTHOR("Jae Hyun Yoo <jae.hyun.yoo@linux.intel.com>");
 +MODULE_DESCRIPTION("PECI bus core module");
 +MODULE_LICENSE("GPL v2");
---- linux-custom-orig/drivers/peci/peci-aspeed.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/peci/peci-aspeed.c	2018-04-26 17:39:46.583521924 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/peci/peci-aspeed.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/peci/peci-aspeed.c	2020-03-09 10:47:12.038803547 +0800
 @@ -0,0 +1,504 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright (C) 2012-2017 ASPEED Technology Inc.
@@ -2116,8 +2116,8 @@
 +MODULE_AUTHOR("Jae Hyun Yoo <jae.hyun.yoo@linux.intel.com>");
 +MODULE_DESCRIPTION("Aspeed PECI driver");
 +MODULE_LICENSE("GPL v2");
---- linux-custom-orig/drivers/peci/peci-smbus.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/peci/peci-smbus.c	2018-04-28 19:17:37.179447375 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/peci/peci-smbus.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/peci/peci-smbus.c	2020-03-09 10:47:12.038803547 +0800
 @@ -0,0 +1,328 @@
 +/*
 + * peci-smbus.c
@@ -2447,8 +2447,8 @@
 +MODULE_AUTHOR("Jeff Zheng <jeff.zheng@silicom.co.il>");
 +MODULE_DESCRIPTION("PECI smbus");
 +MODULE_LICENSE("GPL v2");
---- linux-custom-orig/drivers/peci/Kconfig	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/peci/Kconfig	2018-04-28 12:07:30.468408886 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/peci/Kconfig	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/peci/Kconfig	2020-03-09 10:47:12.039803545 +0800
 @@ -0,0 +1,56 @@
 +#
 +# Platform Environment Control Interface (PECI) subsystem configuration
@@ -2506,8 +2506,8 @@
 +endif # PECI
 +
 +endmenu
---- linux-custom-orig/drivers/peci/Makefile	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/peci/Makefile	2018-04-26 19:37:49.072864738 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/peci/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/peci/Makefile	2020-03-09 10:47:12.039803545 +0800
 @@ -0,0 +1,11 @@
 +#
 +# Makefile for the PECI core and bus drivers.
@@ -2520,8 +2520,8 @@
 +obj-$(CONFIG_PECI_ASPEED)	+= peci-aspeed.o
 +
 +obj-$(CONFIG_PECI_SMBUS)	+= peci-smbus.o
---- linux-custom-orig/drivers/hwmon/peci-cputemp.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/hwmon/peci-cputemp.c	2018-07-18 13:09:54.977425830 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/hwmon/peci-cputemp.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/hwmon/peci-cputemp.c	2020-03-09 10:47:12.039803545 +0800
 @@ -0,0 +1,801 @@
 +// SPDX-License-Identifier: GPL-2.0
 +// Copyright (c) 2018 Intel Corporation
@@ -3324,8 +3324,8 @@
 +MODULE_AUTHOR("Jae Hyun Yoo <jae.hyun.yoo@linux.intel.com>");
 +MODULE_DESCRIPTION("PECI cputemp driver");
 +MODULE_LICENSE("GPL v2");
---- linux-custom-orig/drivers/Kconfig	2018-07-15 00:46:28.000000000 +0800
-+++ linux-custom-silicom/drivers/Kconfig	2018-07-16 13:51:24.673533311 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/Kconfig	2018-07-15 00:46:28.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/Kconfig	2020-03-09 10:47:12.039803545 +0800
 @@ -209,4 +209,6 @@
  
  source "drivers/mux/Kconfig"
@@ -3333,15 +3333,15 @@
 +source "drivers/peci/Kconfig"
 +
  endmenu
---- linux-custom-orig/drivers/Makefile	2018-07-15 00:46:28.000000000 +0800
-+++ linux-custom-silicom/drivers/Makefile	2018-07-16 13:51:24.673533311 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/Makefile	2018-07-15 00:46:28.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/Makefile	2020-03-09 10:47:12.039803545 +0800
 @@ -183,3 +183,4 @@
  obj-$(CONFIG_FSI)		+= fsi/
  obj-$(CONFIG_TEE)		+= tee/
  obj-$(CONFIG_MULTIPLEXER)	+= mux/
 +obj-$(CONFIG_PECI)		+= peci/
---- linux-custom-orig/drivers/hwmon/Kconfig	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/hwmon/Kconfig	2018-07-16 13:51:24.674533301 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/hwmon/Kconfig	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/hwmon/Kconfig	2020-03-09 10:47:12.039803545 +0800
 @@ -1243,6 +1243,34 @@
  	  This driver can also be built as a module.  If so, the module
  	  will be called nct7904.
@@ -3407,8 +3407,8 @@
  if ACPI
  
  comment "ACPI drivers"
---- linux-custom-orig/drivers/hwmon/Makefile	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/hwmon/Makefile	2019-03-04 10:50:31.968528732 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/hwmon/Makefile	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/hwmon/Makefile	2020-03-09 10:47:12.040803544 +0800
 @@ -58,6 +58,7 @@
  obj-$(CONFIG_SENSORS_DS1621)	+= ds1621.o
  obj-$(CONFIG_SENSORS_EMC1403)	+= emc1403.o

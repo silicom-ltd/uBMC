@@ -1,5 +1,5 @@
---- linux-custom-orig/drivers/i2c/algos/i2c-algo-bit.c	2017-09-27 05:40:11.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/algos/i2c-algo-bit.c	2018-05-02 15:57:18.920357531 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/algos/i2c-algo-bit.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/algos/i2c-algo-bit.c	2020-03-09 10:47:12.065803514 +0800
 @@ -74,6 +74,7 @@
  static inline void scllo(struct i2c_algo_bit_data *adap)
  {

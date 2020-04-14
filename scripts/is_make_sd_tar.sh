@@ -37,13 +37,17 @@ test -z "$2" && error_quit "Please specify the install boot image uboot dir, can
 test -z "$3" && error_quit "Please specify the system image to install"
 
 PRODUCT=$(cat ${BR2_OUT}/target/etc/product.txt)
-echo "Building SD tar for ${PRODUCT}"
+PRODUCT_SUB=$(cat ${BR2_OUT}/target/etc/product_sub.txt)
+echo "Building SD tar for ${PRODUCT}:${PRODUCT_SUB}"
 IMGDIR=$1
 IMGDIR_UBOOT=$2
 INSTALL_IMG=$3
 RELEASE=$(basename ${INSTALL_IMG} .img)-MAKESD
-
-SDCARD_ENV=${BR2_ROOT}/product/scripts/upgrade/sdcard_env
+if [ ${PRODUCT_SUB} == "UBMC_ESP" ]; then
+	SDCARD_ENV=${BR2_ROOT}/product/scripts/upgrade/esp_sd_env
+else
+	SDCARD_ENV=${BR2_ROOT}/product/scripts/upgrade/sdcard_env
+fi
 . ${SDCARD_ENV}
 
 test -z "${INSTALL_CP_SRC_NAMES}" && error_quit "invalid sdcard_env, INSTALL_CP_SRC_NAMES is empty"

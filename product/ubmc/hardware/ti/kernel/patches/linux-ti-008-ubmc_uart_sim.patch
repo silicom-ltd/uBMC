@@ -1,5 +1,5 @@
---- linux-custom-orig/drivers/tty/serial/uart_sim_ubmc.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/tty/serial/uart_sim_ubmc.c	2018-07-21 17:46:25.186465786 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/tty/serial/uart_sim_ubmc.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/tty/serial/uart_sim_ubmc.c	2020-03-09 10:47:13.316802014 +0800
 @@ -0,0 +1,959 @@
 +/*************************************************************************
 +    > File Name: uart_sim_ubmc.c
@@ -960,8 +960,8 @@
 +MODULE_DESCRIPTION("self define console driver");
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Texas Instruments Inc");
---- linux-custom-orig/drivers/tty/serial/Makefile	2018-07-15 00:46:30.000000000 +0800
-+++ linux-custom-silicom/drivers/tty/serial/Makefile	2018-07-16 13:51:24.696533070 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/tty/serial/Makefile	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/tty/serial/Makefile	2020-03-09 10:47:13.317802013 +0800
 @@ -94,6 +94,7 @@
  obj-$(CONFIG_SERIAL_PIC32)	+= pic32_uart.o
  obj-$(CONFIG_SERIAL_MPS2_UART)	+= mps2-uart.o
@@ -970,8 +970,8 @@
  
  # GPIOLIB helpers for modem control lines
  obj-$(CONFIG_SERIAL_MCTRL_GPIO)	+= serial_mctrl_gpio.o
---- linux-custom-orig/drivers/tty/serial/Kconfig	2018-07-15 00:46:30.000000000 +0800
-+++ linux-custom-silicom/drivers/tty/serial/Kconfig	2018-07-16 13:51:24.696533070 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/tty/serial/Kconfig	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/tty/serial/Kconfig	2020-03-09 10:47:13.318802012 +0800
 @@ -85,6 +85,13 @@
  	  with "earlycon=smh" on the kernel command line. The console is
  	  enabled when early_param is processed.

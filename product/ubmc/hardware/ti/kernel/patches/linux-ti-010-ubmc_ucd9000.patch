@@ -1,5 +1,5 @@
---- linux-custom-orig/drivers/hwmon/pmbus/ucd9000.c	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/hwmon/pmbus/ucd9000.c	2019-01-29 11:50:40.404184100 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/hwmon/pmbus/ucd9000.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/hwmon/pmbus/ucd9000.c	2020-03-09 10:47:13.362801959 +0800
 @@ -158,21 +158,21 @@
  	const struct i2c_device_id *mid;
  	enum chips chip;

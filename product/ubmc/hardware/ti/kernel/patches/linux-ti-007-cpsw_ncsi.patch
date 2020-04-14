@@ -1,5 +1,5 @@
---- linux-custom-orig/drivers/net/ethernet/ti/cpsw.c	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/ti/cpsw.c	2019-01-25 17:24:23.888278468 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/net/ethernet/ti/cpsw.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/net/ethernet/ti/cpsw.c	2020-03-09 10:47:12.122803446 +0800
 @@ -38,11 +38,19 @@
  #include <linux/net_switch_config.h>
  
@@ -365,8 +365,8 @@
  	unregister_netdev(ndev);
  
  	cpts_release(cpsw->cpts);
---- linux-custom-orig/drivers/net/ethernet/ti/cpsw.h	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/ti/cpsw.h	2018-07-16 13:51:24.691533123 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/net/ethernet/ti/cpsw.h	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/net/ethernet/ti/cpsw.h	2020-03-09 10:47:12.123803445 +0800
 @@ -24,4 +24,6 @@
  void cpsw_phy_sel(struct device *dev, phy_interface_t phy_mode, int slave);
  int ti_cm_get_macid(struct device *dev, int slave, u8 *mac_addr);
@@ -374,8 +374,8 @@
 +#define ubmc_info	dev_info
 +
  #endif /* __CPSW_H__ */
---- linux-custom-orig/drivers/net/ethernet/ti/cpsw-phy-sel.c	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/ti/cpsw-phy-sel.c	2018-07-22 17:08:14.999341553 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/net/ethernet/ti/cpsw-phy-sel.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/net/ethernet/ti/cpsw-phy-sel.c	2020-03-09 10:47:12.124803443 +0800
 @@ -55,6 +55,10 @@
  	bool rgmii_id = false;
  
@@ -403,8 +403,8 @@
  
  	writel(reg, priv->gmii_sel);
  }
---- linux-custom-orig/drivers/net/ethernet/ti/davinci_mdio.c	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/ti/davinci_mdio.c	2019-01-25 17:22:32.257065476 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/net/ethernet/ti/davinci_mdio.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/net/ethernet/ti/davinci_mdio.c	2020-03-09 10:47:12.125803442 +0800
 @@ -42,6 +42,10 @@
  #include <linux/of_device.h>
  #include <linux/of_mdio.h>
@@ -617,8 +617,8 @@
 +
  MODULE_LICENSE("GPL");
  MODULE_DESCRIPTION("DaVinci MDIO driver");
---- linux-custom-orig/drivers/net/ethernet/ti/davinci_mdio_int.h	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/ti/davinci_mdio_int.h	2019-01-25 17:20:41.931688430 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/net/ethernet/ti/davinci_mdio_int.h	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/net/ethernet/ti/davinci_mdio_int.h	2020-03-09 10:47:12.125803442 +0800
 @@ -18,5 +18,12 @@
  			void __iomem *reg_base,
  			const char *clk_name);
@@ -632,8 +632,8 @@
 +#endif
  
  #endif /* DAVINCI_MDIO_INT_H_ */
---- linux-custom-orig/drivers/net/ethernet/ti/Kconfig	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/ti/Kconfig	2019-01-25 17:17:16.147997708 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/net/ethernet/ti/Kconfig	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/net/ethernet/ti/Kconfig	2020-03-09 10:47:12.126803441 +0800
 @@ -58,15 +58,19 @@
  	---help---
  	  This driver supports TI's CPSW ALE module.
@@ -655,8 +655,8 @@
  	---help---
  	  This driver supports TI's CPSW Ethernet Switch.
  
---- linux-custom-orig/net/ncsi/ncsi-aen.c	2018-07-15 00:46:30.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-aen.c	2019-01-17 16:51:26.433344416 +0800
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/ncsi-aen.c	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/ncsi-aen.c	2020-03-09 10:47:12.127803440 +0800
 @@ -116,11 +116,11 @@
  
  	ncsi_stop_channel_monitor(nc);
@@ -682,8 +682,8 @@
  	spin_unlock_irqrestore(&nc->lock, flags);
  
  	spin_lock_irqsave(&ndp->lock, flags);
---- linux-custom-orig/net/ncsi/ncsi-cmd.c	2018-07-14 12:46:30.000000000 -0400
-+++ linux-custom-silicom/net/ncsi/ncsi-cmd.c	2019-01-01 20:28:17.188449146 -0500
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/ncsi-cmd.c	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/ncsi-cmd.c	2020-03-09 10:47:13.183802173 +0800
 @@ -47,8 +47,7 @@
  	h->reserved     = 0;
  	h->id           = nca->id;
@@ -1169,8 +1169,8 @@
  	skb_get(nr->cmd);
  	ret = dev_queue_xmit(nr->cmd);
  	if (ret < 0) {
---- linux-custom-orig/net/ncsi/ncsi-rsp.c	2018-07-14 12:46:30.000000000 -0400
-+++ linux-custom-silicom/net/ncsi/ncsi-rsp.c	2019-01-03 04:00:13.766474426 -0500
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/ncsi-rsp.c	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/ncsi-rsp.c	2020-03-09 10:47:13.201802152 +0800
 @@ -20,12 +20,18 @@
  #include "internal.h"
  #include "ncsi-pkt.h"
@@ -1477,8 +1477,8 @@
  	if (hdr->type == NCSI_PKT_AEN)
  		return ncsi_aen_handler(ndp, skb);
  
---- linux-custom-orig/net/ncsi/ncsi-manage.c	2018-07-14 12:46:30.000000000 -0400
-+++ linux-custom-silicom/net/ncsi/ncsi-manage.c	2019-01-01 22:17:30.280971971 -0500
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/ncsi-manage.c	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/ncsi-manage.c	2020-03-09 10:47:13.220802129 +0800
 @@ -38,7 +38,7 @@
  	return sizes[table];
  }
@@ -2121,8 +2121,8 @@
  			spin_unlock_irqrestore(&nc->lock, flags);
  
  			WARN_ON_ONCE(chained ||
---- linux-custom-orig/net/ncsi/ncsi-pkt.h	2018-07-14 12:46:30.000000000 -0400
-+++ linux-custom-silicom/net/ncsi/ncsi-pkt.h	2019-01-01 22:17:30.282971971 -0500
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/ncsi-pkt.h	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/ncsi-pkt.h	2020-03-09 10:47:13.238802108 +0800
 @@ -326,6 +326,31 @@
  	unsigned char           pad[18];
  };
@@ -2168,8 +2168,8 @@
 +#endif
 +
  #endif /* __NCSI_PKT_H__ */
---- linux-custom-orig/net/ncsi/internal.h	2018-07-14 12:46:30.000000000 -0400
-+++ linux-custom-silicom/net/ncsi/internal.h	2019-01-01 22:35:05.097192862 -0500
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/internal.h	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/internal.h	2020-03-09 10:47:13.255802087 +0800
 @@ -98,11 +98,16 @@
  	u32 data[8];	/* Data entries                */
  };
@@ -2232,8 +2232,8 @@
 +
 +#endif
  #endif /* __NCSI_INTERNAL_H__ */
---- linux-custom-orig/net/ncsi/Kconfig	2018-07-14 12:46:30.000000000 -0400
-+++ linux-custom-silicom/net/ncsi/Kconfig	2019-01-01 22:17:30.285971971 -0500
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/Kconfig	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/Kconfig	2020-03-09 10:47:13.273802066 +0800
 @@ -3,7 +3,7 @@
  #
  
@@ -2243,8 +2243,8 @@
  	depends on INET
  	---help---
  	  This module provides NCSI (Network Controller Sideband Interface)
---- linux-custom-orig/net/ncsi/Makefile	2017-09-27 05:40:18.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/Makefile	2018-06-02 02:27:58.699340514 +0800
+--- linux-ti2018.02-rc4-int-orig/net/ncsi/Makefile	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/net/ncsi/Makefile	2020-03-09 10:47:13.290802045 +0800
 @@ -1,4 +1,6 @@
  #
  # Makefile for NCSI API
@@ -2253,8 +2253,8 @@
 +#obj-$(CONFIG_NET_NCSI) += ncsi-cmd.o ncsi-rsp.o ncsi-aen.o ncsi-manage.o
 +ncsi-objs := ncsi-cmd.o ncsi-rsp.o ncsi-aen.o ncsi-manage.o
 +obj-$(CONFIG_NET_NCSI)	+= ncsi.o
---- linux-custom-orig/include/net/ncsi.h	2018-07-15 00:46:30.000000000 +0800
-+++ linux-custom-silicom/include/net/ncsi.h	2018-07-16 13:51:24.693533102 +0800
+--- linux-ti2018.02-rc4-int-orig/include/net/ncsi.h	2018-07-15 00:46:30.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/include/net/ncsi.h	2020-03-09 10:47:13.291802044 +0800
 @@ -28,7 +28,7 @@
  	void		  (*handler)(struct ncsi_dev *ndev);
  };

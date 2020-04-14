@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 PKG_NAME=uboot_ubmc_marvell
 PKG_VERSION=custom
 PKG_TAR_NAME=sources-uboot-2018.03-ga-19.06.3.tar.bz2

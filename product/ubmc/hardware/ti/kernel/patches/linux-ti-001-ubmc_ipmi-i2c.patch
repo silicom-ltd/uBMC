@@ -1,5 +1,5 @@
---- linux-custom-orig/arch/arm/mach-omap2/cm33xx.c	2017-09-27 05:40:08.000000000 +0800
-+++ linux-custom-silicom/arch/arm/mach-omap2/cm33xx.c	2018-04-11 17:28:19.833644609 +0800
+--- linux-ti2018.02-rc4-int-orig/arch/arm/mach-omap2/cm33xx.c	2018-07-15 00:46:27.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/arch/arm/mach-omap2/cm33xx.c	2020-03-09 10:47:12.012803578 +0800
 @@ -278,6 +278,9 @@
  	v = am33xx_cm_read_reg(inst, clkctrl_offs);
  	v &= ~AM33XX_MODULEMODE_MASK;
@@ -20,8 +20,8 @@
  	am33xx_cm_write_reg(v, inst, clkctrl_offs);
  }
  
---- linux-custom-orig/drivers/i2c/busses/ubmc-ssif.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ssif.c	2019-10-17 16:41:37.110499561 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ssif.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ssif.c	2020-03-09 10:47:12.013803576 +0800
 @@ -0,0 +1,1390 @@
 +#if defined(MODVERSIONS)
 +#include <linux/modversions.h>
@@ -1413,8 +1413,8 @@
 +}
 +
 +
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi.c	2019-10-17 16:46:02.886761165 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi.c	2020-03-09 10:47:12.013803576 +0800
 @@ -0,0 +1,843 @@
 +#include <linux/mm.h>
 +#include <linux/i2c.h>
@@ -2259,8 +2259,8 @@
 +MODULE_DESCRIPTION("Silicom uBMC SSIF");
 +MODULE_LICENSE("GPL");
 +
---- linux-custom-orig/drivers/i2c/busses/ubmc-i2c-slave.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-slave.c	2019-09-11 15:07:29.506312989 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-i2c-slave.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-i2c-slave.c	2020-03-09 10:47:12.013803576 +0800
 @@ -0,0 +1,57 @@
 +/*
 + * ubmc-i2c-slave.c
@@ -2319,8 +2319,8 @@
 +
 +}
 +
---- linux-custom-orig/drivers/i2c/busses/ubmc-i2c-slave.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-slave.h	2019-09-11 15:10:52.499771968 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-i2c-slave.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-i2c-slave.h	2020-03-09 10:47:12.013803576 +0800
 @@ -0,0 +1,61 @@
 +/*
 + * ubmc-i2c-slave.h
@@ -2383,8 +2383,8 @@
 +void ubmc_omap_slave_deinit(void *dev);
 +
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_I2C_SLAVE_H_ */
---- linux-custom-orig/drivers/i2c/busses/Makefile	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/Makefile	2019-09-11 11:43:25.021712296 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/Makefile	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/Makefile	2020-03-09 10:47:12.013803576 +0800
 @@ -76,7 +76,11 @@
  obj-$(CONFIG_I2C_MXS)		+= i2c-mxs.o
  obj-$(CONFIG_I2C_NOMADIK)	+= i2c-nomadik.o
@@ -2398,8 +2398,8 @@
  obj-$(CONFIG_I2C_PASEMI)	+= i2c-pasemi.o
  obj-$(CONFIG_I2C_PCA_PLATFORM)	+= i2c-pca-platform.o
  obj-$(CONFIG_I2C_PMCMSP)	+= i2c-pmcmsp.o
---- linux-custom-orig/drivers/i2c/busses/Kconfig	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/Kconfig	2018-08-15 15:22:31.215824432 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/Kconfig	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/Kconfig	2020-03-09 10:47:12.013803576 +0800
 @@ -760,7 +760,7 @@
  config I2C_OMAP
  	tristate "OMAP I2C adapter"
@@ -2422,8 +2422,8 @@
 +		
 +	
  endmenu
---- linux-custom-orig/drivers/i2c/busses/ubmc-i2c-ipmi.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-ipmi.h	2019-10-17 17:01:39.982174025 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-i2c-ipmi.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-i2c-ipmi.h	2020-03-09 10:47:12.014803575 +0800
 @@ -0,0 +1,950 @@
 +#ifndef __I2C_OMAP_H__
 +#define __I2C_OMAP_H__
@@ -3375,8 +3375,8 @@
 +int response_ipmi_error_request(struct ubmc_ipmi_dev *dev);
 +
 +#endif
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-sdr.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sdr.h	2019-10-17 15:42:57.238451050 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-sdr.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-sdr.h	2020-03-09 10:47:12.014803575 +0800
 @@ -0,0 +1,409 @@
 +
 +#ifndef _UBMC_IPMI_SDR_H
@@ -3787,8 +3787,8 @@
 +
 +
 +#endif				/* IPMI_SDR_H */
---- linux-custom-orig/drivers/i2c/busses/i2c-omap.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-omap.h	2018-05-27 22:35:59.920699459 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/i2c-omap.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/i2c-omap.h	2020-03-09 10:47:12.014803575 +0800
 @@ -0,0 +1,166 @@
 +/*
 + * i2c-omap.h
@@ -3956,8 +3956,8 @@
 +#define OMAP_I2C_IP_V2_INTERRUPTS_MASK	0x6FFF
 +
 +#endif /* DRIVERS_I2C_BUSSES_I2C_OMAP_H_ */
---- linux-custom-orig/drivers/i2c/busses/i2c-omap.c	2017-09-27 05:40:11.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-omap.c	2018-05-22 17:24:42.501617577 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/i2c-omap.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/i2c-omap.c	2020-03-09 10:47:12.014803575 +0800
 @@ -40,6 +40,10 @@
  #include <linux/pm_runtime.h>
  #include <linux/pinctrl/consumer.h>
@@ -3977,8 +3977,8 @@
  
  struct omap_i2c_dev {
  	struct device		*dev;
---- linux-custom-orig/drivers/i2c/busses/ubmc-muxdump.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-muxdump.c	2018-10-15 17:58:45.004649974 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-muxdump.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-muxdump.c	2020-03-09 10:47:12.014803575 +0800
 @@ -0,0 +1,969 @@
 +/*
 + * ubmc-muxdump.c
@@ -4949,8 +4949,8 @@
 +MODULE_AUTHOR("Silicom Ltd.");
 +MODULE_DESCRIPTION("Silicom uBMC SSIF");
 +
---- linux-custom-orig/drivers/i2c/busses/ubmc-muxdump.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-muxdump.h	2018-08-15 15:22:31.225824476 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-muxdump.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-muxdump.h	2020-03-09 10:47:12.014803575 +0800
 @@ -0,0 +1,231 @@
 +/*
 + * ubmc-muxdump.h
@@ -5183,8 +5183,8 @@
 +int init_ubmc_pinmux_proc(struct proc_dir_entry *root_dir);
 +void exit_ubmc_pinmux_proc(struct proc_dir_entry *root_dir);
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_MUXDUMP_H_ */
---- linux-custom-orig/drivers/i2c/busses/ubmc-spi-reg.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-spi-reg.c	2018-07-03 13:51:59.364895669 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-spi-reg.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-spi-reg.c	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,263 @@
 +#include <linux/init.h>
 +#include <linux/module.h>
@@ -5449,8 +5449,8 @@
 +{
 +	remove_proc_entry("spi0-reg",root_dir);
 +}
---- linux-custom-orig/drivers/i2c/busses/ubmc-spi-reg.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-spi-reg.h	2018-06-27 14:07:30.567406359 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-spi-reg.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-spi-reg.h	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,13 @@
 +/*
 + * ubmc-spi-reg.h
@@ -5465,8 +5465,8 @@
 +int init_ubmc_spi_reg(struct proc_dir_entry *root_dir);
 +void exit_spi_reg(struct proc_dir_entry *root_dir );
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_SPI_REG_H_ */
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-sel.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sel.c	2018-08-15 15:22:31.227824485 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-sel.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-sel.c	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,83 @@
 +/*
 + * ubmc-ipmi-sel.c
@@ -5551,8 +5551,8 @@
 +	return ret;
 +}
 +
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-sel.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sel.h	2018-08-15 15:22:31.227824485 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-sel.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-sel.h	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,136 @@
 +/*
 + * ubmc-ipmi-sel.h
@@ -5690,8 +5690,8 @@
 +void ubmc_ipmi_sel_list_del(struct ubmc_ipmi_sel_list * sel_list);
 +int ubmc_ipmi_del_then_add_node(struct ubmc_ipmi_sel_list * sel_list,struct ubmc_ipmi_sel_list *sel_node);
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_IPMI_SEL_H_ */
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-lan.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-lan.h	2018-11-08 15:39:50.147171622 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-lan.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-lan.h	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,49 @@
 +/*
 + * ubmc-ipmi-lan.h
@@ -5742,8 +5742,8 @@
 +void prt_lan_info(struct ubmc_ipmi_lan_s* lan);
 +void prt_netinf_info(struct ipmi_netinf* netinf);
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_IPMI_LAN_H_ */
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-lan.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-lan.c	2018-11-07 16:23:40.052020738 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-lan.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-lan.c	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,39 @@
 +/*
 + * ubmc-ipmi-lan.c
@@ -5784,8 +5784,8 @@
 +	printk("mask is %d.%d.%d.%d ,mask state is %d \n",mask[0],mask[1],mask[2],mask[3],tmp.subnet_mask_status);
 +
 +}
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-omap.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-omap.c	2019-10-17 16:58:10.764328733 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-omap.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-omap.c	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,648 @@
 +/*
 + * ubmc-i2c-slave.c
@@ -6435,8 +6435,8 @@
 +
 +}
 +
---- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-pxa.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-pxa.c	2019-10-17 15:44:06.801708744 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/ubmc-ipmi-pxa.c	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/ubmc-ipmi-pxa.c	2020-03-09 10:47:12.015803574 +0800
 @@ -0,0 +1,644 @@
 +/*
 + * ubmc_ipmi_pxa.c
@@ -7082,8 +7082,8 @@
 +
 +}
 +
---- linux-custom-orig/drivers/i2c/busses/i2c-pxa.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-pxa.h	2019-09-02 15:58:43.368657120 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/i2c-pxa.h	1970-01-01 08:00:00.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/i2c-pxa.h	2020-03-09 10:47:12.016803573 +0800
 @@ -0,0 +1,194 @@
 +/*
 + * i2c-pxa.h
@@ -7279,8 +7279,8 @@
 +
 +
 +#endif /* I2C_BUSSES_I2C_PXA_H_ */
---- linux-custom-orig/drivers/i2c/busses/i2c-pxa.c	2018-07-15 00:46:29.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-pxa.c	2019-09-11 16:19:37.514447898 +0800
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/i2c-pxa.c	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/i2c-pxa.c	2020-03-09 10:47:12.016803573 +0800
 @@ -37,76 +37,11 @@
  #include <linux/slab.h>
  #include <linux/io.h>
