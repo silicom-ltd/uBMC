@@ -309,7 +309,8 @@ upgrade_flash()
 
 	img_size=$(du -b ${flash_img} |cut -f1)
 	if [ "${img_size}" -eq 16777216 ]; then
-		upgrade_raw_image ${flash_img} $2
+		#upgrade_raw_image ${flash_img} $2
+		output_bios_upg_status "Error: raw image upgrade is not allowed" "1"
 	elif [ "${img_size}" -gt 16777216 ] && [ "${img_size}" -lt 18874368 ]; then
 		upgrade_signed_image ${flash_img}
 	else
