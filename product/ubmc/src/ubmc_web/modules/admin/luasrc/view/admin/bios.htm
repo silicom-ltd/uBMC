@@ -145,8 +145,10 @@ $Id$
 							setTimeout(function(){percent(4);}, 1000);
 						} else {
 							var index = data[0].status.indexOf(':');
-							if (warning == undefined) {
-								alert('Info: '+data[0].status.substring(index+1));
+							if (index != -1) {
+								if (warning == undefined) {
+									alert('Info: '+data[0].status.substring(index+1));
+								}
 							}
 							location.href="<%=controller%>/admin/bmc/bios";
 						}

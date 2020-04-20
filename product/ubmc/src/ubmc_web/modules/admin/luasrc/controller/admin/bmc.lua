@@ -123,10 +123,7 @@ function action_bios()
 				ret, _status = mgmtdclient.query_child("/status/bmc/bios/upgrade")
 				local array = {}
 				if ret == 'OK' then
-					if string.find(_status, "OK") ~= nil then
-						nixio.fs.unlink(tmpfile)
-					end
-					if string.find(_status, "Error") ~= nil then
+					if string.find(_status, "Processing") == nil then
 						nixio.fs.unlink(tmpfile)
 					end
 					array[1] = {status=_status}
