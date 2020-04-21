@@ -103,17 +103,19 @@ sysEvt.anonymous = true
 
 sysEvt:option(DummyValue, "event", translate("Event"))
 
-	ret, inf_list = mgmtdclient.query_sub("/status/system/mgmt/interface-list")          
-	infList = mdForm:section(Table, inf_list, translate("System Interfaces"))                    
+	ret, mgmt_list = mgmtdclient.query_sub("/status/system/mgmt")
+
+	---ret, inf_list = mgmtdclient.query_sub("/status/system/mgmt/interface-list") 
+	infList = mdForm:section(Table, mgmt_list['interface-list'], translate("System Interfaces"))
 	infList.template = "cbi/tblsection"                                                  
 	infList:option(TextValue, "info", translate("Info")).height = "200px"   
 
 	local dhcp_list = {}
 	local dhcp_info = {}
-	ret, dhcp_state = mgmtdclient.query_child("/status/system/mgmt/dhcp/state")
-	dhcp_info['state'] = dhcp_state == "true" and "DHCP is running" or "DHCP is not running"
-	ret, dhcp_leases = mgmtdclient.query_child("/status/system/mgmt/dhcp/leases")
-	dhcp_info['leases'] = dhcp_leases
+	--ret, dhcp_state = mgmtdclient.query_child("/status/system/mgmt/dhcp/state")
+	dhcp_info['state'] = mgmt_list['dhcp']['state'] == "true" and "DHCP is running" or "DHCP is not running"
+	--ret, dhcp_leases = mgmtdclient.query_child("/status/system/mgmt/dhcp/leases")
+	dhcp_info['leases'] = mgmt_list['dhcp']['leases'] 
 	dhcp_list['dhcp'] = dhcp_info
 	dhcpInfo = mdForm:section(Table, dhcp_list, translate("System DHCP"))
 	dhcpInfo.template = "cbi/tsection"                                                  
@@ -122,14 +124,14 @@ sysEvt:option(DummyValue, "event", translate("Event"))
 
 	local ipt = {}
 	local ipt_list = {}
-	ret, iptables_s = mgmtdclient.query_sub("/status/system/mgmt/iptables/iptables-s")
-	ipt['iptables-s'] = iptables_s
-	ret, iptables_l = mgmtdclient.query_sub("/status/system/mgmt/iptables/iptables-l")
-	ipt['iptables-l'] = iptables_l
-	ret, ip6tables_s = mgmtdclient.query_sub("/status/system/mgmt/iptables/ip6tables-s")
-	ipt['ip6tables-s'] = ip6tables_s
-	ret, ip6tables_l = mgmtdclient.query_sub("/status/system/mgmt/iptables/ip6tables-l")
-	ipt['ip6tables-l'] = ip6tables_l
+	--ret, iptables_s = mgmtdclient.query_sub("/status/system/mgmt/iptables/iptables-s")
+	ipt['iptables-s'] = mgmt_list['iptables']['iptables-s']
+	--ret, iptables_l = mgmtdclient.query_sub("/status/system/mgmt/iptables/iptables-l")
+	ipt['iptables-l'] = mgmt_list['iptables']['iptables-l']
+	--ret, ip6tables_s = mgmtdclient.query_sub("/status/system/mgmt/iptables/ip6tables-s")
+	ipt['ip6tables-s'] = mgmt_list['iptables']['ip6tables-s']
+	--ret, ip6tables_l = mgmtdclient.query_sub("/status/system/mgmt/iptables/ip6tables-l")
+	ipt['ip6tables-l'] = mgmt_list['iptables']['ip6tables-l']
 	ipt_list['list'] = ipt
 	iptables = mdForm:section(Table, ipt_list, translate("System Iptables"))
 	iptables.template = "cbi/tsection"                                                  
@@ -140,8 +142,8 @@ sysEvt:option(DummyValue, "event", translate("Event"))
 
 	local ips_conn = {}                                                        
 	local ips_list = {}                                                        
-	ret, conn = mgmtdclient.query_child("/status/system/mgmt/ipsec/connection")                  
-	ips_conn['info'] = conn                                                            
+	--ret, conn = mgmtdclient.query_child("/status/system/mgmt/ipsec/connection")                  
+	ips_conn['info'] = mgmt_list['ipsec']['connection'] 
 	ips_list['ipsec'] = ips_conn                                             
 	ipsList = mdForm:section(Table, ips_list, translate("System IPSEC"))
 	ipsList:option(TextValue, "info", translate("Connection")).height = "200px"   
