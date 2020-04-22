@@ -43,7 +43,7 @@ IMGDIR=$1
 IMGDIR_UBOOT=$2
 INSTALL_IMG=$3
 RELEASE=$(basename ${INSTALL_IMG} .img)-MAKESD
-if [ ${PRODUCT_SUB} == "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
 	SDCARD_ENV=${BR2_ROOT}/product/scripts/upgrade/esp_sd_env
 else
 	SDCARD_ENV=${BR2_ROOT}/product/scripts/upgrade/sdcard_env
@@ -67,7 +67,7 @@ for SRC_NAME in ${INSTALL_SRC_NAMES}; do
 done
 
 cp -v ${SDCARD_ENV} ${TARTMP}/
-cp -v ${SILCBASE}/is_make_sd_install.sh ${TARTMP}/
+cp -v ${SILCBASE}/is_/make_sd_install.sh ${TARTMP}/
 
 for CP_SRC_NAME in ${INSTALL_CP_SRC_NAMES}; do
   CP_SRC="$(eval echo \$${CP_SRC_NAME})"
