@@ -259,7 +259,7 @@ int is_mgmtd_system_status_level_get_level_5(silc_mgmtd_if_node* p_parent_node, 
 	if(strcmp(grand_parent_name, "interface-list") == 0)
 	{
 		static char info[CMD_OUTPUT_BUF_LEN];
-		int len=1024;
+		int len=CMD_OUTPUT_BUF_LEN;
 		if(is_mgmtd_system_status_get_interface_info(parent_name, info, len) == 0)
 			silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "info", info, str, silc_false);
 	}
