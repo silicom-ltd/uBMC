@@ -249,15 +249,16 @@ int is_mgmtd_system_status_get_interface_info(char* name, char* info, int len)
 	return 0;
 }
 
+#define CMD_OUTPUT_BUF_LEN	4096
 int is_mgmtd_system_status_level_get_level_5(silc_mgmtd_if_node* p_parent_node, uint32_t level, silc_cstr_array* p_level_arr, const silc_cstr p_match_node, silc_bool add_node)
 {
-	char add_node_tmp_str[1024];
+	static char add_node_tmp_str[CMD_OUTPUT_BUF_LEN];
 	const silc_cstr grand_parent_name = silc_cstr_array_get_quick(p_level_arr, level - 2);
 	const silc_cstr parent_name = silc_cstr_array_get_quick(p_level_arr, level - 1);
 
 	if(strcmp(grand_parent_name, "interface-list") == 0)
 	{
-		static char info[1024];
+		static char info[CMD_OUTPUT_BUF_LEN];
 		int len=1024;
 		if(is_mgmtd_system_status_get_interface_info(parent_name, info, len) == 0)
 			silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "info", info, str, silc_false);
@@ -268,14 +269,13 @@ ERR_RET:
 	return IS_MGMTD_ERR_BASE_ADD_RSP_NODE;
 }
 
-#define CMD_OUTPUT_BUF_LEN	4096
 int is_mgmtd_system_status_level_get_level_4(silc_mgmtd_if_node* p_parent_node, uint32_t level, silc_cstr_array* p_level_arr, const silc_cstr p_match_node, silc_bool add_node)
 {
-	char add_node_tmp_str[1024];
 	const silc_cstr grand_parent_name = silc_cstr_array_get_quick(p_level_arr, level - 2);
 	const silc_cstr parent_name = silc_cstr_array_get_quick(p_level_arr, level - 1);
 	int len = CMD_OUTPUT_BUF_LEN;
 	static char out[CMD_OUTPUT_BUF_LEN];
+	static char add_node_tmp_str[CMD_OUTPUT_BUF_LEN];
 
 	if(strcmp(grand_parent_name, "session") == 0)
 	{
