@@ -1282,7 +1282,7 @@ static int update_eeprom(char* arg)
 	tlvinfo_header_t *hdr_src, *hdr_dst;
 	tlvinfo_tlv_t *tlv_src, *tlv_dst;
 	int r_len = 0, r_totallen = 0, w_len = 0;
-	int added = 0;
+	int need_add = 1;
 
 	if(!arg)
 	{
@@ -1308,11 +1308,11 @@ static int update_eeprom(char* arg)
 		return -1;
 	}
 	value++;
-	if(tag == TLV_CODE_VENDOR_EXT)
+	if(tag == TLV_CODE_VENDOR_EXT && value[0])
 	{
 		int i, len = strlen(value);
 		char sec[8];
-		strcpy(value_str, "0x4E,0x3D,0x00,0x00");
+		strcpy(value_str, "0x00,0x00,0x3D,0x4E");
 		for(i=0; i<len; i++)
 		{
 			sprintf(sec, ",0x%02X", value[i]);
@@ -1342,10 +1342,18 @@ static int update_eeprom(char* arg)
 			break;
 		if(tlv_src->type == tag && curr_idx == target_idx)
 		{
-			printf("TLV found, update it\n");
-			if(!add_eeprom(eeprom_dst, tag, value))
-				return -1;
-			added = 1;
+			if(!value[0])
+			{
+				printf("TLV value is null, delete it\n");
+				need_add = 0;
+			}
+			else
+			{
+				printf("TLV found, update it\n");
+				if(!add_eeprom(eeprom_dst, tag, value))
+					return -1;
+				need_add = 0;
+			}
 		}
 		else
 		{
@@ -1357,7 +1365,7 @@ static int update_eeprom(char* arg)
 		r_len += sizeof(tlvinfo_tlv_t)+tlv_src->length;
 		w_len = sizeof(tlvinfo_header_t) + be16_to_cpu(hdr_dst->totallen);
 	}
-	if(!added)
+	if(need_add)
 	{
 		printf("TLV not found, add it\n");
 		if(!add_eeprom(eeprom_dst, tag, value))
