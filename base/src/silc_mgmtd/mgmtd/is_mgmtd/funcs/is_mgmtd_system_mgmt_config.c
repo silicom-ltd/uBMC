@@ -106,7 +106,8 @@ int is_config_interface(silc_mgmtd_if_req_type req_type, is_inf_config* config)
 		system(cmd);
 		return 0;
 	}
-	sprintf(cmd, "ifconfig %s up", config->name);
+	// enable allmulti
+	sprintf(cmd, "ifconfig %s allmulti up", config->name);
 	system(cmd);
 
 	if(config->master[0])
@@ -141,13 +142,12 @@ int is_config_interface(silc_mgmtd_if_req_type req_type, is_inf_config* config)
 			}
 			sprintf(cmd, "ifconfig %s %s netmask 0x%x", config->name, config->ipv4.addr, mask);
 		}
-		system(cmd);
 	}
 	else
 	{
 		sprintf(cmd, "for addr in $(ip addr show dev %s |grep -w inet|awk '{print $2}'); do ip addr del ${addr} dev %s; done", config->name, config->name);
-		system(cmd);
 	}
+	system(cmd);
 
 	if(config->ipv6.enabled)
 	{
@@ -172,17 +172,12 @@ int is_config_interface(silc_mgmtd_if_req_type req_type, is_inf_config* config)
 			}
 			sprintf(cmd, "ifconfig %s %s/%d", config->name, config->ipv6.addr, config->ipv6.prefixlen);
 		}
-		system(cmd);
-
-		// to enable IPv6 multicast (1s delay is required or the config doesn't work)
-		sprintf(cmd, "ifconfig %s allmulti", config->name);
-		silc_mgmtd_if_system_cmd_later(cmd, 1);
 	}
 	else
 	{
 		sprintf(cmd, "for addr in $(ip addr show dev %s |grep -w inet6|awk '{print $2}'); do ip addr del ${addr} dev %s; done", config->name, config->name);
-		system(cmd);
 	}
+	system(cmd);
 
 	return 0;
 }
