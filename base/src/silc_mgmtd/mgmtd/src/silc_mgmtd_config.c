@@ -319,7 +319,7 @@ int silc_mgmtd_cfg_load_config_file(silc_cstr filename)
 
 int silc_mgmtd_cfg_load_default_config_file()
 {
-	char cmd[200];
+	static char cmd[1024];
 
 	// delete the config+backup file and load the default config from code in next boot
 	sprintf(cmd, "rm -f %s* %s; sync;", s_silc_mgmtd_config_ctl.filename, s_silc_mgmtd_config_ctl.running_config_filename);

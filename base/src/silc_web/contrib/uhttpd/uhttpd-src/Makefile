@@ -6,7 +6,8 @@ UHTTPD_TLS ?= cyassl
 CFLAGS ?= -I./lua-5.1.4/src $(TLS_CFLAGS) -O0 -ggdb3
 LDFLAGS ?= -L./lua-5.1.4/src
 
-CFLAGS += -Wall --std=gnu99
+#CFLAGS += -Wall --std=gnu99
+CFLAGS += -Wall -D_GNU_SOURCE -D_XOPEN_SOURCE=500
 
 ifeq ($(UHTTPD_TLS),openssl)
   TLS_LDFLAGS ?= -L./openssl-0.9.8m -lssl
