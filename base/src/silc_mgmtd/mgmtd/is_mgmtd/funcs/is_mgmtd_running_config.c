@@ -637,7 +637,7 @@ static silc_cstr is_mgmtd_config_get_param(silc_mgmtd_config_cmd *p_cmd, int par
 	{
 		if(strlen(val_str) >= (SILC_MGMTD_CONFIG_CMD_LEN_MAX-4))
 		{
-			SILC_ERR("val_str len:%lu >= %d\n", strlen(val_str), (SILC_MGMTD_CONFIG_CMD_LEN_MAX-4));
+			SILC_ERR("val_str len:%zu >= %d\n", strlen(val_str), (SILC_MGMTD_CONFIG_CMD_LEN_MAX-4));
 			return NULL;
 		}
 		sprintf(mix_param_str, "'%s'", val_str);
