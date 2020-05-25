@@ -1,0 +1,19 @@
+--- linux-custom-orig/drivers/tty/tty_ioctl.c	2019-10-21 23:25:45.000000000 +0800
++++ linux-custom-silicom/drivers/tty/tty_ioctl.c	2020-05-25 17:15:32.944287039 +0800
+@@ -404,13 +404,14 @@
+ 			ld->ops->flush_buffer(tty);
+ 		tty_ldisc_deref(ld);
+ 	}
+-
++	/*Reslove tty can not do hang ioctl(0, SNDCTL_TMR_CONTINUE or TCSETSF*/
++/*
+ 	if (opt & TERMIOS_WAIT) {
+ 		tty_wait_until_sent(tty, 0);
+ 		if (signal_pending(current))
+ 			return -ERESTARTSYS;
+ 	}
+-
++*/
+ 	tty_set_termios(tty, &tmp_termios);
+ 
+ 	/* FIXME: Arguably if tmp_termios == tty->termios AND the
