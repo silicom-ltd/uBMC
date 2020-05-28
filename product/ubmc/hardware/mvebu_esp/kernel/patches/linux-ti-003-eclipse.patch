@@ -1,0 +1,82 @@
+--- linux-custom-orig/.project	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/.project	2020-05-14 09:49:56.905576561 +0800
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>linux-custom</name>
++	<comment></comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.cdt.managedbuilder.core.genmakebuilder</name>
++			<triggers>clean,full,incremental,</triggers>
++			<arguments>
++			</arguments>
++		</buildCommand>
++		<buildCommand>
++			<name>org.eclipse.cdt.managedbuilder.core.ScannerConfigBuilder</name>
++			<triggers>full,incremental,</triggers>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.cdt.core.cnature</nature>
++		<nature>org.eclipse.cdt.core.ccnature</nature>
++		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
++		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
++	</natures>
++</projectDescription>
+--- linux-custom-orig/.cproject	1970-01-01 08:00:00.000000000 +0800
++++ linux-custom-silicom/.cproject	2020-05-14 09:49:56.943576266 +0800
+@@ -0,0 +1,49 @@
++<?xml version="1.0" encoding="UTF-8" standalone="no"?>
++<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
++	<storageModule moduleId="org.eclipse.cdt.core.settings">
++		<cconfiguration id="0.1464394156">
++			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="0.1464394156" moduleId="org.eclipse.cdt.core.settings" name="Default">
++				<externalSettings/>
++				<extensions>
++					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.VCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
++					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
++				</extensions>
++			</storageModule>
++			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
++				<configuration buildProperties="" description="" id="0.1464394156" name="Default" parent="org.eclipse.cdt.build.core.prefbase.cfg">
++					<folderInfo id="0.1464394156." name="/" resourcePath="">
++						<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.1981880525" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
++							<targetPlatform id="org.eclipse.cdt.build.core.prefbase.toolchain.1981880525.1531461522" name=""/>
++							<builder id="org.eclipse.cdt.build.core.settings.default.builder.1892698200" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.libs.623502703" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.1905133608" name="Assembly" superClass="org.eclipse.cdt.build.core.settings.holder">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.795534330" languageId="org.eclipse.cdt.core.assembly" languageName="Assembly" sourceContentType="org.eclipse.cdt.core.asmSource" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.1251704573" name="GNU C++" superClass="org.eclipse.cdt.build.core.settings.holder">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.97443654" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++							<tool id="org.eclipse.cdt.build.core.settings.holder.230942179" name="GNU C" superClass="org.eclipse.cdt.build.core.settings.holder">
++								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.1588819828" languageId="org.eclipse.cdt.core.gcc" languageName="GNU C" sourceContentType="org.eclipse.cdt.core.cSource,org.eclipse.cdt.core.cHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
++							</tool>
++						</toolChain>
++					</folderInfo>
++				</configuration>
++			</storageModule>
++			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
++		</cconfiguration>
++	</storageModule>
++	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
++		<project id="linux-custom.null.305416905" name="linux-custom"/>
++	</storageModule>
++	<storageModule moduleId="scannerConfiguration">
++		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		<scannerConfigBuildInfo instanceId="0.1464394156">
++			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
++		</scannerConfigBuildInfo>
++	</storageModule>
++	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
++</cproject>

@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-03-18 15:41:09.466494822 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-05-15 17:48:24.089456136 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-04-10 17:45:17.000000000 +0800
-@@ -0,0 +1,413 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-05-20 15:07:54.404251524 +0800
+@@ -0,0 +1,531 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -73,7 +73,8 @@
 +	};
 +	aliases {
 +		ethernet0 = &eth0;
-+		i2c0 = &i2c0;
++		/*i2c0 = &i2c0;*/
++		/*i2c1 = &i2c1;*/
 +		spi0 = &spi0;
 +	};
 +	memory@0 {
@@ -117,11 +118,13 @@
 +			status = "okay";
 +			phy-addr = <0>;
 +			cpu-port = <0x0>;
-+			port-mask = <0xf>;
++			/*port-mask = <0xf>;*/
++			port-mask = <0x15>;
++			/*port-mask = <0x3f>;*/
 +			ports {
 +			#address-cells = <1>;
 +			#size-cells = <0>;
-+
++/*
 +			port@0 {
 +				reg = <0>;
 +				label = "cpu";
@@ -145,7 +148,7 @@
 +				label = "lan1";
 +				phy-handle = <&switch0phy2>;
 +			};
-+
++*/
 +		};
 +
 +		mdio {
@@ -196,24 +199,24 @@
 +&comphy {
 +	max-lanes = <3>;
 +	phy0 {
-+							reg = <0>;
-+					#phy-cells = <1>;
-+		phy-type = <COMPHY_TYPE_USB3_DEVICE>;
-+		phy-speed = <COMPHY_SPEED_5G>;
++			reg = <0>;
++			#phy-cells = <1>;
++			phy-type = <COMPHY_TYPE_USB3_DEVICE>;
++			phy-speed = <COMPHY_SPEED_5G>;
 +	};
 +
 +	phy1 {
-+							reg = <1>;
-+					#phy-cells = <1>;
-+		phy-type = <COMPHY_TYPE_PEX0>;
-+		phy-speed = <COMPHY_SPEED_2_5G>;
++			reg = <1>;
++			#phy-cells = <1>;
++			phy-type = <COMPHY_TYPE_PEX0>;
++			phy-speed = <COMPHY_SPEED_2_5G>;
 +	};
 +
 +	phy2 {
-+							reg = <2>;
-+					#phy-cells = <1>;
-+		phy-type = <COMPHY_TYPE_SATA0>;
-+		phy-speed = <COMPHY_SPEED_6G>;
++			reg = <2>;
++			#phy-cells = <1>;
++			phy-type = <COMPHY_TYPE_SATA0>;
++			phy-speed = <COMPHY_SPEED_6G>;
 +	};
 +};
 +
@@ -271,7 +274,7 @@
 +	status = "okay";
 +	expander0: pca953x@22 {
 +		compatible = "nxp,pca9555";
-+                #gpio-cells = <2>;
++        #gpio-cells = <2>;
 +		reg = <0x22>;
 +		status = "disabled";
 +	};
@@ -280,6 +283,30 @@
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&i2c2_pins>;
 +	status = "okay";
++	/*clock-frequency = <100000>;*/
++	bmc_rtc: pcf8523tk@68{
++		compatible = "nxp,pcf8523";
++		reg = <0x68>;
++		status = "okay";
++	};
++	bmc_fru: eeprom@50 {
++		compatible = "atmel,24c02";
++		reg = <0x50>;
++		pagesize = <16>;
++		size = <256>;
++	};
++	host_fru: eeprom@56 {
++		compatible = "atmel,24c02";
++		reg = <0x56>;
++	};
++	host_fan: max31785@53 {
++		compatible = "maxim,max31785";
++		reg = <0x53>;
++	};
++	host_adc: ads7830@48 {
++		compatible = "ti,ads7830";
++		reg = <0x48>;
++	};
 +};
 +
 +/* Exported on the micro USB connector J5 through an FTDI */
@@ -351,17 +378,108 @@
 +		full-duplex;
 +	};
 +};
++&eth1 {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&rgmii_pins>, <&smi_pins>;
++	phy-mode = "rgmii-id";
++	/*phy_addr = <0x1>;
++	phy = <&mvswitch>;*/
++
++	fixed-link {
++		speed = <1000>;
++		full-duplex;
++	};
++
++};
 +&spi0 {
 +	status = "okay";
-+
 +	flash@0 {
 +		reg = <0>;
 +		compatible = "winbond,w25q32dw", "jedec,spi-flash";
-+		spi-max-frequency = <104000000>;
++		spi-max-frequency = <20000000>;
 +		m25p,fast-read;
 +	};
 +};
-+
++/*GPIO1 */
++/*&pinctrl_nb GPIO1 gpiochip0*/
++&gpionb
++{
++	ngpios = <36>;
++	gpio-line-names =
++		"0",
++		"1",
++		"2",
++		"3",
++		"4",
++		"LED_BMC_BOT_RED_N",	/* "5",*/
++		"LED_BMC_BOT_GRN_N",	/*"6",*/
++		"LED_BMC_BOT_BLU_N",	/*"7",*/
++		"8",
++		"9",
++		"10",
++		"HOST_PLTRST_N",	/*"11",*/
++		"HOST_S45_N",	/*"12",*/
++		"HOST_S3_N",		/*"13",*/
++		"HOST_ERROR_N",	/*"14",*/
++		"HOST_THERMTRIP_N",	/*"15",*/
++		"HOST_FRU_EEPROM_MUX_SEL",	/*"16",*/
++		"17",
++		"18",
++		"19",
++		"20",
++		"21",
++		"22",
++		"23",
++		"24",
++		"25",
++		"26",
++		"27",
++		"28",
++		"29",
++		"30",
++		"31",
++		"32",
++		"33",
++		"34",
++		"35";
++};
++/*&pinctrl_sb GPIO2 gpiochip1*/
++&gpiosb
++{
++	ngpios = <30>;
++	gpio-line-names =
++		"HOST_PROCHOT_N",	/*"0",*/
++		"1",
++		"PSU_RIGHT_PWRGD",	/*"2",*/
++		"PSU_LEFT_PWRGD",	/*"3",*/
++		"BMC_RSTBTN_OUT_N",		/*"4",*/
++		"BMC_PWRBTN_OUT_N",		/*"5",*/
++		"6",
++		"7",
++		"8",
++		"9",
++		"10",
++		"11",
++		"12",
++		"13",
++		"14",
++		"15",
++		"16",
++		"17",
++		"18",
++		"19",
++		"20",
++		"BMC_FP_BUTTON_OVERRIDE",	/*"21",*/
++		"FP_RSTBTN_N",			/*"22",*/
++		"FP_PWRBTN_N",			/*"23",*/
++		"HOST_BOOT_COMPLETE_N",	/*"24",*/
++		"DYING_GASP_N",			/*"25",*/
++		"GPIO_HOST_1",			/*"26",*/
++		"SPI_HOST_MUX_EN",		/*"27",*/
++		"RS232_CABLE_DETECTED",	/*"28",*/
++		"BMC_UART_MUX_SEL";		/*"29";*/
++};
 +#if 0
 +/*for espressobin support*/
 +&spi0 {
@@ -427,7 +545,7 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-04-10 18:11:15.491870067 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-05-19 18:23:11.485255960 +0800
 @@ -0,0 +1,584 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
@@ -591,7 +709,7 @@
 +				#size-cells = <0>;
 +				clocks = <&nb_periph_clk 10>;
 +				interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
-+				mrvl,i2c-fast-mode;
++			/*	mrvl,i2c-fast-mode;*/
 +				status = "disabled";
 +			};
 +
@@ -602,7 +720,7 @@
 +				#size-cells = <0>;
 +				clocks = <&nb_periph_clk 9>;
 +				interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
-+				mrvl,i2c-fast-mode;
++			/*	mrvl,i2c-fast-mode;*/
 +				status = "disabled";
 +			};
 +
@@ -1014,7 +1132,7 @@
 +	};
 +};
 --- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-03-18 15:41:09.467494822 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-05-15 17:48:24.089456136 +0800
 @@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) 2018 Marvell

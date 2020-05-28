@@ -1,0 +1,6 @@
+/drivers/hwmon/pmbus/Makefile
+/drivers/hwmon/pmbus/max31785.c
+/drivers/hwmon/pmbus/Kconfig
+/drivers/hwmon/pmbus/pmbus_core.c
+/drivers/hwmon/pmbus/pmbus.c
+/drivers/hwmon/pmbus/pmbus.h

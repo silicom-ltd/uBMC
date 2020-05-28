@@ -1,6 +1,7 @@
 
 SPLIT_ROOTFS=0
-MAX_ROOTFS_SIZE=$((0x4000000))
+#MAX_ROOTFS_SIZE=$((0x4000000))
+MAX_ROOTFS_SIZE=$((0x6000000))
 ##default image env 
 infos[0]="software"
 infos[1]="software"

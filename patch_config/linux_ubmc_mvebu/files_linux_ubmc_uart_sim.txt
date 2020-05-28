@@ -1,0 +1,3 @@
+/drivers/tty/serial/uart_sim_ubmc.c
+/drivers/tty/serial/Makefile
+/drivers/tty/serial/Kconfig

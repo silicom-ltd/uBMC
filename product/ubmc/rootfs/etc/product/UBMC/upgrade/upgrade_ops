@@ -166,14 +166,16 @@ is_upgrade_burn_flash()
     
     if [ "${dst_location}" == "mtd0" ]; then
 		modprobe m25p80 || error_quit "Failed to load Flash driver"
+		echo "Erase Flash:"
+		flash_erase /dev/mtd0 0 0
         flashcp ${img_file} /dev/mtd0 || error_quit "Updating ${img_file} failed" $4
         return 0;
     #install flash-image.bin to mmcblkxboot0
-    elif [ "${dst_location}" == "mmcblk0boot0" -o  "${dst_location}" == "mmcblk1boot0" ]; then
-        echo 0 > /sys/block/${dst_location}/force_ro
-        dd if=${img_file} of=/dev/${dst_location} conv=fdatasync
-        echo 1 > /sys/block/${dst_location}/force_ro
-        return 0;
+    #elif [ "${dst_location}" == "mmcblk0boot0" -o  "${dst_location}" == "mmcblk1boot0" ]; then
+    #    echo 0 > /sys/block/${dst_location}/force_ro
+    #    dd if=${img_file} of=/dev/${dst_location} conv=fdatasync
+    #    echo 1 > /sys/block/${dst_location}/force_ro
+    #    return 0;
     fi
 
     mnt_point=$(is_mktemp -d)

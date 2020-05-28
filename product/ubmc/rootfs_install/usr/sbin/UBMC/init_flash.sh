@@ -20,9 +20,11 @@ dd if=/dev/zero of=$TARGET_DEV bs=1024 count=1024
 PRODUCT_SUB=$(get_product_sub_name)
 #UBMC_ESP boot from /dev/mmcblkxboo0,so let's init the partition
 if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
-	echo 0 > /sys/block/$TARGET_NAME"boot0"/force_ro
-	dd if=/dev/zero of=$TARGET_DEV"boot0" bs=1024 count=2048 conv=fdatasync
-	echo 1 > /sys/block/$TARGET_NAME"boot0"/force_ro
+	#echo 0 > /sys/block/$TARGET_NAME"boot0"/force_ro
+	#dd if=/dev/zero of=$TARGET_DEV"boot0" bs=1024 count=2048 conv=fdatasync
+	#echo 1 > /sys/block/$TARGET_NAME"boot0"/force_ro
+	#flash_erase -q /dev/mtd0 0 0 || error_quit "Failed to erase spi flash"
+	echo "Done flash init"
 fi
 SIZE=`fdisk -l $TARGET_DEV | grep Disk | awk '{print $5}'`
 

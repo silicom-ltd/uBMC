@@ -1,0 +1,89 @@
+--- uboot-custom-orig/drivers/net/phy/mv88e6xxx.c	2019-06-03 05:21:35.000000000 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-05-15 17:48:24.099456059 +0800
+@@ -234,7 +234,8 @@
+ 		printf("No Switch Device Found\n");
+ 		return;
+ 	}
+-
++	printf("PORT_SWITCH_ID_PROD_NUM_6141 :%X\n",PORT_SWITCH_ID_PROD_NUM_6141);
++	printf("PORT_SWITCH_ID_PROD_NUM_6341 :%X\n",PORT_SWITCH_ID_PROD_NUM_6341);
+ 	product_num = ((unsigned int)dev->id) >> 4;
+ 	if (product_num == PORT_SWITCH_ID_PROD_NUM_6390 ||
+ 	    product_num == PORT_SWITCH_ID_PROD_NUM_6390X ||
+@@ -343,7 +344,7 @@
+ 	int node = 0;
+ 	int ret;
+ 	int port;
+-
++	int read_reg;
+ 	soho_dev_handle = NULL;
+ 
+ 	/* Read Device Tree */
+@@ -368,6 +369,7 @@
+ 	soho_dev.id = mv88e6xxx_get_switch_id(&soho_dev);
+ 
+ 	soho_dev.cpu_port = fdtdec_get_int(blob, node, "cpu-port", -1);
++#if 1
+ 	if (soho_dev.cpu_port != -1) {
+ 		u16 reg;
+ 
+@@ -398,8 +400,10 @@
+ 			       PORT_PCS_CTRL_1000;
+ 
+ 			if ((soho_dev.id >> 4) ==
+-			    PORT_SWITCH_ID_PROD_NUM_6341) {
++			    PORT_SWITCH_ID_PROD_NUM_6341 || (soho_dev.id >> 4) ==
++					    PORT_SWITCH_ID_PROD_NUM_6141 /*Add by jason*/) {
+ 				/* Configure RGMII Delay on cpu port */
++				printf("Do RGMII Delay on cpu port \n");
+ 				reg |= PORT_PCS_CTRL_FORCE_SPEED |
+ 				       PORT_PCS_CTRL_RGMII_DELAY_TXCLK |
+ 				       PORT_PCS_CTRL_RGMII_DELAY_RXCLK;
+@@ -413,9 +417,11 @@
+ 		if (ret)
+ 			return ret;
+ 	}
+-
++#endif
+ 	/* Force port setup */
++#if 1
+ 	for (port = 0; port < sizeof(soho_dev.port_mask) * 8; port++) {
++	//	printf("port mask is %x ,BIT(port) is %x \n",soho_dev.port_mask,BIT(port));
+ 		if (!(soho_dev.port_mask & BIT(port)))
+ 			continue;
+ 
+@@ -446,8 +452,21 @@
+ 					     PHY_COPPER_CONTROL_SPEED_1G |
+ 					     PHY_COPPER_CONTROL_DUPLEX |
+ 					     PHY_COPPER_CONTROL_AUTO_NEG_EN);
+-	}
+ 
++		mv88e6xxx_write_phy_register(&soho_dev,
++							     REG_PORT(port),
++							     0,
++							     PHY_COPPER_CONTROL,
++							     PHY_COPPER_CONTROL_SPEED_1G |
++							     PHY_COPPER_CONTROL_DUPLEX);
++							     
++		read_reg = mv88e6xxx_read_phy_register(&soho_dev, REG_PORT(port), 0,PHY_COPPER_CONTROL);
++		printf("port %d:PHY_COPPER_CONTROL set as 0x%x\n",port,read_reg);
++	}
++#endif
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x54);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x51);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x45);
+ 	soho_dev_handle = &soho_dev;
+ 
+ 	return 0;
+--- uboot-custom-orig/drivers/net/phy/mv88e6xxx.h	2019-06-03 05:21:35.000000000 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-05-15 17:48:24.099456059 +0800
+@@ -94,7 +94,8 @@
+ #define PORT_SWITCH_ID_PROD_NUM_6290		0x290
+ #define PORT_SWITCH_ID_PROD_NUM_6390		0x390
+ #define PORT_SWITCH_ID_PROD_NUM_6390X		0x0a1
+-#define PORT_SWITCH_ID_PROD_NUM_6141		0x141
++#define PORT_SWITCH_ID_PROD_NUM_6141		0x340
++//#define PORT_SWITCH_ID_PROD_NUM_6341		0x340
+ #define PORT_SWITCH_ID_PROD_NUM_6341		0x341
+ 
+ #define PORT_CONTROL				0x04

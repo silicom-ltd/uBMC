@@ -54,7 +54,8 @@ if [ "${PRODUCT_SUB}" == "UBMC_EVAL" -o "${PRODUCT_SUB}" == "" ]; then
 elif [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
 	uimage_name="Image"
 	uboot_name="flash-image.bin"
-	uboot_flash_addr=${sys_mmc_name}"boot0"
+	#uboot_flash_addr=${sys_mmc_name}"boot0"
+	uboot_flash_addr="mtd0"
 	uboot_flash_name="flash-image.bin"
 	uboot_flash_info="uboot"
 	#flash write load factor

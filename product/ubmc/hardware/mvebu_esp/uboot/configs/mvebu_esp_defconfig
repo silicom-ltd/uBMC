@@ -165,6 +165,8 @@ CONFIG_PSCI_RESET=y
 # CONFIG_ARMV8_PSCI is not set
 # CONFIG_CMD_DEKBLOB is not set
 # CONFIG_CMD_HDMIDETECT is not set
+# CONFIG_UMBC_SD_UBOOT is not set
+CONFIG_UBMC_UBOOT_ETH_INDX=2
 
 #
 # MVEBU Development Board Utilities

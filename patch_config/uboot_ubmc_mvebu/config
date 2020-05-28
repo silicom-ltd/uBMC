@@ -14,6 +14,8 @@ PATCH_NAME[1]=uboot-marvell-0001-dts.patch
 PATCH_FLIST[1]=files_marvell_uboot_dts.txt
 PATCH_NAME[2]=uboot-marvell-0002-autoboot.patch
 PATCH_FLIST[2]=files_marvell_uboot_autoboot.txt
+PATCH_NAME[3]=uboot-marvell-0003-switch-mv88e6xxx.patch
+PATCH_FLIST[3]=files_marvell_switch_mv88e6xxx.txt
 PATCH_GEN_REQ_CLEAN=0
 PATCH_GEN_REQ_DIST_CLEAN=1
 
