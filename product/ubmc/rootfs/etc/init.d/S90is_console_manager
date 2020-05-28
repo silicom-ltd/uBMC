@@ -4,9 +4,9 @@
 #
 
 umask 077
+PRODUCT_SUB=$(cat /etc/product_sub.txt 2>/dev/null)
 
 start() {
-
 
 	echo -n "Starting is_console_manager: "
 
@@ -17,8 +17,12 @@ start() {
 		echo "load uart-sim kmod"
 	fi
 	#change permission on socket location
-	/usr/bin/is_console_manager &
-        chmod a+rwx /var/run/console_manager_socket
+	if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+		/usr/bin/is_console_manager -H /dev/ttyMV1 -O /dev/ttyMV0 &
+	else
+		/usr/bin/is_console_manager -H /dev/ttyS1 -O /dev/ttyS0 &
+	fi
+  chmod a+rwx /var/run/console_manager_socket
 	echo "OK"
 
 }

@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <syslog.h>
+#include <stdarg.h>
 #include "console_manager_cmdline.h"
 #include "is_con_mgr_mgmtd.h"
 #include "silc_common.h"
@@ -30,8 +31,8 @@
 #define ADDRESS     "/var/run/console_manager_socket"  /* addr to connect for socket*/
 #define IS_CON_MGR_TTY_BUF_SIZE 1024
 #define CONSOLE_MANAGER_SERIAL_SOURCE_1 "/dev/uart-sim"
-#define CONSOLE_MANAGER_SERIAL_SOURCE_2 "/dev/ttyS1"
-#define CONSOLE_MANAGER_SERIAL_OUTPUT   "/dev/ttyS0"
+#define CONSOLE_MANAGER_SERIAL_SOURCE_2 "/dev/ttyMV1"
+#define CONSOLE_MANAGER_SERIAL_OUTPUT   "/dev/ttyMV0"
 #define CONSOLE_MANAGER_SERIAL_HOST_LOG  "/var/log/host_serial.log"
 
 #define HOST_LOG_DEFAULT_MAX_SIZE        50*1024*1024
@@ -115,7 +116,9 @@ enum
 	IS_CON_MGR_ERR_SERVER_LISTEN,
 	IS_CON_MGR_ERR,
 };
-
+#define CONSOLE_DEV_NAME_MAXSIZE 64
+static char console_manager_serial_source_2[CONSOLE_DEV_NAME_MAXSIZE] = {0};
+static char console_manager_serial_output[CONSOLE_DEV_NAME_MAXSIZE] = {0};
 struct serial_source
 {
 	char * serial_in_buf;
@@ -422,11 +425,11 @@ int32_t console_manager_serial_source_host_restart()
 
 	usleep(10000);      //10ms
 
-	new_fd = open(CONSOLE_MANAGER_SERIAL_SOURCE_2, O_RDWR | O_NOCTTY | O_SYNC,S_IRWXU|S_IRWXO);
+	new_fd = open(console_manager_serial_source_2, O_RDWR | O_NOCTTY | O_SYNC,S_IRWXU|S_IRWXO);
 	if (new_fd < 0)
 	{
 		console_m_err("Fail to restart serial source host");
-		console_m_err("Can't open %s: %s\n", CONSOLE_MANAGER_SERIAL_SOURCE_2, strerror (errno));
+		console_m_err("Can't open %s: %s\n", console_manager_serial_source_2, strerror (errno));
 		return IS_CON_MGR_ERR_OPEN_DEVICE_FILE_FIALED;
 	}
 
@@ -1748,21 +1751,21 @@ int32_t console_manager_serial_source_open(int32_t * serial_s_fd1, int32_t *seri
 		return IS_CON_MGR_ERR_OPEN_DEVICE_FILE_FIALED;
 	}
 
-	*serial_s_fd2 = open(CONSOLE_MANAGER_SERIAL_SOURCE_2,
+	*serial_s_fd2 = open(console_manager_serial_source_2,
 	O_RDWR | O_NOCTTY | O_SYNC,S_IRWXU|S_IRWXO);
 	if (*serial_s_fd2 < 0)
 	{
-		console_m_err("console_manager error opening %s: %s\n", CONSOLE_MANAGER_SERIAL_SOURCE_2, strerror (errno));
+		console_m_err("console_manager error opening %s: %s\n", console_manager_serial_source_2, strerror (errno));
 		return IS_CON_MGR_ERR_OPEN_DEVICE_FILE_FIALED;
 	}
-	if (chmod(CONSOLE_MANAGER_SERIAL_SOURCE_2, 0666) < 0)
+	if (chmod(console_manager_serial_source_2, 0666) < 0)
 				console_m_warn("console_manager cannot change file(%s) permission to 0644 \n",
-						CONSOLE_MANAGER_SERIAL_SOURCE_2);
-	*serial_out_fd = open(CONSOLE_MANAGER_SERIAL_OUTPUT,
+						console_manager_serial_source_2);
+	*serial_out_fd = open(console_manager_serial_output,
 	O_RDWR | O_NOCTTY | O_SYNC);
 	if (*serial_out_fd < 0)
 	{
-		console_m_err("console_manager error opening %s: %s\n", CONSOLE_MANAGER_SERIAL_OUTPUT, strerror (errno));
+		console_m_err("console_manager error opening %s: %s\n", console_manager_serial_output, strerror (errno));
 		return IS_CON_MGR_ERR_OPEN_DEVICE_FILE_FIALED;
 	}
 
@@ -1782,7 +1785,7 @@ int32_t console_manager_serial_source_open(int32_t * serial_s_fd1, int32_t *seri
 
 	console_m_info(
 			"console_manager open serial_source_1 : %s serial_source_2 :%s serial output :%s host_serial_log :%s\n",
-			CONSOLE_MANAGER_SERIAL_SOURCE_1, CONSOLE_MANAGER_SERIAL_SOURCE_2, CONSOLE_MANAGER_SERIAL_OUTPUT,
+			CONSOLE_MANAGER_SERIAL_SOURCE_1, console_manager_serial_source_2, console_manager_serial_output,
 			CONSOLE_MANAGER_SERIAL_HOST_LOG);
 
 	return IS_CON_MGR_ERR_NULL;
@@ -1979,6 +1982,18 @@ static void set_dft_console()
 	g_is_console.is_status_changed = false;
 }
 
+void usage(char * prog)
+{
+	fprintf(stderr,
+			"usage: %s [-H <host tty name>] [-O <output tty name>]\n \
+            -h : help \n \
+            -H : host tty name  \n \
+			-O : output tty name \n \
+			For example: \n \
+			%s -O /dev/ttyMV0 -H /dev/ttyMV1 \n \
+			%s -O /dev/ttyS0 -H /dev/ttyS1 \n",prog,prog,prog);
+}
+
 int32_t main(int32_t argc, char *argv[])
 {
 	int32_t server_socket_fd;
@@ -1995,6 +2010,45 @@ int32_t main(int32_t argc, char *argv[])
 	int32_t res;
 	int32_t lock_file;
 	int32_t lock_res;
+
+
+	char * prog;
+	int opt;
+	int ret;
+	prog = argv[0];
+	while ((opt = getopt(argc, argv, "H:O:h?")) != -1)
+	{
+		switch (opt)
+		{
+		//The source tty name
+		case 'H':
+			if(optarg != NULL)
+			{
+				//fan_setting.interv = atoi(optarg);
+				strcpy(console_manager_serial_source_2,optarg);
+
+				//console_m_err("console_manager arg:H %s\n",optarg);
+			}
+			break;
+			//printf("t case optarg is %s interv is %d \n",optarg,fan_setting.interv);
+		//The OUTPUT tty name
+		case 'O':
+			if(optarg != NULL)
+			{
+				//fan_setting.temp_case = atoi(optarg);
+				strcpy(console_manager_serial_output,optarg);
+
+				//console_m_err("console_manager arg:O %s\n",optarg);
+			}
+			break;
+			//printf("T case optarg is %s temp_case: %d \n",optarg,fan_setting.temp_case);
+		case '?':
+		case 'h':
+		default:
+			usage(prog);
+			break;
+		}
+	}
 
 	lock_file = open(console_manager_lock_file, O_CREAT | O_RDWR, 0666);
 	lock_res = flock(lock_file, LOCK_EX | LOCK_NB);
