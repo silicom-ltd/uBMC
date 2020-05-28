@@ -73,6 +73,14 @@ load_driver_for_xsmall()
 	#for vlot sensor driver
 	modprobe ads7828
 }
+load_driver_for_skyd()
+{
+	rmmod i2c_omap.ko
+	rmmod max31785.ko
+	modprobe ads7828.ko
+	modprobe max31785.ko
+
+}
 get_machine_model()
 {	
 	eeprom_op -p
@@ -107,6 +115,9 @@ case "$1" in
 			"ATT-V850")
 			load_driver_for_large
 #			ubmc_fan_control -t 2 -T 76 -v 0 -V 255 &
+			;;
+			"ATT-V950")
+			load_driver_for_skyd
 			;;
 			*)
 			load_fan_driver
