@@ -77,8 +77,9 @@ load_driver_for_skyd()
 {
 	rmmod i2c_omap.ko
 	rmmod max31785.ko
-	modprobe ads7828.ko
+	rmmod ads7828.ko
 	modprobe max31785.ko
+	modprobe ads7828.ko
 
 }
 get_machine_model()
