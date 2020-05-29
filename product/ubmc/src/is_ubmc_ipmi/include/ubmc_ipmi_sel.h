@@ -25,7 +25,8 @@
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include "ubmc_ipmi_sel_sensor.h"
-#define GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
+#include "ubmc_ipmi_board.h"
+#define AM335X_GPIO_TO_PIN(bank, gpio) (32 * (bank) + (gpio))
 //#define UBMC_IPMI_DEBUG_TEST
 //#define UBMC_IPMI_SENSOR_TEST
 //For monitor PSU for rack mounted
@@ -61,11 +62,11 @@
 #define SYS_GPIO_PATH "/sys/class/gpio"
 #define SYS_GPIO_EXPORT_PATH "/sys/class/gpio/export"
 
-//#define UBMC_IPMI_DEBUG
+//#define UBMC_IPMI_DEBUG 1
 #ifdef  UBMC_IPMI_DEBUG
 #define UBMC_IPMI_DEBUG_LINE() printf("[%s:%s] line=%d\r\n",__FILE__, __func__, __LINE__)
 //#define DEBUG_ERR(fmt, args...) printf("\033[46;31m[%s:%d]\033[0m "#fmt" errno=%d, %m\r\n", __func__, __LINE__, ##args, errno, errno)
-#define UBMC_IPMI_DEBUG_INFO(fmt, args...) printf("\033[33m[%s:%d]\033[0m "#fmt"\r\n", __func__, __LINE__, ##args)
+#define UBMC_IPMI_DEBUG_INFO(fmt, args...) syslog(LOG_NOTICE, "[File: %s,Line: %05d, FUNCTION: %s]"fmt"\n",__FILE__, __LINE__,__FUNCTION__, ##args)
 #define UBMC_IPMI_DEBUG_ERR(fmt, args...) printf("[ERROR][%s:%s] line=%d "#fmt"\r\n",__FILE__, __func__, __LINE__)
 #else
 #define UBMC_IPMI_DEBUG_LINE()
@@ -762,6 +763,7 @@ typedef enum
 
 struct gpio_s
 {
+	device_type_t device_type;
 	char gpio_bank;
 	char gpio_pin;
 	int gpio_num;
@@ -788,6 +790,8 @@ struct ubmc_ipmi_sel
 	pthread_mutex_t record_mutex;
 	unsigned char state;
 	struct poll_gpio_fd gpio_fds;
+	device_type_t device_type;
+
 };
 //extern struct ubmc_ipmi_sel ubmc_ipmi_g_sel;
 //int ubmc_ipmi_init_gpio_file(void);
@@ -800,10 +804,10 @@ void ubmc_ipmi_init_record_id(struct ubmc_ipmi_sel *ubmc_ipmi_sel);
 int ubmc_ipmi_clr_sel_list(struct ubmc_ipmi_sel* ubmc_ipmi_sel);
 int check_sensor_event(uint32_t value,ubmc_ipmi_sensor_thresh_s *thresh);
 int ubmc_ipmi_set_sensor_evt(unsigned int evt_flag, ipmi_sensor_type type,unsigned char sensor_id,struct sel_event_record  *event);
-extern int ubmc_ipmi_init_sel(struct ubmc_ipmi_sel *ubmc_ipmi_sel,int ipmi_dev_fd);
+extern int ubmc_ipmi_init_sel(struct ubmc_ipmi_sel *ubmc_ipmi_sel,int ipmi_dev_fd,device_type_t device_type);
 extern FILE* create_sel_file_on_emmc(const char *path);
 int ubmc_ipmi_open_gpio_value_file(struct gpio_s *gpio);
-int ubmc_ipmi_init_gpio_s(struct gpio_s *gpio,const char *name,char tri);
+int ubmc_ipmi_init_gpio_s(struct gpio_s *gpio,const char *name,char tri,device_type_t device_type);
 int ubmc_ipmi_check_sensor_value_is_valid(unsigned int value);
 
 int i2c_smbus_access(int file, char read_write, unsigned char  command,int size, union i2c_smbus_data *data);

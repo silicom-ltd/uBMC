@@ -132,6 +132,8 @@ TLV_CODE_CRC_32, };
 
 static struct tlvinfo_s eeprom_inst;
 static char file_path[] = "/sys/bus/i2c/devices/0-0050/eeprom";
+static char file_path_bus0[] = "/sys/bus/i2c/devices/0-0050/eeprom";
+static char file_path_bus1[] = "/sys/bus/i2c/devices/1-0050/eeprom";
 //static char file_path[] = "eeprom_file";
 
 extern uint32_t crc32(uint32_t crc, const char *p, uint32_t len);
@@ -743,10 +745,12 @@ static int create_model_file(u8 *eeprom)
 #define UBMC_S_PN	"80500-0179"
 #define UBMC_M_PN	"80500-0180"
 #define UBMC_L_PN	"80500-0181"
+#define UBMC_SKYD_PN	"80500-0191"	//For testing
 #define UBMC_XS_MODEL	"ATT-V150"
 #define UBMC_S_MODEL	"ATT-V250"
 #define UBMC_M_MODEL	"ATT-V450"
 #define UBMC_L_MODEL	"ATT-V850"
+#define UBMC_SKYD_MODEL	"ATT-V950"		//For testing
 #define UBMC_PN_MAXSIZE 10
 static int create_model_file_by_pn(u8 *eeprom)
 {
@@ -818,6 +822,10 @@ static int create_model_file_by_pn(u8 *eeprom)
 	else if(strncmp(part_num,UBMC_L_PN,UBMC_PN_MAXSIZE) == 0)
 	{
 		strcpy(model, UBMC_L_MODEL);
+	}
+	else if(strncmp(part_num,UBMC_SKYD_PN,UBMC_PN_MAXSIZE) == 0)
+	{
+		strcpy(model, UBMC_SKYD_MODEL);
 	}
 	else
 	{
@@ -1386,18 +1394,80 @@ void usage(char * prog)
 			prog);
 }
 
+#define PRODUCT_SUB_PATH "/etc/product_sub.txt"
+#define UBMC_SUB_NAME_MAX 20
+#define UBMC_ESP_NAME "UBMC_ESP"
+
+#define UBMC_DEFAULT 0
+#define UBMC_ESP 1
+int get_machine_prod_sub(void)
+{
+	int ret;
+	int ubmc_sub_type = UBMC_DEFAULT;
+	char buf[UBMC_SUB_NAME_MAX];
+	char prod_sub_name[UBMC_SUB_NAME_MAX];
+	char len;
+	FILE *fp;
+	if(access(PRODUCT_SUB_PATH,F_OK) != 0)
+	{
+		eeprom_err("Can not find %s file :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fp = fopen(PRODUCT_SUB_PATH,"r+");
+	if(fp == NULL)
+	{
+		eeprom_err("open %s fail :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fgets(buf,UBMC_SUB_NAME_MAX,fp);
+	if (buf[strlen(buf)-1] == '\n')
+		buf[strlen(buf)-1] = '\0';
+	strcpy(prod_sub_name,buf);
+	if(strcmp(prod_sub_name,UBMC_ESP_NAME) == 0)
+	{
+		ubmc_sub_type = UBMC_ESP;
+	}
+	else
+	{
+		ubmc_sub_type = UBMC_DEFAULT;
+	}
+	fclose(fp);
+	return ubmc_sub_type;
+}
 int main(int argc, char *argv[])
 {
 	char * prog;
 	int opt;
-
+	int ubmc_product_sub_type;
 	/*
 	 *record if there is arguments or not
 	 */
 	int arg_flag = 0;
 	int ret = 0;
 	prog = argv[0];
+	ubmc_product_sub_type = get_machine_prod_sub();
+	if(ubmc_product_sub_type < 0)
+	{
+		eeprom_err("Invalid product_sub_type on %s!",PRODUCT_SUB_PATH);
+		strcpy(file_path,file_path_bus0);
 
+	}
+	else if(UBMC_DEFAULT == ubmc_product_sub_type)
+	{
+		/*UBMC eeprom use default file*/
+		strcpy(file_path,file_path_bus0);
+	}
+	else if(UBMC_ESP == ubmc_product_sub_type)
+	{
+		/*Marvell UBMC eeprom attached to i2c bus 1*/
+		strcpy(file_path,file_path_bus1);
+		//printf("%s \n",file_path);
+	}
+	else
+	{
+		strcpy(file_path,file_path_bus0);
+	}
+	//printf("%s ubmc_product_sub_type is %d \n",file_path,ubmc_product_sub_type);
 	while ((opt = getopt(argc, argv, "rw:vh:fpc")) != -1)
 	{
 

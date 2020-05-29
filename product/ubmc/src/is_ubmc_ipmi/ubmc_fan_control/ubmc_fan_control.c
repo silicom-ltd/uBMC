@@ -8,7 +8,8 @@
 #include <stdint.h>
 #include <errno.h>
 #include <time.h>
- #include <arpa/inet.h>
+#include <arpa/inet.h>
+#include <stdarg.h>
 #include "ubmc_ipmi_sel.h"
 #include "ubmc_ipmi.h"
 #define FAN_SYS_PATH_MAX_NUM 128
@@ -54,10 +55,12 @@ typedef struct fan_ctr
 typedef struct fan_set_cfg
 {
 	long int interv ;
-	long int temp_case ;
+	long int temp_case ;		//threshold
 	unsigned char fan_pwm_max_range;
 	unsigned char fan_pwm_min_range;
 	unsigned int fan_pwm_freq;
+	unsigned int fan_pwm_init;	//Initial pwm
+	unsigned int pwm_step;
 	char mode;
 	char prt;
 
@@ -80,6 +83,118 @@ int get_cpu_temp(unsigned int *cpu_temp);
 int init_fan(ubmc_fan_ctr *ubmc_fans);
 int config_fan_mode(ubmc_fan_ctr *ubmc_fans);
 
+#define LOG_FILE_PATH "/tmp/cpu_temp_fan_pwm.log"
+
+int get_date_time(char * datetime) {
+    time_t seconds;
+    struct tm * pTM;
+
+    time(&seconds);
+    pTM = localtime(&seconds);
+    sprintf(datetime, "%04d-%02d-%02d %02d:%02d:%02d",
+            pTM->tm_year + 1900, pTM->tm_mon + 1, pTM->tm_mday,
+            pTM->tm_hour, pTM->tm_min, pTM->tm_sec);
+
+    return 0;
+}
+
+
+void debug_log(int flag, const char *fmt,...)
+{
+	 va_list arg_ptr;
+	 char  buffer[1024] = {0};
+	 FILE* fp;
+	 if(!flag)
+		 return;
+
+	 if((fp=fopen(LOG_FILE_PATH, "a+")) == 0)
+		 return;
+	 get_date_time(buffer);
+	 sprintf(buffer, "[%s]", buffer);
+
+	 va_start(arg_ptr, fmt);
+	 vsprintf(buffer+strlen(buffer), fmt, arg_ptr);
+	 va_end(arg_ptr);
+
+	 fprintf(fp, "%s", buffer) ;
+	 fclose(fp);
+}
+/*
+ #!/bin/ash
+
+# YUVAL BADICHI
+# Ver: R002
+# Last Update: 27/04/2020
+
+TIME=0
+FAN_PWM=0
+INTERVAL=5
+THRESHOLD=71
+PWM_STEP=3
+
+echo "FAN_PWM_START=$FAN_PWM,INTERVAL=$INTERVAL,THRESHOLD=$THRESHOLD,PWM_STEP=$PWM_STEP" > /home/is_admin/graph_"$INTERVAL"_"$THRESHOLD"_"$PWM_STEP"_time_pwm.csv
+echo "FAN_PWM_START=$FAN_PWM,INTERVAL=$INTERVAL,THRESHOLD=$THRESHOLD,PWM_STEP=$PWM_STEP" > /home/is_admin/graph_"$INTERVAL"_"$THRESHOLD"_"$PWM_STEP"_time_temp.csv
+
+echo "Enter stress type :>"
+read STRESS
+echo "Stress=$STRESS" >> /home/is_admin/graph_"$INTERVAL"_"$THRESHOLD"_"$PWM_STEP"_time_pwm.csv
+echo "Stress=$STRESS" >> /home/is_admin/graph_"$INTERVAL"_"$THRESHOLD"_"$PWM_STEP"_time_temp.csv
+
+set_pwm () {
+    for i in 1 2; do
+		sudo ./fan_con_ubmc_1P3.sh w $i $1
+    done
+}
+
+set_pwm $FAN_PWM
+while true; do
+CPU_TEMP=`sudo ./fan_con_ubmc_1P3.sh | grep CPU | awk '{print $5;}'`
+if [ $CPU_TEMP -le $THRESHOLD ] ; then
+	if [ $FAN_PWM -gt 0 ] ; then
+		FAN_PWM=$((FAN_PWM-PWM_STEP))
+	fi
+else
+	FAN_PWM=$((FAN_PWM+PWM_STEP))
+fi
+set_pwm $FAN_PWM
+echo "$TIME,$FAN_PWM" >> /home/is_admin/graph_"$INTERVAL"_"$THRESHOLD"_"$PWM_STEP"_time_pwm.csv
+echo "$TIME,$CPU_TEMP" >> /home/is_admin/graph_"$INTERVAL"_"$THRESHOLD"_"$PWM_STEP"_time_temp.csv
+sleep $INTERVAL
+TIME=$((TIME+INTERVAL))
+sudo ./fan_con_ubmc_1P3.sh
+done
+ */
+//Small / Medium 2 Fans Profile R002
+static void fan_speed_ctr_mode3_thread( void* data )
+{
+	unsigned int set_pwm = 0;
+	unsigned int cpu_temp = 0;
+	unsigned int pwm_step = 0;
+	unsigned int temp_threshold = 0;
+	unsigned int interv = 0;
+	set_pwm = fan_setting.fan_pwm_init;
+	temp_threshold = fan_setting.temp_case;
+	pwm_step = fan_setting.pwm_step;
+	interv = fan_setting.interv;
+	while(1)
+	{
+		if(get_cpu_temp(&cpu_temp) == 0)
+		{
+			if(cpu_temp < temp_threshold)
+			{
+				set_pwm = set_pwm - pwm_step;
+			}
+			else
+			{
+				set_pwm = set_pwm + pwm_step;
+			}
+		}
+		debug_log(1,"Fan PWM is %ld  CPU TEMP is %ld \n");
+		sleep(interv);
+
+	}
+
+}
 static void fan_speed_ctr_auto_thread( void* data )
 {
 	unsigned int cpu_temp = 0;

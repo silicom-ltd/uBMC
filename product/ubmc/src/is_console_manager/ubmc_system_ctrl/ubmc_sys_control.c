@@ -58,16 +58,83 @@ static ubmc_gpio_direction gpio_pin_dir[GPIO_POS_MAX] = {
 static FILE *fp = NULL;
 static int lock_file;
 
+#define PRODUCT_SUB_PATH "/etc/product_sub.txt"
+#define UBMC_SUB_NAME_MAX 20
+#define UBMC_ESP_NAME "UBMC_ESP"
+#define UBMC_DEFAULT 0
+#define UBMC_ESP 1
+int get_machine_prod_sub(void)
+{
+	int ret;
+	int ubmc_sub_type;
+	char buf[UBMC_SUB_NAME_MAX];
+	char prod_sub_name[UBMC_SUB_NAME_MAX];
+	char len;
+	FILE *fp;
+	if(access(PRODUCT_SUB_PATH,F_OK) != 0)
+	{
+		//eeprom_err("Can not find %s file :%s",PRODUCT_SUB_PATH,strerror(errno));
+		syslog(LOG_WARNING,"Can not find %s file :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fp = fopen(PRODUCT_SUB_PATH,"r+");
+	if(fp == NULL)
+	{
+		//eeprom_err("open %s fail :%s",PRODUCT_SUB_PATH,strerror(errno));
+		syslog(LOG_WARNING,"open %s fail :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fgets(buf,UBMC_SUB_NAME_MAX,fp);
+	if (buf[strlen(buf)-1] == '\n')
+		buf[strlen(buf)-1] = '\0';
+	strcpy(prod_sub_name,buf);
+	if(strcmp(prod_sub_name,UBMC_ESP_NAME) == 0)
+	{
+		ubmc_sub_type = UBMC_ESP;
+	}
+	else
+	{
+		ubmc_sub_type = UBMC_DEFAULT;
+	}
+	//ubmc_debug("model is %s\n",buf);
+	fclose(fp);
+	return ubmc_sub_type;
+}
+
 int ubmc_sys_ctrl_gpio_init_by_name(const char **gpio_pin_name,unsigned int *pin_no)
 {
 	int i = 0;
 	int pin;
+	int ret;
+	char bank_num = 0,pin_num = 0;
+	int ubmc_sub_type;
+	ubmc_sub_type = get_machine_prod_sub();
+	if( ubmc_sub_type < 0)
+		return -1;
 	for(i = 0;i < GPIO_POS_MAX;i ++)
 	{
-		pin = silc_gpio_get_by_name(gpio_pin_name[i]);
+		ret =  silc_gpio_get_by_name(gpio_pin_name[i],&bank_num,&pin_num);
 		if(pin < 0)
 		{
 			return -1;
+		}
+		/*
+		 * The formulation is different between platforms
+		 * */
+		if( ubmc_sub_type == UBMC_ESP)
+		{
+			if(bank_num == 0)
+			{
+				pin = pin_num + 476;
+			}
+			else if(bank_num == 1)
+			{
+				pin = pin_num + 446;
+			}
+		}
+		else
+		{
+			pin = 32 * (bank_num) + (pin_num);
 		}
 		pin_no[i] = pin;
 	}

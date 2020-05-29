@@ -138,6 +138,49 @@ void *umount_varlog_handle(void *arg)
 	return NULL;
 }
 
+#define PRODUCT_SUB_PATH "/etc/product_sub.txt"
+#define UBMC_SUB_NAME_MAX 20
+#define UBMC_ESP_NAME "UBMC_ESP"
+#define UBMC_DEFAULT 0
+#define UBMC_ESP 1
+int get_machine_prod_sub(void)
+{
+	int ret;
+	int ubmc_sub_type = UBMC_DEFAULT;
+#if 1
+	char buf[UBMC_SUB_NAME_MAX];
+	char prod_sub_name[UBMC_SUB_NAME_MAX];
+	char len;
+	FILE *fp;
+	if(access(PRODUCT_SUB_PATH,F_OK) != 0)
+	{
+		DG_DEBUG_ERR("Can not find %s file :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fp = fopen(PRODUCT_SUB_PATH,"r+");
+	if(fp == NULL)
+	{
+		DG_DEBUG_ERR("open %s fail :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fgets(buf,UBMC_SUB_NAME_MAX,fp);
+	if (buf[strlen(buf)-1] == '\n')
+		buf[strlen(buf)-1] = '\0';
+	strcpy(prod_sub_name,buf);
+	if(strcmp(prod_sub_name,UBMC_ESP_NAME) == 0)
+	{
+		ubmc_sub_type = UBMC_ESP;
+	}
+	else
+	{
+		ubmc_sub_type = UBMC_DEFAULT;
+	}
+	//ubmc_debug("model is %s\n",buf);
+	fclose(fp);
+#endif
+	return ubmc_sub_type;
+}
+
 /*poll the  dying_gasp gpio and do something before power off */
 int poll_dying_gasp()
 {
@@ -145,22 +188,50 @@ int poll_dying_gasp()
 	struct timeval time;
 	netsnmp_session *ss;
 	int status,ret,count,cnt,i,rc;
-	char buf[1024] = {0};
+	//char buf[1024] = {0};
 	char value;
 	char gpio_path[200] = {0};
-	char cmdbuf[255] = {0};
+	char cmdbuf[256] = {0};
 	pthread_t tid1,tid2;
-	char cmd[100] = {0};
+	//char cmd[100] = {0};
 	int temp;
 	int gpio_pin = 0;
-	memset(buf,0x00,sizeof(char)*1024);
-	memset(gpio_path,0x00,sizeof(char)*5);
-	memset(cmdbuf,0x00,sizeof(char)*1024);
-	gpio_pin = silc_gpio_get_by_name(DYING_GASP_PIN);
-	if(gpio_pin < 0)
+	int ubmc_sub_type;
+	char bank_num = 0,pin_num = 0;
+	//memset(buf,0x00,sizeof(char)*1024);
+	memset(gpio_path,0x00,sizeof(char)*200);
+	memset(cmdbuf,0x00,sizeof(char)*256);
+	//gpio_pin = silc_gpio_get_by_name(DYING_GASP_PIN);
+	ret =  silc_gpio_get_by_name(DYING_GASP_PIN,&bank_num,&pin_num);
+	if(ret < 0)
 	{
 		DG_DEBUG_ERR("silc_gpio_get_by_name fail %d \n",gpio_pin);
 		return -1;
+	}
+	/*
+	 * this formulation should be changed when platform be different
+	 * */
+	ubmc_sub_type = get_machine_prod_sub();
+	//ubmc_sub_type = 0;
+	if(ubmc_sub_type < 0)
+	{
+		DG_DEBUG_ERR("Can not get right Product Sub Name \n");
+		return -1;
+	}
+	else if(UBMC_ESP == ubmc_sub_type)
+	{
+		if(bank_num == 0)
+		{
+			gpio_pin = pin_num + 476;
+		}
+		else if(bank_num == 1)
+		{
+			gpio_pin = pin_num + 446;
+		}
+	}
+	else
+	{
+		gpio_pin = 32 * (bank_num) + (pin_num);
 	}
 	sprintf(cmdbuf,"echo %d > /sys/class/gpio/export",gpio_pin);
 	status = system(cmdbuf);
@@ -169,7 +240,7 @@ int poll_dying_gasp()
 		DG_DEBUG_ERR("cmd: %s\t error: %d", cmdbuf, status);
 		return -1;
 	}
-	memset(cmdbuf,0x00,sizeof(char)*1024);
+	memset(cmdbuf,0x00,sizeof(char)*256);
 	sprintf(cmdbuf,"echo falling > /sys/class/gpio/gpio%d/edge",gpio_pin);
 	status = system(cmdbuf);
 	if(status < 0)
@@ -247,7 +318,7 @@ int poll_dying_gasp()
 	    else
 	    {
 	    	//listen_pid_change(&g_dying_gasp_pids.kill_mgmtd,"ps -ef|grep is_mgmtd|grep -v grep|awk \'{print $1}\'");
-	    	listen_pid_change(&g_dying_gasp_pids.umount_varlog,"lsof |grep /var/log | awk \'!a[$1]++{print $1}\'");
+	    	//listen_pid_change(&g_dying_gasp_pids.umount_varlog,"lsof |grep /var/log | awk \'!a[$1]++{print $1}\'");
 
 	    }
 

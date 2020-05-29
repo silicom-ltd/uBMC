@@ -69,7 +69,7 @@ int silc_snmp_send_simple_trap(char* trap_name, char* module, int event,netsnmp_
 	return ret;
 }
 
-#define PID_BUF_SIZE
+#define PID_BUF_SIZE 42
 /*listen some process's pid which we need to kill */
 int listen_pid_change(struct pids_need_to_kill_s* pid,const char* cmd)
 {

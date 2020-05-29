@@ -11,6 +11,7 @@ ubmc_ipmi_SOURCES = \
 	ubmc_ipmi_pm_l.c \
 	ubmc_ipmi_pm_sm.c \
 	ubmc_ipmi_pm_xs.c \
+	ubmc_ipmi_pm_skyd.c \
 	ubmc_ipmi_lan.c \
 	ubmc_ipmi_check_st.c 
 #	ubmc_ipmi_sel.c
