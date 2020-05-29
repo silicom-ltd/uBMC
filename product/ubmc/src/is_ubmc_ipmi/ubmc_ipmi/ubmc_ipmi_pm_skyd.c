@@ -381,14 +381,14 @@ static int skyd_update_sensor_state_callback(void* sensor_data ,void* private_da
 	}
 	//Do something else:
 
-	//printf("value is %ld type is %d sensor_id is %d \n",value,type,sensor_id);
+	//printf("value is %ld path %s \n",value,ubmc_sensor_arry->sensor_value_path);
 	return BMC_SUCCESS;
 }
 
 struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 {
 		{
-				.dev_name = CPU_HOST_TEMP_DEV_NAME,
+				.dev_name = SKYD_FAN_DEV_NAME,		// for testting,need chang when we can read cpu temp from SML
 				.sensor_type = UBMC_SENSOR_TEMP,
 				.sensor_sys_path_suffix = "",
 				.sensor_name = "TEMP_HOST_CPU",
@@ -398,7 +398,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_id = 1,
 				.sensor_thresh = &skyd_temp_host_cpu_thresh,
 				.sensor_value_multiple = 1,
-				.sensor_read_value_mode = TEST_MODE,
+				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
@@ -412,7 +412,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 
 		},
 		{
-				.dev_name = FAN_AND_TEMP_DEV_NAME,
+				.dev_name = SKYD_FAN_DEV_NAME,
 				.sensor_type = UBMC_SENSOR_TEMP,
 				.sensor_sys_path_suffix = "",
 				.sensor_name = "TEMP_HOST_PCB",
@@ -422,7 +422,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_id = 2,
 				.sensor_thresh = &skyd_temp_host_pcb_thresh,
 				.sensor_value_multiple = 1,
-				.sensor_read_value_mode = TEST_MODE,
+				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
@@ -556,7 +556,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 0,
 				.sensor_id = 1,
 				.sensor_thresh = &skyd_volt_1_8_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -565,7 +565,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -578,7 +578,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 1,
 				.sensor_id = 2,
 				.sensor_thresh = &skyd_mem_vddq_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -587,7 +587,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -600,7 +600,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 2,
 				.sensor_id = 3,
 				.sensor_thresh = &skyd_mem_vddq_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -609,7 +609,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -622,7 +622,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 3,
 				.sensor_id = 4,
 				.sensor_thresh = &skyd_volt_1_0_5_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -631,7 +631,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -644,7 +644,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 4,
 				.sensor_id = 5,
 				.sensor_thresh = &skyd_volt_1_8_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -653,7 +653,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -666,7 +666,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 5,
 				.sensor_id = 6,
 				.sensor_thresh = &skyd_volt_1_0_5_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -675,7 +675,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -688,7 +688,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 6,
 				.sensor_id = 7,
 				.sensor_thresh = &skyd_volt_1_0_5_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -697,7 +697,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -710,7 +710,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.index_of_gui_array = 7,
 				.sensor_id = 8,
 				.sensor_thresh = &skyd_volt_1_0_5_thresh,
-				.sensor_value_multiple = 1,
+				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
@@ -719,7 +719,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.k2 = -2,
 				.ipmitool_factor.minification = 150
 		},
 

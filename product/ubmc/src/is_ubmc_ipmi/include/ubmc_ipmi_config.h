@@ -38,6 +38,10 @@ static unsigned int g_debug_info_cnt = 0;
 #define FAN_AND_TEMP_DEV_L_S_M_NAME	"silc_fan"//"adt7475"
 #define VOL_DEV_UCD9000_NAME "ucd90160"
 #define VOL_DEV_PAC1014A_NAME "pac1014a"
+/*For SKYD platform*/
+#define SKYD_CPU_HOST_TEMP_DEV "test"
+#define SKYD_FAN_DEV_NAME "max31785"
+#define SKYD_ADC_NAME "ads7830"
 /*********************************************************config sensor number of XSMALL**************************************************************/
 #define XSMALL_SERSOR_TEMP_NUM	3
 #define XSMALL_SERSOR_VOL_NUM	8
@@ -60,6 +64,15 @@ static unsigned int g_debug_info_cnt = 0;
 #define L_SERSOR_FAN_NUM	(3 + 2/*Power Supply Fan*/)
 #define L_SERSOR_PS_NUM	3
 #define L_SENSOR_MAX_NUM (L_SERSOR_TEMP_NUM + L_SERSOR_VOL_NUM + L_SERSOR_FAN_NUM + L_SERSOR_PS_NUM)
+
+
+#define SENSOR_MAX_NUM (UBMC_LIMIT_SERSOR_TEMP + UBMC_LIMIT_SERSOR_VOL + UBMC_LIMIT_SERSOR_FAN + UBMC_LIMIT_SERSOR_PS)
+/*********************************************************config sensor number of SKYD**************************************************************/
+#define SKYD_SERSOR_TEMP_NUM	(2/*TEMP_HOST_PCB and TEMP_HOST_CPU*/)
+#define SKYD_SERSOR_VOL_NUM	8
+#define SKYD_SERSOR_FAN_NUM	(5)
+#define SKYD_SERSOR_PS_NUM	0
+#define SKYD_SENSOR_MAX_NUM (SKYD_SERSOR_TEMP_NUM + SKYD_SERSOR_VOL_NUM + SKYD_SERSOR_FAN_NUM + SKYD_SERSOR_PS_NUM)
 
 
 #define SENSOR_MAX_NUM (UBMC_LIMIT_SERSOR_TEMP + UBMC_LIMIT_SERSOR_VOL + UBMC_LIMIT_SERSOR_FAN + UBMC_LIMIT_SERSOR_PS)
@@ -107,6 +120,7 @@ static unsigned int g_debug_info_cnt = 0;
 extern struct ubmc_sensor_config_s ubmc_xsmall_sensor_cfg[XSMALL_SENSOR_MAX_NUM];
 extern struct ubmc_sensor_config_s ubmc_s_m_sensor_cfg[S_M_SENSOR_MAX_NUM];
 extern struct ubmc_sensor_config_s ubmc_large_sensor_cfg[L_SENSOR_MAX_NUM];
+extern struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM];
 extern struct ubmc_ipmi_s g_ubmc_ipmi;
 extern ubmc_shm_state * ubmc_shm_base;
 extern ubmc_sensor_event *sensor_events[SENSOR_MAX_NUM];
@@ -114,4 +128,5 @@ int ubmc_ipmi_large_init(void *data,uint32_t flag);
 int ubmc_ipmi_small_init(void *data,uint32_t flag);
 int ubmc_ipmi_medium_init(void *data,uint32_t flag);
 int ubmc_ipmi_xsmall_init(void *data,uint32_t flag);
+int ubmc_ipmi_skyd_init(void *data,uint32_t flag);
 #endif /* INCLUDE_UBMC_IPMI_CONFIG_H_ */

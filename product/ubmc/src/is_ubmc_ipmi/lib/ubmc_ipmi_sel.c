@@ -1138,7 +1138,7 @@ int ubmc_ipmi_clear_record_file(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 	return ret;
 }
 
-int ubmc_ipmi_init_sel(struct ubmc_ipmi_sel *ubmc_ipmi_sel,int ipmi_dev_fd)
+int ubmc_ipmi_init_sel(struct ubmc_ipmi_sel *ubmc_ipmi_sel,int ipmi_dev_fd,device_type_t device_type)
 {
 	FILE* sel_msg_record_fd;
 	struct sel_event_record event;
@@ -1156,6 +1156,7 @@ int ubmc_ipmi_init_sel(struct ubmc_ipmi_sel *ubmc_ipmi_sel,int ipmi_dev_fd)
 	ubmc_ipmi_init_record_id(ubmc_ipmi_sel);
 	ubmc_ipmi_sel->ipmi_dev_fd = ipmi_dev_fd;
 	ubmc_ipmi_sel->sel_msg_fd = sel_msg_record_fd;
+	ubmc_ipmi_sel->device_type = device_type;
 	ubmc_ipmi_clr_sel_list(ubmc_ipmi_sel);
 	ubmc_ipmi_set_sel_maxnum(ubmc_ipmi_sel,SEL_ENTRY_MAXNUM);
 	ubmc_ipmi_sel->state = 1;
@@ -1847,10 +1848,14 @@ int ubmc_ipmi_open_gpio_value_file(struct gpio_s *gpio)
  * @param gpio_bank
  * @param gpio_pin
  * @param tri	the edge of gpio when the event happen
+ * @param flag indicate which platform was in
  */
-int ubmc_ipmi_init_gpio_s(struct gpio_s *gpio,const char *name,char tri)
+int ubmc_ipmi_init_gpio_s(struct gpio_s *gpio,const char *name,char tri,device_type_t device_type)
 {
 	int gpio_num = 0;
+	int ret = 0;
+	char bank_num;
+	char pin_num;
 	/*gpio->gpio_bank = gpio_bank;
 	gpio->gpio_pin = gpio_pin;*/
 	if(gpio == NULL || name == NULL)
@@ -1858,10 +1863,31 @@ int ubmc_ipmi_init_gpio_s(struct gpio_s *gpio,const char *name,char tri)
 		UBMC_IPMI_ERR("can not get gpio or name \n");
 		return -1;
 	}
-	gpio_num = silc_gpio_get_by_name(name);
-	if (gpio_num < 0)
+	ret = silc_gpio_get_by_name(name,&bank_num,&pin_num);
+	if (ret < 0)
 	{
 		UBMC_IPMI_ERR("can not get_gpio_by_name %s\n",name);
+		return -1;
+	}
+	if(device_type == XSMALL || device_type == SMALL || device_type == LARGE || device_type == MIDDLE)	//in TI-AM335X
+	{
+		gpio_num = AM335X_GPIO_TO_PIN(bank_num,pin_num);
+	}
+	else if(device_type == SKYD)
+	{
+		//Use Marvell A3700 pin map
+		if(bank_num == 0)
+		{
+			gpio_num = pin_num + 476;
+		}
+		else if(bank_num == 1)
+		{
+			gpio_num = pin_num + 446;
+		}
+	}
+	else
+	{
+		UBMC_IPMI_ERR("Invalid device type %d \n",device_type);
 		return -1;
 	}
 	strcpy(gpio->gpio_name,name);
@@ -1920,27 +1946,29 @@ int ubmc_ipmi_sel_clear(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 int ubmc_ipmi_poll_gpio_events(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 {
 	struct poll_gpio_fd *gpio_fds;
+	device_type_t device_type;
 	char fd_fail_num = 0,gpio_fds_num = 0,count = 0;
 	int gpio_fd = 0, i = 0,value = 0;
 	int ret;
 	int gpio_num = 0;
 	gpio_fds = &ubmc_ipmi_sel->gpio_fds;
+	device_type = ubmc_ipmi_sel->device_type;
 	//to init the gpio pin which we neet to poll
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[0],"PSU_LEFT_PWRGD",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[0],"PSU_LEFT_PWRGD",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[1],"PSU_RIGHT_PWRGD",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[1],"PSU_RIGHT_PWRGD",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[2],"HOST_S45_N",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[2],"HOST_S45_N",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[3],"HOST_S3_N",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[3],"HOST_S3_N",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[4],"HOST_ERROR_N",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[4],"HOST_ERROR_N",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[5],"HOST_PROCHOT_N",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[5],"HOST_PROCHOT_N",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[6],"HOST_THERMTRIP_N",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[6],"HOST_THERMTRIP_N",TRI_FALLING,device_type) < 0)
 		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[7],"HOST_PLTRST_N",TRI_FALLING) < 0)
+	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[7],"HOST_PLTRST_N",TRI_FALLING,device_type) < 0)
 		return -1;
 //for test
 #ifdef UBMC_IPMI_DEBUG_TEST
@@ -2050,10 +2078,10 @@ int ubmc_ipmi_poll_gpio_events(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 				if(ubmc_ipmi_read_gpio_value_by_name(ubmc_ipmi_sel,"HOST_S45_N") == 1 && ubmc_ipmi_read_gpio_value_by_name(ubmc_ipmi_sel,"HOST_PLTRST_N") == 1)
 				{
 					ubmc_ipmi_sel->state = 1;
-					//UBMC_IPMI_NOTE("SEL is reable \n");
+					UBMC_IPMI_NOTE("SEL is reable \n");
 				}
 			}
-			//UBMC_IPMI_DEBUG_INFO("POLL TIME OUT \n");
+			//UBMC_IPMI_NOTE("POLL TIME OUT \n");
 		}
 	}
 

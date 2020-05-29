@@ -390,6 +390,7 @@ typedef struct ubmc_sensor_event{
 #define IPMI_SENSOR_DEV_NAME_MAX 	 40
 #define FILE_MODE		0	//read value from the sys file interface
 #define DEV_MODE 		1	//read value from the device file interface
+#define	TEST_MODE		2	//for testing
 	uint8_t 					 read_value_mode;
 	uint8_t                      sensor_value_reg;
 	uint8_t 					 dev_adr;

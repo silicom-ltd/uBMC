@@ -126,7 +126,8 @@ static int ipmi_host_power_monitor_init(struct gpio_s *gpio)
 {
 	int gpio_fd;
 	/*note :this seting should be same as the gpio of ubmc_ipmi_poll_gpio_events function setting*/
-	if(ubmc_ipmi_init_gpio_s(gpio,HOST_POWER_NAME,TRI_FALLING) < 0)
+	/*Only XS model need ,so just use flag = 0*/
+	if(ubmc_ipmi_init_gpio_s(gpio,HOST_POWER_NAME,TRI_FALLING,0) < 0)
 		return -1;
 	gpio_fd = ubmc_ipmi_open_gpio_value_file(gpio);
 	if(gpio_fd < 0)

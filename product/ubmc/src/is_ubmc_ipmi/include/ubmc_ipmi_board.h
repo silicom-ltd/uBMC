@@ -14,6 +14,7 @@ typedef enum
 	SMALL,
 	MIDDLE,
 	LARGE,
+	SKYD,
 	UNKNOW
 }device_type_t;
 

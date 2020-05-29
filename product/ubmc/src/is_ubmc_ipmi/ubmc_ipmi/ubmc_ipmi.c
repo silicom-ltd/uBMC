@@ -249,6 +249,11 @@ ubmc_sensor_event* ubmc_add_sensor( struct ubmc_sensor_config_s *config)
 		sensor->sensor_value_reg = config->sensor_read_value_reg;
 		sensor->dev_adr = config->dev_adr;
 	}
+	/*Just used for testing*/
+	else if(sensor->read_value_mode == TEST_MODE)
+	{
+		sprintf(buffer,"/temp_test.txt");
+	}
 
 	strcpy(sensor->sensor_value_path,buffer);
 	if(ubmc_is_file_exist(fault_path))
@@ -517,6 +522,7 @@ static int read_default_ubmc_sensor_states_from_shm(struct ubmc_board_info_s *bo
 #define UBMC_SMALL_MODEL "ATT-V250"
 #define UBMC_MIDDLE_MODEL "ATT-V450"
 #define UBMC_LARGE_MODEL "ATT-V850"
+#define UBMC_SKYD_MODEL "ATT-V950" //Just for test
 int get_machine_model(void)
 {
 	int ret;
@@ -552,8 +558,13 @@ int get_machine_model(void)
 	{
 		device_type = LARGE;
 	}
+	else if(strcmp(buf,UBMC_SKYD_MODEL) == 0)
+	{
+		device_type = SKYD;
+	}
 	else
 	{
+		ubmc_error("UNKNOW machine model :%s",buf);
 		device_type = UNKNOW;
 
 	}
@@ -624,6 +635,16 @@ int init_board_configs(struct ubmc_ipmi_s *ubmc_ipmi)
 		ubmc_ipmi->ubmc_board_info.temp_sensor_max_num = L_SERSOR_TEMP_NUM;
 		ubmc_ipmi->ubmc_board_info.power_supply_sensor_max_num = L_SERSOR_PS_NUM;
 		ubmc_ipmi->ubmc_board_info.init_handler = ubmc_ipmi_large_init;
+	}
+	else if(device_type == SKYD)
+	{
+		ubmc_ipmi->ubmc_board_info.sensor_config = ubmc_skyd_sensor_cfg;
+		ubmc_ipmi->ubmc_board_info.sensor_max_num = SKYD_SENSOR_MAX_NUM;
+		ubmc_ipmi->ubmc_board_info.fan_sensor_max_num = SKYD_SERSOR_FAN_NUM;
+		ubmc_ipmi->ubmc_board_info.volt_sensor_max_num = SKYD_SERSOR_VOL_NUM;
+		ubmc_ipmi->ubmc_board_info.temp_sensor_max_num = SKYD_SERSOR_TEMP_NUM;
+		ubmc_ipmi->ubmc_board_info.power_supply_sensor_max_num = SKYD_SERSOR_PS_NUM;
+		ubmc_ipmi->ubmc_board_info.init_handler = ubmc_ipmi_skyd_init;
 	}
 	else
 	{
@@ -740,7 +761,7 @@ int main(int argc, char* argv[])
 		ubmc_error(" Create ubmc_ipmi_lan_thread  error !\n");
 		goto exit;
 	}
-	ret = ubmc_ipmi_init_sel(&g_ubmc_ipmi.ubmc_ipmi_sel,fd);
+	ret = ubmc_ipmi_init_sel(&g_ubmc_ipmi.ubmc_ipmi_sel,fd,g_ubmc_ipmi.ubmc_board_info.device_type);
 	if(ret < 0)
 	{
 		ubmc_error(" ubmc_ipmi_init_sel fail ret = %d!\n");
