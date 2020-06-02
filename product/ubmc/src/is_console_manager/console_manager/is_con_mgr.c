@@ -1725,7 +1725,7 @@ int32_t console_manager_socket_init(int32_t *server_socket_fd)
 		console_m_err("console_manager error server: bind [%d]", res);
 		return IS_CON_MGR_ERR_SERVER_BIND;
 	}
-	if (chmod(ADDRESS, 0644) < 0)
+	if (chmod(ADDRESS, 0666) < 0)
 				console_m_warn("console_manager cannot change file(%s) permission to 0644 \n",ADDRESS);
 	/*
 	 * Listen on the socket.

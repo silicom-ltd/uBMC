@@ -610,17 +610,19 @@ int main(int argc, char *argv[])
 	/*it is used to set terminal stdin no caching*/
 	console_m_serial_socket_client_set_char_break(2);
 	int len;
-	int host_ser_fd;
+	//int host_ser_fd;
 	int fd_instance;
 
 	char *read_buf[128] = {0};
 	int ret = 0;
 	int c ;
+	/*
 	host_ser_fd = open(HOST_SERIAL_DEV, O_RDWR | O_NOCTTY | O_SYNC,S_IRWXU|S_IRWXO);
 	if(host_ser_fd < 0)
 	{
 		perror("open HOST_SERIAL_DEV fail ");
 	}
+	*/
 	fprintf(stderr,"Press  Ctrl+']' if you want to exit.\n");
 	while (1)
 	{
