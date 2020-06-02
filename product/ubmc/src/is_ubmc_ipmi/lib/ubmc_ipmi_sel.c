@@ -390,8 +390,8 @@ static int ubmc_ipmi_mutex_unlock(pthread_mutex_t *mutex)
     return 1;
 }
 
-#define CMD_BUF_SIZE 128
-#define DIR_BUF_SIZE 64
+#define CMD_BUF_SIZE 256
+#define DIR_BUF_SIZE 128
 
 /**
  *create gpio file on /sys/class/gpio directory
@@ -1954,22 +1954,45 @@ int ubmc_ipmi_poll_gpio_events(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 	gpio_fds = &ubmc_ipmi_sel->gpio_fds;
 	device_type = ubmc_ipmi_sel->device_type;
 	//to init the gpio pin which we neet to poll
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[0],"PSU_LEFT_PWRGD",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[1],"PSU_RIGHT_PWRGD",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[2],"HOST_S45_N",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[3],"HOST_S3_N",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[4],"HOST_ERROR_N",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[5],"HOST_PROCHOT_N",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[6],"HOST_THERMTRIP_N",TRI_FALLING,device_type) < 0)
-		return -1;
-	if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[7],"HOST_PLTRST_N",TRI_FALLING,device_type) < 0)
-		return -1;
+	if(device_type == SKYD)
+	{
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[0],"PSU_LEFT_PWRGD",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[1],"PSU_RIGHT_PWRGD",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[2],"HOST_S45_N",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[3],"HOST_S3_N",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[4],"HOST_ERROR_N",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[5],"HOST_PROCHOT_N",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[6],"HOST_THERMTRIP_N",TRI_NULL,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[7],"HOST_PLTRST_N",TRI_NULL,device_type) < 0)
+			return -1;
+	}
+	else
+	{
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[0],"PSU_LEFT_PWRGD",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[1],"PSU_RIGHT_PWRGD",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[2],"HOST_S45_N",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[3],"HOST_S3_N",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[4],"HOST_ERROR_N",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[5],"HOST_PROCHOT_N",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[6],"HOST_THERMTRIP_N",TRI_FALLING,device_type) < 0)
+			return -1;
+		if(ubmc_ipmi_init_gpio_s(&gpio_fds->gpio[7],"HOST_PLTRST_N",TRI_FALLING,device_type) < 0)
+			return -1;
+	}
+
 //for test
 #ifdef UBMC_IPMI_DEBUG_TEST
 	if(ubmc_ipmi_set_poll_gpio(&gpio_fds.gpio[UBMC_IPMI_GPIO_MAXNUM-1],TEST_GPIO,TRI_FALLING) < 0)
@@ -1979,7 +2002,9 @@ int ubmc_ipmi_poll_gpio_events(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 	for(i = 0; i < UBMC_IPMI_GPIO_MAXNUM; i ++)
 	{
 		memset(&gpio_fds->fdset[i],0x00,sizeof(struct pollfd));
+		UBMC_IPMI_ERR("ubmc_ipmi_poll_gpio_events do \n");
 		gpio_fd = ubmc_ipmi_open_gpio_value_file(&gpio_fds->gpio[i]);
+		UBMC_IPMI_ERR("ubmc_ipmi_poll_gpio_events done \n");
 		if(gpio_fd < 0)
 		{
 			UBMC_IPMI_ERRLOG("open gpio value file fail :%d \n",gpio_fd);
