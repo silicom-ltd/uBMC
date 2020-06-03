@@ -2002,9 +2002,7 @@ int ubmc_ipmi_poll_gpio_events(struct ubmc_ipmi_sel *ubmc_ipmi_sel)
 	for(i = 0; i < UBMC_IPMI_GPIO_MAXNUM; i ++)
 	{
 		memset(&gpio_fds->fdset[i],0x00,sizeof(struct pollfd));
-		UBMC_IPMI_ERR("ubmc_ipmi_poll_gpio_events do \n");
 		gpio_fd = ubmc_ipmi_open_gpio_value_file(&gpio_fds->gpio[i]);
-		UBMC_IPMI_ERR("ubmc_ipmi_poll_gpio_events done \n");
 		if(gpio_fd < 0)
 		{
 			UBMC_IPMI_ERRLOG("open gpio value file fail :%d \n",gpio_fd);

@@ -1,5 +1,5 @@
 --- linux-custom-orig/arch/arm/mach-omap2/cm33xx.c	2019-10-21 23:25:41.000000000 +0800
-+++ linux-custom-silicom/arch/arm/mach-omap2/cm33xx.c	2020-05-15 16:24:29.582861259 +0800
++++ linux-custom-silicom/arch/arm/mach-omap2/cm33xx.c	2020-05-28 11:56:51.741232456 +0800
 @@ -267,6 +267,9 @@
  	v = am33xx_cm_read_reg(inst, clkctrl_offs);
  	v &= ~AM33XX_MODULEMODE_MASK;
@@ -21,7 +21,7 @@
  }
  
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ssif.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ssif.c	2020-05-15 16:24:29.582861259 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ssif.c	2020-05-28 11:56:51.742232448 +0800
 @@ -0,0 +1,1390 @@
 +#if defined(MODVERSIONS)
 +#include <linux/modversions.h>
@@ -1414,7 +1414,7 @@
 +
 +
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi.c	2020-05-18 18:33:14.286692519 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi.c	2020-06-03 12:03:11.328818017 +0800
 @@ -0,0 +1,870 @@
 +#include <linux/mm.h>
 +#include <linux/i2c.h>
@@ -1535,21 +1535,21 @@
 +	UBMC_SENSOR_SEGMENT("TEMP_HOST_CPU" 	,UBMC_SENSOR_TEMP,0x00,0x0001,0x0000,UBMC_TEMP_HOST_CPU_THRESHOLDS,0x33),
 +	UBMC_SENSOR_SEGMENT("TEMP_HOST_PCB" 	,UBMC_SENSOR_TEMP,0x01,0x0002,0x0001,UBMC_TEMP_HOST_PCB_THRESHOLDS,0x33),
 +
-+	UBMC_SENSOR_SEGMENT("FAN1_TACH"     	,UBMC_SENSOR_FAN ,0x02,0x0003,0x0002,UBMC_FAN1_TACH_THRESHOLDS ,0x33),
-+	UBMC_SENSOR_SEGMENT("FAN2_TACH"     	,UBMC_SENSOR_FAN ,0x03,0x0004,0x0003,UBMC_FAN1_TACH_THRESHOLDS ,0x33),
-+	UBMC_SENSOR_SEGMENT("FAN3_TACH"     	,UBMC_SENSOR_FAN ,0x04,0x0005,0x0004,UBMC_FAN1_TACH_THRESHOLDS ,0x33),
-+	UBMC_SENSOR_SEGMENT("FAN4_TACH"     	,UBMC_SENSOR_FAN ,0x05,0x0006,0x0005,UBMC_FAN1_TACH_THRESHOLDS ,0x33),
-+	UBMC_SENSOR_SEGMENT("FAN5_TACH"     	,UBMC_SENSOR_FAN ,0x06,0x0007,0x0006,UBMC_FAN1_TACH_THRESHOLDS ,0x33),
++	UBMC_SENSOR_SEGMENT("FAN1_TACH"     	,UBMC_SENSOR_FAN ,0x02,0x0003,0x0002,UBMC_SKYD_FAN_TACH_THRESHOLDS ,0x33),
++	UBMC_SENSOR_SEGMENT("FAN2_TACH"     	,UBMC_SENSOR_FAN ,0x03,0x0004,0x0003,UBMC_SKYD_FAN_TACH_THRESHOLDS ,0x33),
++	UBMC_SENSOR_SEGMENT("FAN3_TACH"     	,UBMC_SENSOR_FAN ,0x04,0x0005,0x0004,UBMC_SKYD_FAN_TACH_THRESHOLDS ,0x33),
++	UBMC_SENSOR_SEGMENT("FAN4_TACH"     	,UBMC_SENSOR_FAN ,0x05,0x0006,0x0005,UBMC_SKYD_FAN_TACH_THRESHOLDS ,0x33),
++	UBMC_SENSOR_SEGMENT("FAN5_TACH"     	,UBMC_SENSOR_FAN ,0x06,0x0007,0x0006,UBMC_SKYD_FAN_TACH_THRESHOLDS ,0x33),
 +//	UBMC_SENSOR_SEGMENT("FAN2_TACH"     	,UBMC_SENSOR_FAN ,0x04,0x0005,0x0004,UBMC_FAN2_TACH_THRESHOLDS ,0x33),
-+	UBMC_SENSOR_SEGMENT("CPU_BRD 1.8V"    	,UBMC_SENSOR_VOL ,0x07,0x0008,0x0007,VOLT_1_8_THRESHOLDS ,0x21),
-+	UBMC_SENSOR_SEGMENT("CPU MEMVDDQ 01"    ,UBMC_SENSOR_VOL ,0x08,0x0009,0x0008,VOLT_1_0_5_THRESHOLDS ,0x21),
-+	UBMC_SENSOR_SEGMENT("CPU MEMVDDQ 34"    ,UBMC_SENSOR_VOL ,0x09,0x000a,0x0009,VOLT_1_0_5_THRESHOLDS ,0x21),
-+	UBMC_SENSOR_SEGMENT("CPU_BRD VCCSA"     ,UBMC_SENSOR_VOL ,0x0a,0x000b,0x000a,VOLT_1_0_5_THRESHOLDS ,0x21),
-+	UBMC_SENSOR_SEGMENT("CPU_BRD VCCIN"     ,UBMC_SENSOR_VOL ,0x0b,0x000c,0x000b,VOLT_1_0_5_THRESHOLDS ,0x21),
-+	UBMC_SENSOR_SEGMENT("CPU_BRD VNN"     	,UBMC_SENSOR_VOL ,0x0c,0x000d,0x000c,VOLT_1_0_5_THRESHOLDS ,0x21),
-+	UBMC_SENSOR_SEGMENT("CPU_BRD VCCIO"   	,UBMC_SENSOR_VOL ,0x0d,0x000e,0x000d,VOLT_1_0_5_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU_BRD 1.8V"    	,UBMC_SENSOR_VOL ,0x07,0x0008,0x0007,SKYD_VOLT_1_8_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU MEMVDDQ 01"    ,UBMC_SENSOR_VOL ,0x08,0x0009,0x0008,SKYD_VOLT_1_2_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU MEMVDDQ 34"    ,UBMC_SENSOR_VOL ,0x09,0x000a,0x0009,SKYD_VOLT_1_2_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU_BRD VCCSA"     ,UBMC_SENSOR_VOL ,0x0a,0x000b,0x000a,SKYD_VOLT_0_8_5_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU_BRD VCCIN"     ,UBMC_SENSOR_VOL ,0x0b,0x000c,0x000b,SKYD_VOLT2_1_8_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU_BRD VNN"     	,UBMC_SENSOR_VOL ,0x0c,0x000d,0x000c,SKYD_VOLT_0_9_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU_BRD VCCIO"   	,UBMC_SENSOR_VOL ,0x0d,0x000e,0x000d,SKYD_VOLT_1_THRESHOLDS ,0x21),
 +	// the next id of the last must be 0xffff
-+	UBMC_SENSOR_SEGMENT("CPU_BRD 1.05V"      ,UBMC_SENSOR_VOL ,0x0e,0xffff,0x000e,VOLT_1_0_5_THRESHOLDS ,0x21),
++	UBMC_SENSOR_SEGMENT("CPU_BRD 1.05V"      ,UBMC_SENSOR_VOL ,0x0e,0xffff,0x000e,SKYD_VOLT_1_0_5_THRESHOLDS ,0x21),
 +
 +	//UBMC_SENSOR_SEGMENT("CPU_BRD 1.8V"      ,UBMC_SENSOR_VOL ,0x0b,0xffff,0x000b,VOLT_1_8_THRESHOLDS ,0x21),
 +};
@@ -2287,7 +2287,7 @@
 +MODULE_LICENSE("GPL");
 +
 --- linux-custom-orig/drivers/i2c/busses/ubmc-i2c-slave.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-slave.c	2020-05-15 16:24:29.583861252 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-slave.c	2020-05-28 11:56:51.742232448 +0800
 @@ -0,0 +1,58 @@
 +/*
 + * ubmc-i2c-slave.c
@@ -2348,7 +2348,7 @@
 +}
 +
 --- linux-custom-orig/drivers/i2c/busses/ubmc-i2c-slave.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-slave.h	2020-05-15 16:24:29.583861252 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-slave.h	2020-05-28 11:56:51.743232441 +0800
 @@ -0,0 +1,61 @@
 +/*
 + * ubmc-i2c-slave.h
@@ -2412,7 +2412,7 @@
 +
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_I2C_SLAVE_H_ */
 --- linux-custom-orig/drivers/i2c/busses/Makefile	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/Makefile	2020-05-15 16:24:29.583861252 +0800
++++ linux-custom-silicom/drivers/i2c/busses/Makefile	2020-05-28 11:56:51.743232441 +0800
 @@ -76,7 +76,11 @@
  obj-$(CONFIG_I2C_MXS)		+= i2c-mxs.o
  obj-$(CONFIG_I2C_NOMADIK)	+= i2c-nomadik.o
@@ -2427,7 +2427,7 @@
  obj-$(CONFIG_I2C_PCA_PLATFORM)	+= i2c-pca-platform.o
  obj-$(CONFIG_I2C_PMCMSP)	+= i2c-pmcmsp.o
 --- linux-custom-orig/drivers/i2c/busses/Kconfig	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/Kconfig	2020-05-15 16:24:29.584861244 +0800
++++ linux-custom-silicom/drivers/i2c/busses/Kconfig	2020-05-28 11:56:51.743232441 +0800
 @@ -1326,4 +1326,12 @@
  	  This driver can also be built as a module. If so, the module will be
  	  called i2c-zx2967.
@@ -2442,8 +2442,8 @@
 +	
  endmenu
 --- linux-custom-orig/drivers/i2c/busses/ubmc-i2c-ipmi.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-ipmi.h	2020-05-18 11:44:14.260415337 +0800
-@@ -0,0 +1,951 @@
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-i2c-ipmi.h	2020-06-03 12:10:54.368267436 +0800
+@@ -0,0 +1,1030 @@
 +#ifndef __I2C_OMAP_H__
 +#define __I2C_OMAP_H__
 +
@@ -2600,7 +2600,13 @@
 +#define FAN2_TACH_UCR 90	//9000
 +#define FAN2_TACH_UNR 100	//10000
 +
-+
++//SKYD FAN_TACH limit
++#define SKYD_FAN_TACH_LNR 24	//800
++#define SKYD_FAN_TACH_LCR UBMC_IPMI_N_A	//1000
++#define SKYD_FAN_TACH_LNC UBMC_IPMI_N_A
++#define SKYD_FAN_TACH_UNC UBMC_IPMI_N_A
++#define SKYD_FAN_TACH_UCR UBMC_IPMI_N_A	//9000
++#define SKYD_FAN_TACH_UNR 127	//10000
 +
 +//5V limit
 +#define VOLT_5_0_LNR 90//45000
@@ -2715,7 +2721,7 @@
 +
 +//1.0V limit
 +//resolution is 15mv
-+#define L_VOLT_1_0_LNR 64		//965
++#define L_VOLT_1_0_LNR 64		//0.965
 +#define L_VOLT_1_0_LCR UBMC_IPMI_N_A
 +#define L_VOLT_1_0_LNC UBMC_IPMI_N_A
 +#define L_VOLT_1_0_UNC UBMC_IPMI_N_A
@@ -2768,6 +2774,61 @@
 +#define L_VOLT_54_UNR 114		//57.23
 +
 +
++//for skyd
++//1.8V limit
++//resolution is 15mv
++#define SKYD_VOLT_1_8_LNR 113		// 1.71
++#define SKYD_VOLT_1_8_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_8_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_8_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_8_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_8_UNR 126		//	1.89
++
++#define SKYD_VOLT2_1_8_LNR 100		// 1.5
++#define SKYD_VOLT2_1_8_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT2_1_8_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT2_1_8_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT2_1_8_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT2_1_8_UNR 127		//	2.0
++
++
++#define SKYD_VOLT_1_2_LNR 77		//	1.16
++#define SKYD_VOLT_1_2_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_2_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_2_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_2_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_2_UNR 84		//	1.26
++
++#define SKYD_VOLT_0_8_5_LNR 34		//	0.5
++#define SKYD_VOLT_0_8_5_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT_0_8_5_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT_0_8_5_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT_0_8_5_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT_0_8_5_UNR 74		//	1.1
++
++#define SKYD_VOLT_0_9_LNR 56		//	0.85
++#define SKYD_VOLT_0_9_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT_0_9_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT_0_9_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT_0_9_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT_0_9_UNR 68		//	1.0
++
++#define SKYD_VOLT_1_LNR 54		//	0.8
++#define SKYD_VOLT_1_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_UNR 76		//	1.1
++
++
++#define SKYD_VOLT_1_0_5_LNR 67		//	1.01
++#define SKYD_VOLT_1_0_5_LCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_0_5_LNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_0_5_UNC UBMC_IPMI_N_A
++#define SKYD_VOLT_1_0_5_UCR UBMC_IPMI_N_A
++#define SKYD_VOLT_1_0_5_UNR 73		//	1.09
++
++
 +// define the defalut threshods for three types sensor
 +#define UBMC_TEMP_HOST_CPU_THRESHOLDS \
 +	{TEMP_HOST_CPU_LNR,TEMP_HOST_CPU_LCR,TEMP_HOST_CPU_LNC,TEMP_HOST_CPU_UNC,TEMP_HOST_CPU_UCR,TEMP_HOST_CPU_UNR}
@@ -2784,7 +2845,8 @@
 +#define UBMC_FAN2_TACH_THRESHOLDS  \
 +	{FAN2_TACH_LNR,FAN2_TACH_LCR,FAN2_TACH_LNC,FAN2_TACH_UNC,FAN2_TACH_UCR,FAN2_TACH_UNR}
 +
-+
++#define UBMC_SKYD_FAN_TACH_THRESHOLDS  \
++	{SKYD_FAN_TACH_LNR,SKYD_FAN_TACH_LCR,SKYD_FAN_TACH_LNC,SKYD_FAN_TACH_UNC,SKYD_FAN_TACH_UCR,SKYD_FAN_TACH_UNR}
 +
 +#define VOLT_5_0_THRESHOLDS  \
 +	{VOLT_5_0_LNR,VOLT_5_0_LCR,VOLT_5_0_LNC,VOLT_5_0_UNC,VOLT_5_0_UCR,VOLT_5_0_UNR}
@@ -2839,8 +2901,25 @@
 +#define UBMC_VOL_SENSOR_DEFAUT_THRESHOLDS  {0x6c,0x64,0x61,0x8d,0x96,0x98}
 +#define UBMC_FAN_SENSOR_DEFAUT_THRESHOLDS  {0x07,0x05,0x03,0xfd,0xfe,0xff}
 +
++//for skyd thresholds list
++#define SKYD_VOLT_1_8_THRESHOLDS  \
++	{SKYD_VOLT_1_8_LNR,SKYD_VOLT_1_8_LCR,SKYD_VOLT_1_8_LNC,SKYD_VOLT_1_8_UNC,SKYD_VOLT_1_8_UCR,SKYD_VOLT_1_8_UNR}
++#define SKYD_VOLT2_1_8_THRESHOLDS  \
++	{SKYD_VOLT2_1_8_LNR,SKYD_VOLT2_1_8_LCR,SKYD_VOLT2_1_8_LNC,SKYD_VOLT2_1_8_UNC,SKYD_VOLT2_1_8_UCR,SKYD_VOLT2_1_8_UNR}
 +
++#define SKYD_VOLT_1_2_THRESHOLDS  \
++	{SKYD_VOLT_1_2_LNR,SKYD_VOLT_1_2_LCR,SKYD_VOLT_1_2_LNC,SKYD_VOLT_1_2_UNC,SKYD_VOLT_1_2_UCR,SKYD_VOLT_1_2_UNR}
 +
++#define SKYD_VOLT_0_8_5_THRESHOLDS  \
++	{SKYD_VOLT_0_8_5_LNR,SKYD_VOLT_0_8_5_LCR,SKYD_VOLT_0_8_5_LNC,SKYD_VOLT_0_8_5_UNC,SKYD_VOLT_0_8_5_UCR,SKYD_VOLT_0_8_5_UNR}
++
++#define SKYD_VOLT_0_9_THRESHOLDS  \
++	{SKYD_VOLT_0_9_LNR,SKYD_VOLT_0_9_LCR,SKYD_VOLT_0_9_LNC,SKYD_VOLT_0_9_UNC,SKYD_VOLT_0_9_UCR,SKYD_VOLT_0_9_UNR}
++#define SKYD_VOLT_1_THRESHOLDS  \
++	{SKYD_VOLT_1_LNR,SKYD_VOLT_1_LCR,SKYD_VOLT_1_LNC,SKYD_VOLT_1_UNC,SKYD_VOLT_1_UCR,SKYD_VOLT_1_UNR}
++
++#define SKYD_VOLT_1_0_5_THRESHOLDS  \
++	{SKYD_VOLT_1_0_5_LNR,SKYD_VOLT_1_0_5_LCR,SKYD_VOLT_1_0_5_LNC,SKYD_VOLT_1_0_5_UNC,SKYD_VOLT_1_0_5_UCR,SKYD_VOLT_1_0_5_UNR}
 +
 +// the follow two segments are use to calculate the sensor value by 'ipmitool sdr'
 +// Because the sensor value has only one byte.
@@ -3396,7 +3475,7 @@
 +
 +#endif
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-sdr.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sdr.h	2020-05-15 16:24:29.584861244 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sdr.h	2020-05-28 11:56:51.744232433 +0800
 @@ -0,0 +1,409 @@
 +
 +#ifndef _UBMC_IPMI_SDR_H
@@ -3808,7 +3887,7 @@
 +
 +#endif				/* IPMI_SDR_H */
 --- linux-custom-orig/drivers/i2c/busses/i2c-omap.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-omap.h	2020-05-15 16:24:29.585861237 +0800
++++ linux-custom-silicom/drivers/i2c/busses/i2c-omap.h	2020-05-28 11:56:51.744232433 +0800
 @@ -0,0 +1,166 @@
 +/*
 + * i2c-omap.h
@@ -3977,7 +4056,7 @@
 +
 +#endif /* DRIVERS_I2C_BUSSES_I2C_OMAP_H_ */
 --- linux-custom-orig/drivers/i2c/busses/i2c-omap.c	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-omap.c	2020-05-15 16:24:29.585861237 +0800
++++ linux-custom-silicom/drivers/i2c/busses/i2c-omap.c	2020-05-28 11:56:51.745232425 +0800
 @@ -40,6 +40,10 @@
  #include <linux/pm_runtime.h>
  #include <linux/pinctrl/consumer.h>
@@ -3998,7 +4077,7 @@
  struct omap_i2c_dev {
  	struct device		*dev;
 --- linux-custom-orig/drivers/i2c/busses/ubmc-muxdump.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-muxdump.c	2020-05-15 16:24:29.585861237 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-muxdump.c	2020-05-28 11:56:51.745232425 +0800
 @@ -0,0 +1,969 @@
 +/*
 + * ubmc-muxdump.c
@@ -4970,7 +5049,7 @@
 +MODULE_DESCRIPTION("Silicom uBMC SSIF");
 +
 --- linux-custom-orig/drivers/i2c/busses/ubmc-muxdump.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-muxdump.h	2020-05-15 16:24:29.586861229 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-muxdump.h	2020-05-28 11:56:51.745232425 +0800
 @@ -0,0 +1,231 @@
 +/*
 + * ubmc-muxdump.h
@@ -5204,7 +5283,7 @@
 +void exit_ubmc_pinmux_proc(struct proc_dir_entry *root_dir);
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_MUXDUMP_H_ */
 --- linux-custom-orig/drivers/i2c/busses/ubmc-spi-reg.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-spi-reg.c	2020-05-15 16:24:29.586861229 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-spi-reg.c	2020-05-28 11:56:51.746232417 +0800
 @@ -0,0 +1,263 @@
 +#include <linux/init.h>
 +#include <linux/module.h>
@@ -5470,7 +5549,7 @@
 +	remove_proc_entry("spi0-reg",root_dir);
 +}
 --- linux-custom-orig/drivers/i2c/busses/ubmc-spi-reg.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-spi-reg.h	2020-05-15 16:24:29.586861229 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-spi-reg.h	2020-05-28 11:56:51.746232417 +0800
 @@ -0,0 +1,13 @@
 +/*
 + * ubmc-spi-reg.h
@@ -5486,7 +5565,7 @@
 +void exit_spi_reg(struct proc_dir_entry *root_dir );
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_SPI_REG_H_ */
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-sel.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sel.c	2020-05-15 16:24:29.586861229 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sel.c	2020-05-28 11:56:51.746232417 +0800
 @@ -0,0 +1,83 @@
 +/*
 + * ubmc-ipmi-sel.c
@@ -5572,7 +5651,7 @@
 +}
 +
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-sel.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sel.h	2020-05-15 16:24:29.586861229 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-sel.h	2020-05-28 11:56:51.747232409 +0800
 @@ -0,0 +1,136 @@
 +/*
 + * ubmc-ipmi-sel.h
@@ -5711,7 +5790,7 @@
 +int ubmc_ipmi_del_then_add_node(struct ubmc_ipmi_sel_list * sel_list,struct ubmc_ipmi_sel_list *sel_node);
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_IPMI_SEL_H_ */
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-lan.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-lan.h	2020-05-15 16:24:29.587861221 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-lan.h	2020-05-28 11:56:51.747232409 +0800
 @@ -0,0 +1,49 @@
 +/*
 + * ubmc-ipmi-lan.h
@@ -5763,7 +5842,7 @@
 +void prt_netinf_info(struct ipmi_netinf* netinf);
 +#endif /* DRIVERS_I2C_BUSSES_UBMC_IPMI_LAN_H_ */
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-lan.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-lan.c	2020-05-15 16:24:29.587861221 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-lan.c	2020-05-28 11:56:51.747232409 +0800
 @@ -0,0 +1,39 @@
 +/*
 + * ubmc-ipmi-lan.c
@@ -5805,7 +5884,7 @@
 +
 +}
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-omap.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-omap.c	2020-05-15 16:24:29.587861221 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-omap.c	2020-05-28 11:56:51.747232409 +0800
 @@ -0,0 +1,648 @@
 +/*
 + * ubmc-i2c-slave.c
@@ -6456,7 +6535,7 @@
 +}
 +
 --- linux-custom-orig/drivers/i2c/busses/ubmc-ipmi-pxa.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-pxa.c	2020-05-15 19:45:13.278900419 +0800
++++ linux-custom-silicom/drivers/i2c/busses/ubmc-ipmi-pxa.c	2020-05-28 11:56:51.748232401 +0800
 @@ -0,0 +1,647 @@
 +/*
 + * ubmc_ipmi_pxa.c
@@ -7106,7 +7185,7 @@
 +}
 +
 --- linux-custom-orig/drivers/i2c/busses/i2c-pxa.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-pxa.h	2020-05-15 16:24:29.588861213 +0800
++++ linux-custom-silicom/drivers/i2c/busses/i2c-pxa.h	2020-05-28 11:56:51.748232401 +0800
 @@ -0,0 +1,194 @@
 +/*
 + * i2c-pxa.h
@@ -7303,7 +7382,7 @@
 +
 +#endif /* I2C_BUSSES_I2C_PXA_H_ */
 --- linux-custom-orig/drivers/i2c/busses/i2c-pxa.c	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/i2c/busses/i2c-pxa.c	2020-05-15 19:44:18.231283028 +0800
++++ linux-custom-silicom/drivers/i2c/busses/i2c-pxa.c	2020-05-28 11:56:51.749232393 +0800
 @@ -37,76 +37,11 @@
  #include <linux/slab.h>
  #include <linux/io.h>

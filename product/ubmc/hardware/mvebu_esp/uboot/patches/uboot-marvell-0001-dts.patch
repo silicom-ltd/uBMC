@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-05-15 17:48:24.089456136 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-05-26 11:07:56.030567331 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-05-20 15:07:54.404251524 +0800
-@@ -0,0 +1,531 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-06-03 12:11:31.402982439 +0800
+@@ -0,0 +1,536 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -380,11 +380,10 @@
 +};
 +&eth1 {
 +	status = "okay";
-+	pinctrl-names = "default";
-+	pinctrl-0 = <&rgmii_pins>, <&smi_pins>;
-+	phy-mode = "rgmii-id";
-+	/*phy_addr = <0x1>;
-+	phy = <&mvswitch>;*/
++	/* Generic PHY, providing serdes lanes */
++	/*phys = <&a3700_comphy0 1>;*/
++	phy-mode = "sgmii";
++	/*phy = <&phy1>;*/
 +
 +	fixed-link {
 +		speed = <1000>;
@@ -396,6 +395,12 @@
 +	status = "okay";
 +	flash@0 {
 +		reg = <0>;
++		compatible = "winbond,w25q32dw", "jedec,spi-flash";
++		spi-max-frequency = <20000000>;
++		m25p,fast-read;
++	};
++	flash@0 {
++		reg = <3>;
 +		compatible = "winbond,w25q32dw", "jedec,spi-flash";
 +		spi-max-frequency = <20000000>;
 +		m25p,fast-read;
@@ -424,7 +429,7 @@
 +		"HOST_ERROR_N",	/*"14",*/
 +		"HOST_THERMTRIP_N",	/*"15",*/
 +		"HOST_FRU_EEPROM_MUX_SEL",	/*"16",*/
-+		"17",
++		"SPI_BMC_CS1",
 +		"18",
 +		"19",
 +		"20",
@@ -545,7 +550,7 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-05-19 18:23:11.485255960 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-05-27 18:31:07.256937282 +0800
 @@ -0,0 +1,584 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
@@ -709,7 +714,7 @@
 +				#size-cells = <0>;
 +				clocks = <&nb_periph_clk 10>;
 +				interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
-+			/*	mrvl,i2c-fast-mode;*/
++				mrvl,i2c-fast-mode;
 +				status = "disabled";
 +			};
 +
@@ -720,7 +725,7 @@
 +				#size-cells = <0>;
 +				clocks = <&nb_periph_clk 9>;
 +				interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
-+			/*	mrvl,i2c-fast-mode;*/
++				mrvl,i2c-high-mode;
 +				status = "disabled";
 +			};
 +
@@ -1132,7 +1137,7 @@
 +	};
 +};
 --- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-05-15 17:48:24.089456136 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-05-26 11:07:56.030567331 +0800
 @@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) 2018 Marvell

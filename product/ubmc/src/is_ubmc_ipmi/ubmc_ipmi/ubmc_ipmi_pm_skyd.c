@@ -565,7 +565,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -587,7 +587,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -609,7 +609,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -631,7 +631,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -653,7 +653,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -675,7 +675,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -697,7 +697,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 		{
@@ -719,7 +719,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.m	= 15,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -2,
+				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
 
