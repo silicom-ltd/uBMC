@@ -37,12 +37,12 @@ int pmbus_get_linear_value(unsigned short in_value,float* out_value)
 		return 0;
 	}
 	N = (in_value >> 11) & 0x001f;
-	printf("N1 is 0x%x \n",N);
+	//printf("N1 is 0x%x \n",N);
 	N = ((~N) & 0x01f)+1;
-	printf("N2 is 0x%x \n",N);
+	//printf("N2 is 0x%x \n",N);
 	exp = 1 << N;
 	*out_value = (float)Y/exp;
-	printf("pmbus_get_linear_value:in_valueis 0x%x Y is 0x%x,N is 0x%x exp is %d out_value is %f \n",in_value,Y,N,exp,*out_value);
+	//printf("pmbus_get_linear_value:in_valueis 0x%x Y is 0x%x,N is 0x%x exp is %d out_value is %f \n",in_value,Y,N,exp,*out_value);
 	return 0;
 
 }
@@ -58,45 +58,45 @@ int do_i2c_read_test(const char *dev,unsigned char slave_adr)
 	p_value = &value;
 
 	reg = 0x20;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,0);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,0);
 	printf("VOUT MODE :0x%x is 0x%x \n",reg,value);
 
 	reg = 0x79;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,1);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("summry state :0x%x is 0x%x \n",reg,value);
 	reg = 0x7a;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,0);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("states vout :0x%x is 0x%x \n",reg,value);
 	reg = 0x7b;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,0);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("states iout :0x%x is 0x%x \n",reg,value);
 	reg = 0x7c;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,0);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,0);
 	printf("states input :0x%x is 0x%x \n",reg,value);
 	reg = 0x7d;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,1);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("states temp :0x%x is 0x%x \n",reg,value);
 	reg = 0x88;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,0);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,0);
 	printf("read vin :0x%x is 0x%x ,value %f\n",reg,value,value/8.0);
 	reg = 0x89;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,0);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,0);
 	pmbus_get_linear_value(value,&out);
 	printf("read iin :0x%x is 0x%x Y is 0x%x N is 0x%x value is %f \n",reg,value,value&0x7ff,(value >> 11)&0x1f,out);
 
 	reg = 0x8b;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,1);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	pmbus_get_linear_value(value,&out);
 	printf("read vout :0x%x is 0x%x Y is 0x%x N is 0x%x value is %f \n",reg,value,value&0x7ff,(value >> 11)&0x1f,out);
 	//printf("read vout :0x%x is 0x%x ,value is %f\n",reg,value,value/4096.0);
 	reg = 0x8c;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,1);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("read iout :0x%x is 0x%x ,value is %f\n",reg,value,value/16.0);
 	reg = 0x8d;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,1);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("read temprature 0x%x is 0x%x value is %.3f \n",reg,value,value/4.0);
 	reg = 0x90;
-	ubmc_smbus_read_value("/dev/i2c-0",slave_adr,reg,p_value,1);
+	ubmc_smbus_read_value(dev,slave_adr,reg,p_value,1);
 	printf("read fan speed 0x%x is 0x%x \n",reg,value);
 
 }
@@ -583,6 +583,7 @@ int get_device_type(struct ubmc_ipmi_s *ubmc_ipmi)
 	ret = get_machine_model();
 	if(ret < 0 || ret >= UNKNOW)
 	{
+
 		ubmc_ipmi->ubmc_board_info.device_type = XSMALL;
 		ubmc_error("can not find right model info,using XSMALL as default configuration! \n")
 	}
@@ -684,11 +685,11 @@ int main(int argc, char* argv[])
 #endif
 	//do_i2c_read_test(CPU_HOST_TEMP_I2C_DEV,CPU_TEMP_SLAVE_ADDR);
 #if 0
-	do_i2c_read_test("/dev/i2c-0",0x59);
+	do_i2c_read_test("/dev/i2c-1",0x59);
 	printf("\n\n");
-	do_i2c_read_test("/dev/i2c-0",0x5a);
+	do_i2c_read_test("/dev/i2c-1",0x5a);
 	printf("\n\n");
-	do_i2c_read_test("/dev/i2c-0",0x2a);
+	//do_i2c_read_test("/dev/i2c-0",0x2a);
 #endif
 #if 1
 	if (signal(SIGUSR1, sig_handler) == SIG_ERR)

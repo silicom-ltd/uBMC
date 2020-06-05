@@ -42,6 +42,7 @@ static unsigned int g_debug_info_cnt = 0;
 #define SKYD_CPU_HOST_TEMP_DEV "test"
 #define SKYD_FAN_DEV_NAME "max31785"
 #define SKYD_ADC_NAME "ads7830"
+#define SKYD_POWER_SUPPLY_DEV "/dev/i2c-1"
 /*********************************************************config sensor number of XSMALL**************************************************************/
 #define XSMALL_SERSOR_TEMP_NUM	3
 #define XSMALL_SERSOR_VOL_NUM	8
@@ -68,10 +69,10 @@ static unsigned int g_debug_info_cnt = 0;
 
 #define SENSOR_MAX_NUM (UBMC_LIMIT_SERSOR_TEMP + UBMC_LIMIT_SERSOR_VOL + UBMC_LIMIT_SERSOR_FAN + UBMC_LIMIT_SERSOR_PS)
 /*********************************************************config sensor number of SKYD**************************************************************/
-#define SKYD_SERSOR_TEMP_NUM	(2/*TEMP_HOST_PCB and TEMP_HOST_CPU*/)
-#define SKYD_SERSOR_VOL_NUM	8
-#define SKYD_SERSOR_FAN_NUM	(5)
-#define SKYD_SERSOR_PS_NUM	0
+#define SKYD_SERSOR_TEMP_NUM	(2/*TEMP_HOST_PCB and TEMP_HOST_CPU*/ + 2 /*PSU*/)
+#define SKYD_SERSOR_VOL_NUM	(8)
+#define SKYD_SERSOR_FAN_NUM	(5 + 2)
+#define SKYD_SERSOR_PS_NUM	2
 #define SKYD_SENSOR_MAX_NUM (SKYD_SERSOR_TEMP_NUM + SKYD_SERSOR_VOL_NUM + SKYD_SERSOR_FAN_NUM + SKYD_SERSOR_PS_NUM)
 
 

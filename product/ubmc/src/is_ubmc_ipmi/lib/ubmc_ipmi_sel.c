@@ -172,7 +172,7 @@ int open_i2c_dev(const char *dev,unsigned char slave_adr)
 	//set device address
 	if (ioctl(iic_fd,I2C_SLAVE, slave_adr) < 0)
 	{
-		UBMC_IPMI_ERRLOG("ERROR: Unable to set I2C slave address \n");
+		UBMC_IPMI_ERRLOG("ERROR: Unable to set I2C slave address 0x%x\n",slave_adr);
 		close(iic_fd);
 		return -1;
 	}

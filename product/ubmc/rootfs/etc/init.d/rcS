@@ -25,14 +25,17 @@ for serv_disable in ${DISABLED_SERVICE}; do
 done
 
 #load watchdog
-modprobe omap_wdt
-WATCHDOG_DEV=/dev/watchdog
-if [ -e ${WATCHDOG_DEV} ]; then
-	touch ${WATCHDOG_DEV}
+if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+	modprobe armada3700_wdt
 else
-	echo "${WATCHDOG_DEV} not found"
+	modprobe omap_wdt
+	WATCHDOG_DEV=/dev/watchdog
+	if [ -e ${WATCHDOG_DEV} ]; then
+		touch ${WATCHDOG_DEV}
+	else
+		echo "${WATCHDOG_DEV} not found"
+	fi
 fi
-
 #disable input echoing and start is_boot_monitor
 stty -echo
 /usr/sbin/is_boot_monitor.sh &
@@ -86,9 +89,19 @@ done
 
 chown -R :is_admin /var/images
 
-BOT_LED_BLU_BANK=2
-BOT_LED_BLU_PIN=22         
-BOT_LED_BLU_GPIO_NUM=$((BOT_LED_BLU_BANK*32+BOT_LED_BLU_PIN))
+if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+	BOT_LED_BLU_BANK=1
+	BOT_LED_BLU_PIN=7
+	if [ $BOT_LED_BLU_BANK -eq 1 ]; then         
+		BOT_LED_BLU_GPIO_NUM=$((476+BOT_LED_BLU_PIN))
+	elif [ $BOT_LED_BLU_BANK -eq 2 ];	then
+		BOT_LED_BLU_GPIO_NUM=$((446+BOT_LED_BLU_PIN))
+	fi
+else
+	BOT_LED_BLU_BANK=2
+	BOT_LED_BLU_PIN=22         
+	BOT_LED_BLU_GPIO_NUM=$((BOT_LED_BLU_BANK*32+BOT_LED_BLU_PIN))
+fi
 SYS_GPIO_PATH="/sys/class/gpio"
 SYS_GPIO_EXPORT_PATH="/sys/class/gpio/export"
 echo $BOT_LED_BLU_GPIO_NUM > $SYS_GPIO_EXPORT_PATH

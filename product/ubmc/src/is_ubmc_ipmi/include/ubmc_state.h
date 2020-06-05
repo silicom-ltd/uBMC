@@ -8,7 +8,7 @@
 #define UBMC_NAME_MAX			17//ipmi defined
 //the maximum value could be of sensor
 #define UBMC_LIMIT_SERSOR_TEMP       6
-#define UBMC_LIMIT_SERSOR_FAN        5
+#define UBMC_LIMIT_SERSOR_FAN        7
 #define UBMC_LIMIT_SERSOR_VOL        22
 #define UBMC_LIMIT_SERSOR_PS		 3
 typedef struct is_temp_state_s

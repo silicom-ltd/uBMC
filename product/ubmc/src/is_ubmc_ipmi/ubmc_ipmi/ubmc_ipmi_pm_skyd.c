@@ -140,6 +140,17 @@ struct ubmc_ipmi_sensor_thresh skyd_volt_1_8_thresh =
 	.status = UBMC_IPMI_NORMAL,
 };
 
+struct ubmc_ipmi_sensor_thresh skyd_volt_54v_thresh =
+{
+	.lnr = PS_54V_LNR,
+	.lcr = PS_54V_LCR,
+	.lnc = PS_54V_LNC,
+	.unc = PS_54V_UNC,
+	.ucr = PS_54V_UCR,
+	.unr = PS_54V_UNR,
+	.status = UBMC_IPMI_NORMAL,
+};
+
 int ubmc_ipmi_skyd_init(void *data,uint32_t flag)
 {
 	return 0;
@@ -186,7 +197,7 @@ static int skyd_sync_sensor_state_to_kernel(void* sensor_data ,void* ipmi_p,uint
 */
 	return BMC_SUCCESS;
 }
-
+#if 0
 static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_t value,void *output)
 {
 	//before set the value ,should check the value
@@ -264,7 +275,159 @@ static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_
 	}
 	return BMC_SUCCESS;
 }
+#endif
 
+struct gpio_s skyd_ps1_used_state = {.gpio_num = 448,.tri = TRI_NULL};
+struct gpio_s skyd_ps2_used_state = {.gpio_num = 449,.tri = TRI_NULL};
+static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_t value,void *output)
+{
+	//before set the value ,should check the value
+	ubmc_sensor_event *ubmc_sensor_arry;
+	unsigned int interval_hour;
+	ubmc_sensor_arry = (ubmc_sensor_event *)sensor_data;
+	ipmi_sensor_type type = ubmc_sensor_arry->type;
+	uint8_t sub_type = ubmc_sensor_arry->sub_type;
+	uint8_t index = ubmc_sensor_arry->index_of_gui_array;
+	uint8_t sensornum = ubmc_sensor_arry->sensor_offset;
+	uint32_t is_fault = 0;
+	uint32_t is_warning = 0;
+	int ret;
+	int power_supply_present = 0;
+	uint8_t status = 0;
+	if(sensor_data == NULL)
+	{
+		ubmc_error(" sync_sensor_state_to_gui: (ubmc_sensor_arry == NULL)\n");
+		return BMC_FALSE;
+	}
+	if(!ubmc_ipmi_check_sensor_value_is_valid(value))
+	{
+		value = -1;
+	}
+	switch( type )
+	{
+		case UBMC_SENSOR_TEMP:
+			UBMC_SENSOR_SET_GUI_INT(temp_state,temp,index,value);
+			// set the peak value when the value is smaller the value
+			//the value maybe is a negative number
+			if( UBMC_SENSOR_GET_GUI_INT(temp_state,peak,index) < value ){
+				UBMC_SENSOR_SET_GUI_INT(temp_state,peak,index,value);
+			}
+			if( UBMC_SENSOR_GET_GUI_STR(temp_state,name,index)[0] == '\0' ){
+				UBMC_SENSOR_SET_GUI_STR(temp_state,name,index,sensor_events[sensornum]->sensor_name);
+			}
+			break;
+		case UBMC_SENSOR_VOL:
+			//printf("sensor num is %d ,index is %d \n",sensornum,index);
+			if(sub_type == 0)	//for normal type
+			{
+				UBMC_SENSOR_SET_GUI_INT(vol_state,voltage,index,value);
+				if( UBMC_SENSOR_GET_GUI_STR(vol_state,name,index)[0] == '\0' )
+				{
+					UBMC_SENSOR_SET_GUI_STR(vol_state,name,index,sensor_events[sensornum]->sensor_name);
+				}
+			}
+			else if(sub_type == 1)	//for power supply
+			{
+
+				UBMC_SENSOR_SET_GUI_STR(power_supply_state,name,index,sensor_events[sensornum]->sensor_name);
+				UBMC_SENSOR_SET_GUI_INT(power_supply_state,voltage_out,index,value);
+				if(index == 0)
+				{
+					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
+					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
+				}
+				else if(index == 1)
+				{
+					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
+					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
+				}
+				else if(index == 2)
+				{
+					if(value > 0)
+					{
+						UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,1);
+					}
+					else
+					{
+						UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,0);
+					}
+
+				}
+				if( UBMC_SENSOR_GET_GUI_STR(power_supply_state,name,index)[0] == '\0')
+				{
+					UBMC_SENSOR_SET_GUI_STR(power_supply_state,name,index,sensor_events[sensornum]->sensor_name);
+				}
+			//	ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&status,0);
+				if(status > 0)
+				{
+					if((status & 0x95) > 0)	//refer to PMbus spec
+					{
+						UBMC_SENSOR_SET_GUI_INT(power_supply_state,fault,index,1);
+					}
+					else
+					{
+						UBMC_SENSOR_SET_GUI_INT(power_supply_state,warning,index,1);
+					}
+				}
+				else
+				{
+					UBMC_SENSOR_SET_GUI_INT(power_supply_state,fault,index,0);
+					UBMC_SENSOR_SET_GUI_INT(power_supply_state,warning,index,0);
+
+				}
+
+			}
+			else
+			{
+				;
+			}
+
+			break;
+		case UBMC_SENSOR_FAN:
+
+			UBMC_SENSOR_SET_GUI_INT(fan_state,speed,index,value);
+			if( !UBMC_SENSOR_GET_GUI_INT(fan_state,status,index) ){
+				UBMC_SENSOR_SET_GUI_INT(fan_state,status,index,1);
+			}
+			//to set runtime of fan
+			//disable this function
+			//interval_hour = ubmc_ipmi_get_rt_interval(&g_runtime)/3600;
+			//UBMC_SENSOR_SET_GUI_INT(fan_state,run_time,index,interval_hour);
+
+			if( UBMC_SENSOR_GET_GUI_STR(fan_state,name,index)[0] == '\0' ){
+				UBMC_SENSOR_SET_GUI_STR(fan_state,name,index,sensor_events[sensornum]->sensor_name);
+			}
+			//set fan fault status
+			if(ubmc_sensor_arry->read_value_mode == FILE_MODE)
+			{
+				if(ubmc_sensor_arry->sensor_fault_path[0] != '\0')
+				{
+					if( ubmc_get_sys_file_content(ubmc_sensor_arry->sensor_fault_path,&is_fault) == BMC_FALSE )
+					{
+						ubmc_debug(" ubmc_get_sys_file_content  get sensor fault state Error ! \n");
+					}
+					UBMC_SENSOR_SET_GUI_INT(fan_state,fault,index,is_fault);
+					//set fan warning status
+					if(ubmc_sensor_arry->thresh.status > NO_EVENT)
+					{
+						is_warning = 1;
+					}
+					UBMC_SENSOR_SET_GUI_INT(fan_state,warning,index,is_warning);
+				}
+			}
+			else if(ubmc_sensor_arry->read_value_mode == DEV_MODE)
+			{
+				;
+			}
+
+			break;
+		default:
+			ubmc_error("Error type : %d \n",type);
+			return BMC_FALSE;
+			break;
+	}
+	return BMC_SUCCESS;
+}
 static int skyd_event_handler(void* sensor_data ,void* ipmi_p,uint32_t evt_flag,void *output)
 {
 	ubmc_sensor_event *ubmc_sensor_arry;
@@ -307,7 +470,7 @@ static int skyd_update_sensor_state_callback(void* sensor_data ,void* private_da
 	ubmc_sensor_event *ubmc_sensor_arry;
 	ubmc_sensor_arry = (ubmc_sensor_event *)sensor_data;
 	//check parameters
-	if( ubmc_sensor_arry == NULL || !ubmc_sensor_arry->sensor_value_path || *ubmc_sensor_arry->sensor_value_path == '\0' )
+	if( ubmc_sensor_arry == NULL )
 	{
 		return BMC_FALSE;
 	}
@@ -336,10 +499,9 @@ static int skyd_update_sensor_state_callback(void* sensor_data ,void* private_da
 	}
 	else if(ubmc_sensor_arry->read_value_mode == DEV_MODE)
 	{
-		if( ubmc_get_dev_file_content(ubmc_sensor_arry->sensor_dev_name,&value) == BMC_FALSE )
+		if( ubmc_sensor_arry->sensor_read_dev_value_handler(ubmc_sensor_arry ,NULL,0,&value) < 0)
 		{
-			//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_file_content Error ! \n");
-			//return BMC_FALSE;
+			//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_dev_content Error ! \n");
 			//do not return ,just set value to -1,means can not get the value ,N/A
 			value = -1;
 		}
@@ -384,7 +546,118 @@ static int skyd_update_sensor_state_callback(void* sensor_data ,void* private_da
 	//printf("value is %ld path %s \n",value,ubmc_sensor_arry->sensor_value_path);
 	return BMC_SUCCESS;
 }
+static int skyd_sensor_read_dev_value(void* sensor_data ,void* private_date,uint32_t flag,void *output)
+{
+	ubmc_sensor_event *ubmc_sensor_arry;
+	ubmc_sensor_arry = (ubmc_sensor_event *)sensor_data;
+	unsigned int value = 0;
+	unsigned short val = 0;
+	unsigned int result = 0;
+	int ret = 0;
+	float fvalue;
+	if(ubmc_sensor_arry->dev_adr == CPU_TEMP_DEVICE_ADDR)
+	{
+		switch (ubmc_sensor_arry->sensor_value_reg)
+		{
+			case CPU_TEMP_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+				val = htons(val);
+				//value = val & 0x0ff;
+				//printf("temp1 is 0x%x \n",ret);
+				value = value*1000;
+			break;
+			default:
+			//ubmc_debug(" Begin to gather sensors' data \n");
+			break;
+		}
+	}
+	else if(ubmc_sensor_arry->dev_adr == PS1_DEVICE_ADR ||  ubmc_sensor_arry->dev_adr == PS2_DEVICE_ADR)
+	{
+		switch (ubmc_sensor_arry->sensor_value_reg)
+		{
+			case PS_DEVICE_FAN_VAL_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+				value = val;
+				printf("get the fan speed %d ret is %d \n",value,ret);
+			break;
+			case PS_DEVICE_VO_VAL_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+				if(ret < 0)
+				{
+					break;
+				}
+				printf("get the val %d ret is %d \n",val,ret);
+				//ubmc_pmbus_get_linear_value(val,&fvalue);
+				value = 2*0x17*val; //converted to mv
 
+			break;
+			case PS_DEVICE_TEMP_VAL_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+				printf("get the temp %d ret is %d \n",val,ret);
+				value = val;
+			break;
+			default:
+			//ubmc_debug(" Begin to gather sensors' data \n");
+			break;
+		}
+	}
+	else if(ubmc_sensor_arry->dev_adr == PS_12_V_DEVICE_ADR)
+	{
+		switch (ubmc_sensor_arry->sensor_value_reg)
+		{
+			case PS_DEVICE_FAN_VAL_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+
+			break;
+			case PS_DEVICE_VO_VAL_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+				if(ret < 0)
+				{
+					break;
+				}
+				//ubmc_pmbus_get_linear_value(value,&fvalue);
+				//printf("vo is %f %d \n",fvalue,value);
+				fvalue = val/4096.0;
+				value = fvalue*1000; //converted to mv
+			break;
+			case PS_DEVICE_TEMP_VAL_REG:
+				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
+				value = val /2;
+			break;
+			default:
+			//ubmc_debug(" Begin to gather sensors' data \n");
+			break;
+		}
+	}
+	else
+	{
+		ubmc_debug("Unknow device 0x%x:0x%x \n",ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg);
+		return -1;
+	}
+	if(ret < 0)
+	{
+		//ubmc_debug("Read value from 0x%x:0x%x fail \n",ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg);
+		return -1;
+	}
+	*(unsigned int*)output = value;
+	return BMC_SUCCESS;
+}
+
+static int skyd_sensor_read_file_value(void* sensor_data ,void* private_date,uint32_t flag,void *value)
+{
+	ubmc_sensor_event *ubmc_sensor_arry;
+	ubmc_sensor_arry = (ubmc_sensor_event *)sensor_data;
+	int ret;
+	int temp;
+	ret = ubmc_get_sys_file_content(ubmc_sensor_arry->sensor_value_path,&temp);
+	if(ret < 0)
+	{
+		//if(g_debug_info_cnt ++ <= 10) ubmc_debug(" ubmc_get_sys_file_content Error ! file path:%s \n",ubmc_sensor_arry->sensor_value_path);
+		return -1;
+	}
+	*(int *)value = temp;
+	return BMC_SUCCESS;
+}
 struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 {
 		{
@@ -433,6 +706,58 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.k2 = 0,
 				.ipmitool_factor.minification = 1000
 
+		},
+		{
+				.dev_name = SKYD_POWER_SUPPLY_DEV,
+				.sensor_type = UBMC_SENSOR_TEMP,
+				.sensor_name = "PS1_TEMP",
+				.sensor_filename_flag = 0,
+				.sensor_sys_path_suffix = "device",
+				//.sensor_channel_id = 3,
+				.index_of_gui_array = 2,
+				.sensor_id = 3,
+				.sensor_thresh = &skyd_temp_host_cpu_thresh,
+				.sensor_value_multiple = 1,
+				.sensor_read_value_mode = DEV_MODE,
+				.dev_adr = PS1_DEVICE_ADR,
+				.sensor_read_value_reg = PS_DEVICE_TEMP_VAL_REG,
+				.sensor_read_dev_value_handler = skyd_sensor_read_dev_value,
+				.sensor_read_file_value_handler = skyd_sensor_read_file_value,
+				.update_sensor_state = skyd_update_sensor_state_callback,
+				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
+				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
+				.sensor_event_handler = skyd_event_handler,
+				.ipmitool_factor.m	= 1,
+				.ipmitool_factor.b	= 0,
+				.ipmitool_factor.k1 = 0,
+				.ipmitool_factor.k2 = 0,
+				.ipmitool_factor.minification = 1000
+		},
+		{
+				.dev_name = SKYD_POWER_SUPPLY_DEV,
+				.sensor_type = UBMC_SENSOR_TEMP,
+				.sensor_name = "PS2_TEMP",
+				.sensor_filename_flag = 0,
+				.sensor_sys_path_suffix = "device",
+				//.sensor_channel_id = 4,
+				.index_of_gui_array = 3,
+				.sensor_id = 4,
+				.sensor_thresh = &skyd_temp_host_cpu_thresh,
+				.sensor_value_multiple = 1,
+				.sensor_read_value_mode = DEV_MODE,
+				.dev_adr = PS2_DEVICE_ADR,
+				.sensor_read_value_reg = PS_DEVICE_TEMP_VAL_REG,
+				.sensor_read_dev_value_handler = skyd_sensor_read_dev_value,
+				.sensor_read_file_value_handler = skyd_sensor_read_file_value,
+				.update_sensor_state = skyd_update_sensor_state_callback,
+				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
+				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
+				.sensor_event_handler = skyd_event_handler,
+				.ipmitool_factor.m	= 1,
+				.ipmitool_factor.b	= 0,
+				.ipmitool_factor.k1 = 0,
+				.ipmitool_factor.k2 = 0,
+				.ipmitool_factor.minification = 1000
 		},
 		{
 				.dev_name = SKYD_FAN_DEV_NAME,
@@ -535,6 +860,58 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_thresh = &skyd_fan1_thresh,
 				.sensor_value_multiple = 1,
 				.sensor_read_value_mode = FILE_MODE,
+				.update_sensor_state = skyd_update_sensor_state_callback,
+				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
+				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
+				.sensor_event_handler = skyd_event_handler,
+				.ipmitool_factor.m	= 100,
+				.ipmitool_factor.b	= 0,
+				.ipmitool_factor.k1 = 0,
+				.ipmitool_factor.k2 = 0,
+				.ipmitool_factor.minification = 100
+		},
+		{
+				.dev_name = SKYD_POWER_SUPPLY_DEV,
+				.sensor_type = UBMC_SENSOR_FAN,
+				.sensor_name = "PS1_FAN_TACH",
+				.sensor_filename_flag = 0,
+				.sensor_sys_path_suffix = "device",
+				.sensor_channel_id = 6,
+				.index_of_gui_array = 5,
+				.sensor_id = 6,
+				.sensor_thresh = &skyd_fan1_thresh,
+				.sensor_value_multiple = 1,
+				.sensor_read_value_mode = DEV_MODE,
+				.dev_adr = PS1_DEVICE_ADR,
+				.sensor_read_value_reg = PS_DEVICE_FAN_VAL_REG,
+				.sensor_read_dev_value_handler = skyd_sensor_read_dev_value,
+				.sensor_read_file_value_handler = skyd_sensor_read_file_value,
+				.update_sensor_state = skyd_update_sensor_state_callback,
+				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
+				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
+				.sensor_event_handler = skyd_event_handler,
+				.ipmitool_factor.m	= 100,
+				.ipmitool_factor.b	= 0,
+				.ipmitool_factor.k1 = 0,
+				.ipmitool_factor.k2 = 0,
+				.ipmitool_factor.minification = 100
+		},
+		{
+				.dev_name = SKYD_POWER_SUPPLY_DEV,
+				.sensor_type = UBMC_SENSOR_FAN,
+				.sensor_name = "PS2_FAN_TACH",
+				.sensor_filename_flag = 0,
+				.sensor_sys_path_suffix = "device",
+				.sensor_channel_id = 7,
+				.index_of_gui_array = 6,
+				.sensor_id = 7,
+				.sensor_thresh = &skyd_fan1_thresh,
+				.sensor_value_multiple = 1,
+				.sensor_read_value_mode = DEV_MODE,
+				.dev_adr = PS2_DEVICE_ADR,
+				.sensor_read_value_reg = PS_DEVICE_FAN_VAL_REG,
+				.sensor_read_dev_value_handler = skyd_sensor_read_dev_value,
+				.sensor_read_file_value_handler = skyd_sensor_read_file_value,
 				.update_sensor_state = skyd_update_sensor_state_callback,
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
@@ -722,6 +1099,59 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.ipmitool_factor.k2 = -3,
 				.ipmitool_factor.minification = 150
 		},
-
+		{
+				.dev_name = SKYD_POWER_SUPPLY_DEV,
+				.sensor_type = UBMC_SENSOR_VOL,
+				.sub_type = 1,
+				.sensor_filename_flag = 0,
+				.sensor_name = "PS1_V12",
+				.sensor_sys_path_suffix = "",
+				//.sensor_channel_id = 15,	//not used
+				.index_of_gui_array = 0,
+				.sensor_id = 1,
+				.sensor_thresh = &skyd_volt_54v_thresh,
+				.sensor_value_multiple = 1,
+				.sensor_read_value_mode = DEV_MODE,
+				.dev_adr = PS1_DEVICE_ADR,
+				.sensor_read_value_reg = PS_DEVICE_VO_VAL_REG,
+				.update_sensor_state = skyd_update_sensor_state_callback,
+				.sensor_read_dev_value_handler = skyd_sensor_read_dev_value,
+				.sensor_read_file_value_handler = skyd_sensor_read_file_value,
+				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
+				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
+				.sensor_event_handler = skyd_event_handler,
+				.ipmitool_factor.m	= 5,
+				.ipmitool_factor.b	= 0,
+				.ipmitool_factor.k1 = 0,
+				.ipmitool_factor.k2 = -1,
+				.ipmitool_factor.minification = 500
+		},
+		{
+				.dev_name = SKYD_POWER_SUPPLY_DEV,
+				.sensor_type = UBMC_SENSOR_VOL,
+				.sub_type = 1,
+				.sensor_filename_flag = 0,
+				.sensor_name = "PS2_V12",
+				.sensor_sys_path_suffix = "",
+				//.sensor_channel_id = 14,		//not used
+				.index_of_gui_array = 1,
+				.sensor_id = 2,
+				.sensor_thresh = &skyd_volt_54v_thresh,
+				.sensor_value_multiple = 1,
+				.sensor_read_value_mode = DEV_MODE,
+				.dev_adr = PS2_DEVICE_ADR,
+				.sensor_read_value_reg = PS_DEVICE_VO_VAL_REG,
+				.update_sensor_state = skyd_update_sensor_state_callback,
+				.sensor_read_dev_value_handler = skyd_sensor_read_dev_value,
+				.sensor_read_file_value_handler = skyd_sensor_read_file_value,
+				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
+				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
+				.sensor_event_handler = skyd_event_handler,
+				.ipmitool_factor.m	= 5,
+				.ipmitool_factor.b	= 0,
+				.ipmitool_factor.k1 = 0,
+				.ipmitool_factor.k2 = -1,
+				.ipmitool_factor.minification = 500
+		},
 
 };
