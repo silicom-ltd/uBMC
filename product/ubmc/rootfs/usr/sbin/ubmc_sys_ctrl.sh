@@ -9,6 +9,30 @@ flash_img=/tmp/bmc_cli_upload_bios.img
 host_bios_backup_auto=/var/images/host_bios_auto_backup.bin
 host_bios_backup_manual=/var/images/host_bios_manual_backup.bin
 
+#$1 is 0 or 1 
+#1 means enable host falsh
+#0 means disable host falsh
+control_host_flash_mux()
+{
+	UBMC_XS_SLM_FLASH_MUX_PIN=27
+	#BANK 2 PIN 27 
+	UBMC_SKYD_FLASH_MUX_PIN=473  
+	PRODUCT_SUB=$(get_product_sub_name)
+	if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+		PINNUM=$UBMC_SKYD_FLASH_MUX_PIN
+	else
+		PINNUM=$UBMC_XS_SLM_FLASH_MUX_PIN
+	fi
+	if [ -d /sys/class/gpio/gpio$PINNUM ]; then
+		echo $1 > /sys/class/gpio/gpio$PINNUM/value
+	else
+		echo $PINNUM > /sys/class/gpio/export
+		echo $1 > /sys/class/gpio/gpio$PINNUM/value 
+		if [ $? != 0 ]; then
+			echo "error"
+		fi
+	fi
+}
 prepare_init()
 {
     ori_str=$(echo $($prog -p))
@@ -27,12 +51,14 @@ mount_mtd()
 		rmmod m25p80
 	fi
 	echo 1 > /sys/class/gpio/gpio27/value
+	#control_host_flash_mux 1
 	modprobe m25p80
 }
 
 umount_mtd()
 {
 	echo 0 > /sys/class/gpio/gpio27/value
+	#control_host_flash_mux 0
 	rmmod m25p80
 }
 
