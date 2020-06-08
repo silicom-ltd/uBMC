@@ -333,12 +333,12 @@ static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_
 				UBMC_SENSOR_SET_GUI_INT(power_supply_state,voltage_out,index,value);
 				if(index == 0)
 				{
-					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
+					power_supply_present = 1;//ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
 					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
 				}
 				else if(index == 1)
 				{
-					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
+					power_supply_present = 1;//ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
 					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
 				}
 				else if(index == 2)
@@ -578,7 +578,7 @@ static int skyd_sensor_read_dev_value(void* sensor_data ,void* private_date,uint
 			case PS_DEVICE_FAN_VAL_REG:
 				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
 				value = val;
-				printf("get the fan speed %d ret is %d \n",value,ret);
+				//printf("get the fan speed %d ret is %d \n",value,ret);
 			break;
 			case PS_DEVICE_VO_VAL_REG:
 				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
@@ -586,14 +586,14 @@ static int skyd_sensor_read_dev_value(void* sensor_data ,void* private_date,uint
 				{
 					break;
 				}
-				printf("get the val %d ret is %d \n",val,ret);
+				//printf("get the val %d ret is %d \n",val,ret);
 				//ubmc_pmbus_get_linear_value(val,&fvalue);
-				value = 2*0x17*val; //converted to mv
+				value = 2*9*val/10; //converted to mv
 
 			break;
 			case PS_DEVICE_TEMP_VAL_REG:
 				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
-				printf("get the temp %d ret is %d \n",val,ret);
+				//printf("get the temp %d ret is %d \n",val,ret);
 				value = val;
 			break;
 			default:
@@ -1147,11 +1147,11 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
 				.sensor_event_handler = skyd_event_handler,
-				.ipmitool_factor.m	= 5,
+				.ipmitool_factor.m	= 100,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -1,
-				.ipmitool_factor.minification = 500
+				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.minification = 100
 		},
 
 };
