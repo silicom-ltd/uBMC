@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-06-04 12:13:33.322077205 +0800
-@@ -0,0 +1,536 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dts	2020-06-08 14:06:58.367126948 +0800
+@@ -0,0 +1,537 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -272,6 +272,7 @@
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&i2c1_pins>;
 +	status = "okay";
++	clock-frequency = <100000>;
 +	expander0: pca953x@22 {
 +		compatible = "nxp,pca9555";
 +        #gpio-cells = <2>;
@@ -283,7 +284,7 @@
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&i2c2_pins>;
 +	status = "okay";
-+	/*clock-frequency = <100000>;*/
++	clock-frequency = <100000>;
 +	bmc_rtc: pcf8523tk@68{
 +		compatible = "nxp,pcf8523";
 +		reg = <0x68>;
@@ -402,12 +403,12 @@
 +	w25q256@1 {
 +		reg = <1>;
 +		compatible =  "winbond,w25q256", "jedec,spi-nor";
-+		spi-max-frequency = <10000000>;
++		spi-max-frequency = <30000000>;
 +		m25p,fast-read;
 +	};
 +};
 +/*GPIO1 */
-+/*&pinctrl_nb GPIO1 gpiochip0*/
++/*&pinctrl_nb GPIO1 gpiochip0 476*/
 +&gpionb
 +{
 +	ngpios = <36>;
@@ -417,14 +418,14 @@
 +		"2",
 +		"3",
 +		"4",
-+		"LED_BMC_BOT_RED_N",	/* "5",*/
-+		"LED_BMC_BOT_GRN_N",	/*"6",*/
-+		"LED_BMC_BOT_BLU_N",	/*"7",*/
++		"LED_BMC_BOT_RED_N",	/* "5"  481,*/
++		"LED_BMC_BOT_GRN_N",	/*"6",	482*/
++		"LED_BMC_BOT_BLU_N",	/*"7",	483*/
 +		"8",
 +		"9",
 +		"10",
-+		"HOST_PLTRST_N",	/*"11",*/
-+		"HOST_S45_N",	/*"12",*/
++		"HOST_PLTRST_N",	/*"11",487 */
++		"HOST_S45_N",	/*"12",		488*/
 +		"HOST_S3_N",		/*"13",*/
 +		"HOST_ERROR_N",	/*"14",*/
 +		"HOST_THERMTRIP_N",	/*"15",*/
@@ -449,7 +450,7 @@
 +		"34",
 +		"35";
 +};
-+/*&pinctrl_sb GPIO2 gpiochip1*/
++/*&pinctrl_sb GPIO2 gpiochip1 446*/
 +&gpiosb
 +{
 +	ngpios = <30>;
@@ -458,8 +459,8 @@
 +		"1",
 +		"PSU_RIGHT_PWRGD",	/*"2",448*/
 +		"PSU_LEFT_PWRGD",	/*"3",449*/
-+		"BMC_RSTBTN_OUT_N",		/*"4",*/
-+		"BMC_PWRBTN_OUT_N",		/*"5",*/
++		"BMC_RSTBTN_OUT_N",		/*"4" 450,*/
++		"BMC_PWRBTN_OUT_N",		/*"5" 451,*/
 +		"6",
 +		"7",
 +		"8",
@@ -475,8 +476,8 @@
 +		"18",
 +		"19",
 +		"20",
-+		"BMC_FP_BUTTON_OVERRIDE",	/*"21",*/
-+		"FP_RSTBTN_N",			/*"22",*/
++		"BMC_FP_BUTTON_OVERRIDE",	/*"21",467*/
++		"FP_RSTBTN_N",				/*"22",*/
 +		"FP_PWRBTN_N",			/*"23",*/
 +		"HOST_BOOT_COMPLETE_N",	/*"24",*/
 +		"DYING_GASP_N",			/*"25",*/
@@ -550,7 +551,7 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_esp.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-06-04 13:37:07.439553992 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_esp.dtsi	2020-06-05 12:26:57.490481577 +0800
 @@ -0,0 +1,586 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
@@ -714,7 +715,7 @@
 +				#size-cells = <0>;
 +				clocks = <&nb_periph_clk 10>;
 +				interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
-+				mrvl,i2c-fast-mode;
++			/*	mrvl,i2c-fast-mode;*/
 +				status = "disabled";
 +			};
 +
@@ -725,7 +726,7 @@
 +				#size-cells = <0>;
 +				clocks = <&nb_periph_clk 9>;
 +				interrupts = <GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>;
-+				mrvl,i2c-high-mode;
++			/*	mrvl,i2c-fast-mode;*/
 +				status = "disabled";
 +			};
 +
