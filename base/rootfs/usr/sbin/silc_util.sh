@@ -23,6 +23,10 @@ get_product_sub_name()
 
 get_vendor_name()
 {
-	/usr/sbin/is_upgrade.sh -o
+	if [ -e /etc/product/vendor ]; then
+		cat /etc/product/vendor 2>/dev/null
+	else
+		/usr/sbin/is_upgrade.sh -o
+	fi
 }
 

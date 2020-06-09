@@ -60,9 +60,9 @@ static int lock_file;
 
 #define PRODUCT_SUB_PATH "/etc/product_sub.txt"
 #define UBMC_SUB_NAME_MAX 20
-#define UBMC_ESP_NAME "UBMC_ESP"
+#define UBMC_M_NAME "UBMC_M"
 #define UBMC_DEFAULT 0
-#define UBMC_ESP 1
+#define UBMC_M 1
 int get_machine_prod_sub(void)
 {
 	int ret;
@@ -88,9 +88,9 @@ int get_machine_prod_sub(void)
 	if (buf[strlen(buf)-1] == '\n')
 		buf[strlen(buf)-1] = '\0';
 	strcpy(prod_sub_name,buf);
-	if(strcmp(prod_sub_name,UBMC_ESP_NAME) == 0)
+	if(strcmp(prod_sub_name,UBMC_M_NAME) == 0)
 	{
-		ubmc_sub_type = UBMC_ESP;
+		ubmc_sub_type = UBMC_M;
 	}
 	else
 	{
@@ -121,7 +121,7 @@ int ubmc_sys_ctrl_gpio_init_by_name(const char **gpio_pin_name,unsigned int *pin
 		/*
 		 * The formulation is different between platforms
 		 * */
-		if( ubmc_sub_type == UBMC_ESP)
+		if( ubmc_sub_type == UBMC_M)
 		{
 			if(bank_num == 0)
 			{

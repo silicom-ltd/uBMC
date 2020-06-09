@@ -4,7 +4,7 @@
 #if not ,using the time when it was build 
 #set the system date from RTC
 PRODUCT_SUB=$(cat /etc/product_sub.txt 2>/dev/null)
-if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
     hwclock -s -u -f /dev/rtc0
     if [ $? != "0" ];then
         date -s "$(stat -c %y /etc/hostname)"

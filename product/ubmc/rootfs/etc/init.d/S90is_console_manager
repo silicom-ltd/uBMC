@@ -17,7 +17,7 @@ start() {
 		echo "load uart-sim kmod"
 	fi
 	#change permission on socket location
-	if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+	if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 #Fix me
 		/usr/bin/is_console_manager -H /dev/ttyMV1 -O /dev/ttyMV0 &
 		killall -q is_console_manager

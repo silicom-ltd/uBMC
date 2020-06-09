@@ -6,7 +6,7 @@ if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
 	return
 fi
 # When we install IMG for armada-37xx ,we should use usb storage
-if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 	if [ -b /dev/sda1 ] && [ -b /dev/mmcblk0 ]; then
 		DUAL_DEV=1
 		SRC_DEV=/dev/sda1

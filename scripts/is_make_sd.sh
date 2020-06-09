@@ -43,8 +43,8 @@ SDTMP=$(mktemp -d) || error_quit "Failed to create temp mount dir"
 test -z "$1" && error_quit "Please specify the sd card device"
 test -z "$2" && error_quit "Please specify the image dir"
 test -z "$3" && error_quit "Please specify the image to install"
-if [ ${PRODUCT_SUB} == "UBMC_ESP" ]; then
-${BASE_ROOT}/scripts/is_make_sd_install.sh $1 $2 $3 ${BR2_ROOT}/product/scripts/upgrade/esp_sd_env
+if [ ${PRODUCT_SUB} == "UBMC_M" ]; then
+${BASE_ROOT}/scripts/is_make_sd_install.sh $1 $2 $3 ${BR2_ROOT}/product/scripts/upgrade/mvebu_sd_env
 else
 ${BASE_ROOT}/scripts/is_make_sd_install.sh $1 $2 $3 ${BR2_ROOT}/product/scripts/upgrade/sdcard_env
 fi

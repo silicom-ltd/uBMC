@@ -25,7 +25,7 @@ for serv_disable in ${DISABLED_SERVICE}; do
 done
 
 #load watchdog
-if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 	modprobe armada3700_wdt
 else
 	modprobe omap_wdt
@@ -89,7 +89,7 @@ done
 
 chown -R :is_admin /var/images
 
-if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 	BOT_LED_BLU_BANK=1
 	BOT_LED_BLU_PIN=7
 	if [ $BOT_LED_BLU_BANK -eq 1 ]; then         
