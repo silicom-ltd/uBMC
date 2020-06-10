@@ -54,7 +54,7 @@ int is_cli_cmd_reload_go_confirm()
 	else
 		silc_cli_print("%% Can not query the configuration state, maybe lose unsaved configuration!");
 
-	if(silc_cli_get_product_info()->reboot_warn)
+	if(silc_cli_get_product_info() && silc_cli_get_product_info()->reboot_warn)
 		reboot_warn_msg = silc_cli_get_product_info()->reboot_warn;
 	return silc_cli_cmd_confirm(reboot_warn_msg, NULL, "%% Cancelled");
 }
@@ -139,7 +139,7 @@ int is_cli_cmd_reload_go(silc_list* p_token_list)
 		}
 		else if(strcmp(p_token->name, "halt") == 0)
 		{
-			if(silc_cli_get_product_info()->halt_support)
+			if(silc_cli_get_product_info() && silc_cli_get_product_info()->halt_support)
 				sprintf(req_info.path, IS_CLI_PATH_ACTION_SYSTEM_HALT);
 
 		}

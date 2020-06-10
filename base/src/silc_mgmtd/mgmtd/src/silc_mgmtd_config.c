@@ -830,12 +830,32 @@ ERROR_OUT:
 #define PROD_DEFCONF_DIR	"/etc/prod_defconfig"
 #define PROD_VENDOR_DIR		"/etc/prod_defconfig/vendor_config"
 
+int silc_mgmtd_cfg_check_product_default_config(silc_cstr cfg_name, silc_cstr cfg_path)
+{
+	if(!cfg_name)
+		return 0;
+
+	sprintf(cfg_path, PROD_DEFCONF_DIR"/%s.default_config", cfg_name);
+	if(access(cfg_path, F_OK))
+		return 0;
+
+	return 1;
+}
+
 int silc_mgmtd_cfg_read_product_default_config()
 {
+	silc_mgmtd_product_info* prod_info = silc_mgmtd_memdb_get_product_info();
 	char cfg_path[200];
 
-	sprintf(cfg_path, PROD_DEFCONF_DIR"/%s.default_config",
-			SILC_MGMTD_PRODUCT_NAME);
+	//first find the cfg for prod_number, then prod_sub, and prod the last
+	if(!silc_mgmtd_cfg_check_product_default_config(prod_info->product_number, cfg_path) &&
+			!silc_mgmtd_cfg_check_product_default_config(prod_info->product_sub, cfg_path) &&
+			!silc_mgmtd_cfg_check_product_default_config(prod_info->product_name, cfg_path))
+	{
+		SILC_ERR("Product default config not found");
+		return 0;
+	}
+
 	return silc_mgmtd_cfg_read_config_from_file_core(cfg_path, silc_true);
 }
 
@@ -845,6 +865,8 @@ int silc_mgmtd_cfg_read_oem_default_config()
 
 	sprintf(cfg_path, PROD_VENDOR_DIR"/%s/%s.default_config",
 			silc_mgmtd_if_get_vendor_name(), silc_mgmtd_if_get_vendor_name());
+	if(access(cfg_path, F_OK))
+		return 0;
 	return silc_mgmtd_cfg_read_config_from_file_core(cfg_path, silc_true);
 }
 

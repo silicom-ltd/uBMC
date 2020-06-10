@@ -252,9 +252,9 @@ int is_cli_cmd_get_image(silc_list* p_token_list, silc_bool *b_manufacture_upgra
 	silc_bool b_manufacture_vendor = silc_false;
 	silc_cstr user = NULL, passwd = NULL, url = NULL, image=NULL;
 
-	if(silc_cli_get_product_info()->get_manufacture_mode_func)
+	if(silc_cli_get_product_info())
 	{
-		b_manufacture_vendor = silc_cli_get_product_info()->get_manufacture_mode_func();
+		b_manufacture_vendor = silc_cli_get_product_info()->manufacture_support;
 	}
 
 	/* Token sequence: upgrade [manufacture] file-url XXXX */

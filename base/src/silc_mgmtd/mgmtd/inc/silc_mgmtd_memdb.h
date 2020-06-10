@@ -139,9 +139,6 @@ typedef struct silc_mgmtd_config_cmd_s
 
 typedef int (*silc_mgmtd_default_node_add_func)(void);
 typedef void (*silc_mgmtd_default_node_del_func)(void);
-typedef int (*silc_mgmtd_get_node_func)(silc_mgmtd_node_info** p_node_list, int* p_node_cnt);
-typedef int (*silc_mgmtd_get_cberr_func)(silc_mgmtd_cberr_info** p_cberr_list, int* p_cberr_cnt);
-typedef int (*silc_mgmtd_get_config_cmd_func)(silc_mgmtd_config_cmd_map** p_config_list, int* p_config_cnt);
 typedef int (*silc_mgmtd_set_init_config_func)(void);
 typedef int (*silc_mgmtd_custom_sys_halt_func)(void);
 typedef int (*silc_mgmtd_custom_sync_hw_clock)(void);
@@ -159,14 +156,22 @@ typedef struct silc_mgmtd_storage_path_s
 typedef struct silc_mgmtd_product_info_s
 {
 	silc_cstr product_name;
+	silc_cstr product_sub;
+	silc_cstr product_number;
 	uint32_t product_id;
-	silc_cstr device_name;
 	silc_cstr admin_name;
 	silc_cstr admin_shadow;
 	silc_cstr *vendor_list;
 	int vendor_cnt;
 	silc_mgmtd_storage_path * storage_list;
 	int	storage_cnt;
+
+	silc_mgmtd_node_info* node_list;
+	int node_cnt;
+	silc_mgmtd_cberr_info* cberr_list;
+	int cberr_cnt;
+	silc_mgmtd_config_cmd_map* config_list;
+	int config_cnt;
 
 	int multi_eth_support;	//management feature enable/disable
 	int permit_ip_support;	//managemnet feature enable/disable. permit ip is a simple ip blocking mechanism
@@ -176,14 +181,8 @@ typedef struct silc_mgmtd_product_info_s
 	int ipsec_support;
 
 	silc_mgmtd_default_node_add_func	default_node_add_func;
-	
+
 	silc_mgmtd_default_node_del_func	default_node_del_func;
-
-	silc_mgmtd_get_node_func get_node_func;
-
-	silc_mgmtd_get_cberr_func get_cberr_func;
-
-	silc_mgmtd_get_config_cmd_func get_config_cmd_func;
 
 	silc_mgmtd_set_init_config_func set_init_config_func;
 
@@ -198,6 +197,8 @@ typedef struct silc_mgmtd_product_info_s
 	silc_mgmtd_get_ttyd_cmd get_ttyd_cmd_func;//can return NULL
 
 }silc_mgmtd_product_info;
+
+typedef silc_mgmtd_product_info* (*silc_mgmtd_get_product_info_func)(void);
 
 #define silc_mgmtd_node_changed(p_node)		((p_node)->tmp_value.type == (p_node)->value.type && !silc_mgmtd_var_equal(&(p_node)->tmp_value, &(p_node)->value))
 #define silc_mgmtd_node_configured(p_node)	((p_node)->tmp_value.type == (p_node)->value.type)

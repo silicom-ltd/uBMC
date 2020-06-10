@@ -88,8 +88,12 @@ typedef struct silc_cli_product_info_s
 {
     silc_cstr product_name;
     uint32_t  product_id;
-	silc_cstr *vendor_list;
+
+    silc_cstr *vendor_list;
 	int vendor_cnt;
+
+	silc_cli_token_info* token_list;
+	int token_cnt;
 
 	silc_cstr reboot_warn;
 
@@ -97,18 +101,19 @@ typedef struct silc_cli_product_info_s
 	int whoami_support;
 	int halt_support;
 
-    silc_cli_get_token_func get_token_func;
+	int snmp_v3_only;
+	int snmp_threshold_enabled;
+	int snmp_show_engine_id;
+    int permit_ip_support;		//default enabled
+    int dns_support;		//default enabled
+    int show_http;		//default enabled
+
+    int manufacture_support;	//default false
 
     silc_cli_show_snmp_trap_control show_snmp_configure_trap_ctrl_func;
-	silc_cli_get_snmp_v3_only snmp_v3_only_func;
-	silc_cli_get_snmp_threshold_enabled snmp_threshold_enabled_func;
-	silc_cli_get_snmp_show_engine_id snmp_show_engine_id_func;
-    silc_cli_get_permit_ip_support permit_ip_support_func;		//default enabled
-    silc_cli_get_dns_support dns_support_func;		//default enabled
-    silc_cli_show_http_enabled show_http_func;		//default enabled
-
-    silc_cli_get_manufacture_mode get_manufacture_mode_func;	//default false
 }silc_cli_product_info;
+
+typedef silc_cli_product_info* (*silc_cli_get_product_info_func)(void);
 
 silc_cli_product_info* silc_cli_get_product_info(void);
 

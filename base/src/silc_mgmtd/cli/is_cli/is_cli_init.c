@@ -569,24 +569,32 @@ static silc_cli_product_info* load_product_info()
 	struct stat fs;
 	void *dl_handle;
 	char *filename = PRODUCT_LIB;
+	silc_cli_get_product_info_func get_product_info_func;
 	silc_cli_product_info* product_info = NULL;
 
 	if ((stat(filename, &fs)) != 0 || !(fs.st_mode & S_IFREG))
 	{
-		printf("%s: File does not exist.", filename);
+		printf("%s: File does not exist.\n", filename);
 		return NULL;
 	}
 
 	if ((dl_handle = dlopen(filename, RTLD_NOW)) == NULL)
 	{
-		printf("%s: dlopen %s", filename, dlerror());
+		printf("%s: dlopen %s\n", filename, dlerror());
 		return NULL;
 	}
 
-	product_info = (silc_cli_product_info*)dlsym(dl_handle, "cli_product_info");
+	get_product_info_func = dlsym(dl_handle, "cli_get_product_info");
+	if (get_product_info_func == NULL)
+	{
+		printf("%s: dlsym %s\n", filename, dlerror());
+		dlclose(dl_handle);
+		return NULL;
+	}
+	product_info = get_product_info_func();
 	if (product_info == NULL)
 	{
-		printf("%s: dlsym %s", filename, dlerror());
+		printf("Fail to get product info\n");
 		dlclose(dl_handle);
 		return NULL;
 	}
@@ -630,17 +638,14 @@ int is_cli_init()
 
     if(g_cli_product_info)
     {
-    	silc_cli_token_info* token_info_list;
-    	int token_info_cnt;
+    	silc_cli_token_info* token_info_list = g_cli_product_info->token_list;
+    	int token_info_cnt = g_cli_product_info->token_cnt;
 
-    	if(g_cli_product_info->get_token_func && 0 == g_cli_product_info->get_token_func(&token_info_list, &token_info_cnt))
-    	{
-			for(loop=0; loop<token_info_cnt; loop++)
-			{
-				if(silc_cli_token_add(&token_info_list[loop]) < 0)
-					return -1;
-			}
-    	}
+		for(loop=0; loop<token_info_cnt; loop++)
+		{
+			if(silc_cli_token_add(&token_info_list[loop]) < 0)
+				return -1;
+		}
     }
 
     return is_cli_user_init(); 

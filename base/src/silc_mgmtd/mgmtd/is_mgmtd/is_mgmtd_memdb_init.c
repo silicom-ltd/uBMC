@@ -424,6 +424,7 @@ static silc_mgmtd_product_info* load_product_info()
 	struct stat fs;
 	void *dl_handle;
 	char *filename = PRODUCT_LIB;
+	silc_mgmtd_get_product_info_func get_product_info_func;
 
 	if ((stat(filename, &fs)) != 0 || !(fs.st_mode & S_IFREG))
 	{
@@ -437,10 +438,17 @@ static silc_mgmtd_product_info* load_product_info()
 		return NULL;
 	}
 
-	s_silc_mgmtd_product_info = (silc_mgmtd_product_info*)dlsym(dl_handle, "mgmtd_product_info");
-	if (s_silc_mgmtd_product_info == NULL)
+	get_product_info_func = dlsym(dl_handle, "mgmtd_get_product_info");
+	if (get_product_info_func == NULL)
 	{
 		SILC_ERR("%s: dlsym %s", filename, dlerror());
+		dlclose(dl_handle);
+		return NULL;
+	}
+	s_silc_mgmtd_product_info = get_product_info_func();
+	if (s_silc_mgmtd_product_info == NULL)
+	{
+		SILC_ERR("Fail to get product info");
 		dlclose(dl_handle);
 		return NULL;
 	}
@@ -482,18 +490,15 @@ int is_mgmtd_memdb_init()
     }
     if(product_info)
     {
-    	silc_mgmtd_node_info* node_list;
-    	int node_cnt;
-    	if(product_info->get_node_func && 0 == product_info->get_node_func(&node_list, &node_cnt))
-    	{
-			for(loop=0; loop<node_cnt; loop++)
-			{
-				p_info = &node_list[loop];
-				if(silc_mgmtd_memdb_add_node(p_info->path, p_info->level, p_info->type,
-						p_info->val_type, p_info->val_str, p_info->cb, p_info->cb_timeout) < 0)
-					goto ERROR_OUT;
-			}
-    	}
+    	silc_mgmtd_node_info* node_list = product_info->node_list;
+    	int node_cnt = product_info->node_cnt;
+		for(loop=0; loop<node_cnt; loop++)
+		{
+			p_info = &node_list[loop];
+			if(silc_mgmtd_memdb_add_node(p_info->path, p_info->level, p_info->type,
+					p_info->val_type, p_info->val_str, p_info->cb, p_info->cb_timeout) < 0)
+				goto ERROR_OUT;
+		}
     }
 
     for(loop=0; loop<sizeof(s_silc_mgmtd_cberr_list)/sizeof(silc_mgmtd_cberr_info); loop++)
@@ -504,17 +509,14 @@ int is_mgmtd_memdb_init()
     }
     if(product_info)
     {
-    	silc_mgmtd_cberr_info* cberr_list;
-    	int cberr_cnt;
-    	if(product_info->get_cberr_func && 0 == product_info->get_cberr_func(&cberr_list, &cberr_cnt))
-    	{
-			for(loop=0; loop<cberr_cnt; loop++)
-			{
-				p_err = &cberr_list[loop];
-				if(silc_mgmtd_memdb_add_cb_err(p_err->path, p_err->num, p_err->info) < 0)
-					goto ERROR_OUT;
-			}
-    	}
+    	silc_mgmtd_cberr_info* cberr_list = product_info->cberr_list;
+    	int cberr_cnt = product_info->cberr_cnt;
+		for(loop=0; loop<cberr_cnt; loop++)
+		{
+			p_err = &cberr_list[loop];
+			if(silc_mgmtd_memdb_add_cb_err(p_err->path, p_err->num, p_err->info) < 0)
+				goto ERROR_OUT;
+		}
     }
 
     for(loop=0; loop<sizeof(s_silc_mgmtd_ref_list)/sizeof(silc_mgmtd_ref_info); loop++)

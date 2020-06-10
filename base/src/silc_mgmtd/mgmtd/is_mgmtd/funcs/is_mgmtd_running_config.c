@@ -383,11 +383,10 @@ int is_mgmtd_config_cmd_init()
     init_done = 1;
 
     product_info = silc_mgmtd_memdb_get_product_info();
-    if(product_info && product_info->get_config_cmd_func &&
-    		0 != product_info->get_config_cmd_func(&config_list, &config_cnt))
+    if(product_info)
     {
-		SILC_ERR("[%s] get_config_cmd_func error!", __func__);
-		return -1;
+    	config_list = product_info->config_list;
+    	config_cnt = product_info->config_cnt;
     }
 
     s_is_mgmtd_config_2_cmds_cnt = common_config_cnt + config_cnt;

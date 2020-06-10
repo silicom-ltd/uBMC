@@ -159,9 +159,9 @@ int is_cli_cmd_mgmt_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info* p
 		else if(strcmp(p_token->name, "permitted") == 0)
 		{
 			int permit_ip_support = 1;
-			if(silc_cli_get_product_info()->permit_ip_support_func)
+			if(silc_cli_get_product_info())
 			{
-				permit_ip_support = silc_cli_get_product_info()->permit_ip_support_func();
+				permit_ip_support = silc_cli_get_product_info()->permit_ip_support;
 			}
 			if(permit_ip_support)
 			{
@@ -184,7 +184,7 @@ int is_cli_cmd_mgmt_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info* p
 		}
 		else if(strcmp(p_token->name, "whoami") == 0)
 		{
-			if(silc_cli_get_product_info()->whoami_support)
+			if(silc_cli_get_product_info() && silc_cli_get_product_info()->whoami_support)
 			{
 				sprintf(p_req_info->path, "/notify/switch/who_am_i");
 				p_req_info->root_val = none_str;

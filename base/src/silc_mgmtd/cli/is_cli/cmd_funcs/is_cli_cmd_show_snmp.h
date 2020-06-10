@@ -62,7 +62,7 @@ static inline void is_cli_show_snmp_configured_trap_hosts(silc_mgmtd_if_node* p_
 
 static inline void is_cli_show_snmp_configured_trap_ctl(silc_mgmtd_if_node* p_node)
 {
-	if(silc_cli_get_product_info()->show_snmp_configure_trap_ctrl_func)
+	if(silc_cli_get_product_info() && silc_cli_get_product_info()->show_snmp_configure_trap_ctrl_func)
 	{
 		silc_cli_get_product_info()->show_snmp_configure_trap_ctrl_func(p_node);
 	}
@@ -96,15 +96,12 @@ static inline void is_cli_show_snmp_configured_cb(silc_mgmtd_if_rsp* p_rsp)
 {
 	silc_mgmtd_if_node *p_node, *p_sub_node;
 	int snmpv3_only = 0;
-	int threshold_enabled = 1;
+	int threshold_enabled = 0;
 
-	if(silc_cli_get_product_info()->snmp_v3_only_func)
+	if(silc_cli_get_product_info())
 	{
-		snmpv3_only = silc_cli_get_product_info()->snmp_v3_only_func();
-	}
-	if(silc_cli_get_product_info()->snmp_threshold_enabled_func)
-	{
-		threshold_enabled = silc_cli_get_product_info()->snmp_threshold_enabled_func();
+		snmpv3_only = silc_cli_get_product_info()->snmp_v3_only;
+		threshold_enabled = silc_cli_get_product_info()->snmp_threshold_enabled;
 	}
 
 	silc_list_for_each_entry(p_node, &p_rsp->p_node_root->sub_node_list, node)
@@ -134,7 +131,6 @@ static inline void is_cli_show_snmp_configured_cb(silc_mgmtd_if_rsp* p_rsp)
 				else if(strcmp(p_sub_node->name, "sensor") == 0)
 					is_cli_show_snmp_configured_threshold_sensor(p_sub_node);
 			}
-
 		}
 	}
 }
@@ -203,14 +199,10 @@ static inline void is_cli_show_snmp_status_cb(silc_mgmtd_if_rsp* p_rsp)
 	int snmpv3_only = 0;
 	int show_engine_id = 1;
 
-	if(silc_cli_get_product_info()->snmp_show_engine_id_func)
+	if(silc_cli_get_product_info())
 	{
-		show_engine_id = silc_cli_get_product_info()->snmp_show_engine_id_func();
-	}
-
-	if(silc_cli_get_product_info()->snmp_v3_only_func)
-	{
-		snmpv3_only = silc_cli_get_product_info()->snmp_v3_only_func();
+		show_engine_id = silc_cli_get_product_info()->snmp_show_engine_id;
+		snmpv3_only = silc_cli_get_product_info()->snmp_v3_only;
 	}
 
 	silc_list_for_each_entry(p_node, &p_rsp->p_node_root->sub_node_list, node)

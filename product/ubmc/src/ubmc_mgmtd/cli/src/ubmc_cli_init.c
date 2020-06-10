@@ -105,57 +105,49 @@ static silc_cli_token_info s_ubmc_cli_token_info_list[] = {
 		{"configure show phonehome state", "Display PhoneHome runtime state", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},
 };
 
-static int ubmc_cli_get_token(silc_cli_token_info** p_token_list, int* p_token_cnt)
-{
-	*p_token_list = s_ubmc_cli_token_info_list;
-	*p_token_cnt = sizeof(s_ubmc_cli_token_info_list)/sizeof(silc_cli_token_info);
-	return 0;
-}
-
 static silc_cstr ubmc_cli_vendor_list[] = {UBMC_MGMTD_VENDOR_LIST};
 
+static silc_cli_product_info cli_product_info = {
+		.product_name = UBMC_PRODUCT_NAME,
+		.product_id = UBMC_PRODUCT_ID,
+		.vendor_list = ubmc_cli_vendor_list,
+		.vendor_cnt = sizeof(ubmc_cli_vendor_list)/sizeof(silc_cstr),
 
-int ubmc_cli_permit_ip_support_enabled(void)
+		.token_list = s_ubmc_cli_token_info_list,
+		.token_cnt = sizeof(s_ubmc_cli_token_info_list)/sizeof(silc_cli_token_info),
+
+		.reboot_warn = "%% The uBMC will reboot, Continue (y|n) ?",  //reboot_warn
+
+		.multi_eth_support = 1,
+		.whoami_support = 0,
+		.halt_support = 0,	//halt support, ubmc doesn't do halt
+
+		.snmp_v3_only = 0,
+		.snmp_threshold_enabled = 0,
+		.snmp_show_engine_id = 0,
+		.permit_ip_support = 0,
+		.dns_support = 1,
+		.show_http = 1,
+		.manufacture_support = 0,
+
+		.show_snmp_configure_trap_ctrl_func = NULL,
+};
+
+int ubmc_cli_get_manufacture_support(void)
 {
+	if (silc_mgmtd_if_cmp_vendor_id(VENDOR_UBMC_MANUFACTURE))
+		return 1;
 	return 0;
 }
 
-int ubmc_cli_dns_support_enabled(void)
+silc_cli_product_info * cli_get_product_info(void)
 {
-	return 1;
+	silc_mgmtd_if_product_info_set(cli_product_info.product_name,
+			cli_product_info.product_id,
+			cli_product_info.vendor_list,
+			cli_product_info.vendor_cnt);
+
+	cli_product_info.manufacture_support = ubmc_cli_get_manufacture_support();
+
+	return &cli_product_info;
 }
-int ubmc_cli_show_http_enabled(void)
-{
-	return 1;
-}
-
-silc_bool ubmc_cli_get_manufacture_mode(void)
-{
-	if (silc_mgmtd_if_cmp_vendor_id(VENDOR_UBMC_MANUFACTURE))
-		return silc_true;
-	return silc_false;
-}
-
-
-silc_cli_product_info cli_product_info = {
-		UBMC_PRODUCT_NAME,
-		UBMC_PRODUCT_ID,
-		ubmc_cli_vendor_list,
-		sizeof(ubmc_cli_vendor_list)/sizeof(silc_cstr),
-		"%% The uBMC will reboot, Continue (y|n) ?",  //reboot_warn
-
-		1,	//multi_eth
-		0,	//whoami
-		0,	//halt support, ubmc doesn't do halt
-
-		ubmc_cli_get_token,
-
-		NULL, //cli_show_snmp_configured_trap_ctl,
-		NULL, //cli_get_snmp_v3_only,
-		NULL, //cli_snmp_threshold_enabled,
-		NULL, //cli_snmp_show_engine_id_enabled,
-		ubmc_cli_permit_ip_support_enabled,
-		ubmc_cli_dns_support_enabled,
-		ubmc_cli_show_http_enabled,
-		ubmc_cli_get_manufacture_mode,
-};

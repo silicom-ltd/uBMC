@@ -3,6 +3,10 @@
 #include "ubmc_mgmtd_func_def.h"
 #include "ubmc_mgmtd_common.h"
 
+static silc_cstr ubmc_mgmtd_vendor_list[] = {UBMC_MGMTD_VENDOR_LIST};
+
+static silc_mgmtd_storage_path ubmc_mgmtd_storage_list[] = { {"*var*images", "/var/images"} };
+
 /* define memdb node info */ 
 static silc_mgmtd_node_info s_ubmc_mgmtd_node_list[] = {
 {"/config", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_NULL, "None", NULL, 0},
@@ -97,13 +101,6 @@ static silc_mgmtd_node_info s_ubmc_mgmtd_node_list[] = {
 {"/action/bmc/images/remove-local-image", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_bmc_action, 5},
 };
 
-static int ubmc_mgmtd_get_node(silc_mgmtd_node_info** p_node_list, int* p_node_cnt)
-{
-	*p_node_list = s_ubmc_mgmtd_node_list;
-	*p_node_cnt = sizeof(s_ubmc_mgmtd_node_list)/sizeof(silc_mgmtd_node_info);
-	return 0;
-}
-
 static silc_mgmtd_cberr_info s_ubmc_mgmtd_cberr_list[] = {
 {"/", IS_MGMTD_ERR_BMC_CDROM_ISO_FILE_NOT_FOUND, "Image file not found"},
 {"/", IS_MGMTD_ERR_BMC_CDROM_ISO_FILE_IN_USE, "Image file in use"},
@@ -112,13 +109,6 @@ static silc_mgmtd_cberr_info s_ubmc_mgmtd_cberr_list[] = {
 {"/", IS_MGMTD_ERR_BMC_CDROM_ATTACHED, "CDROM is attached"},
 {"/", IS_MGMTD_ERR_BMC_CDROM_NOT_ATTACHED, "CDROM is not attached"},
 };
-
-static int ubmc_mgmtd_get_cberr(silc_mgmtd_cberr_info** p_cberr_list, int* p_cberr_cnt)
-{
-	*p_cberr_list = s_ubmc_mgmtd_cberr_list;
-	*p_cberr_cnt = sizeof(s_ubmc_mgmtd_cberr_list)/sizeof(silc_mgmtd_cberr_info);
-	return 0;
-}
 
 static silc_mgmtd_config_cmd_map s_ubmc_mgmtd_config_2_cmds[] = {
 		/* BMC */
@@ -133,19 +123,11 @@ static silc_mgmtd_config_cmd_map s_ubmc_mgmtd_config_2_cmds[] = {
 		{"bmc console ?",	{{"/config/bmc/console/com-swflowctrl", "false,sw-flowctrl"TAG_CMD_TRANS_FALSE2NO",true,sw-flowctrl"}}, FLAG_CMD_TRANS_FALSE2NO},
 };
 
-static int ubmc_mgmtd_get_config_cmd(silc_mgmtd_config_cmd_map** p_config_list, int* p_config_cnt)
-{
-	*p_config_list = s_ubmc_mgmtd_config_2_cmds;
-	*p_config_cnt = sizeof(s_ubmc_mgmtd_config_2_cmds)/sizeof(silc_mgmtd_config_cmd_map);
-	return 0;
-}
-
 static int ubmc_mgmtd_action_custom_sys_halt(void)
 {
 	//ubmc doesn't have halt, return 0 to indicate halt is successful.
 	return 0;
 }
-
 
 #define OEMI_MODEL_FILE_PATH "/etc/product/UBMC/OEMI/model.txt"
 #define DECODE_NAME_MAX 20
@@ -220,39 +202,48 @@ static silc_cstr ubmc_mgmtd_get_ttyd_cmd(void)
 	return cmd;
 }
 
-static silc_cstr ubmc_mgmtd_vendor_list[] = {UBMC_MGMTD_VENDOR_LIST};
-static int ubmc_mgmtd_vendor_cnt = sizeof(ubmc_mgmtd_vendor_list)/sizeof(silc_cstr);
-
-static silc_mgmtd_storage_path ubmc_mgmtd_storage_list[] = { {"*var*images", "/var/images"} };
-
 silc_mgmtd_product_info mgmtd_product_info = {
-		UBMC_PRODUCT_NAME,
-		UBMC_PRODUCT_ID,
-		"UBMC",
-		"is_admin",
-		"$6$mns4d/vK1k0hTHhq$P7HGvlCMzNoKtLA/9Wmsn9AcryO.aMcX2Fvz6j/.D/UPDlustc6CPifjOWZPQyk6SHsReyzMsCyxp1u4l8iek1",
+		.product_name = UBMC_PRODUCT_NAME,
+		.product_sub = UBMC_PRODUCT_SUB,
+		.product_number = NULL,
+		.product_id = UBMC_PRODUCT_ID,
+
+		.admin_name = "is_admin",
+		.admin_shadow = "$6$mns4d/vK1k0hTHhq$P7HGvlCMzNoKtLA/9Wmsn9AcryO.aMcX2Fvz6j/.D/UPDlustc6CPifjOWZPQyk6SHsReyzMsCyxp1u4l8iek1",
 		//vendor
-		ubmc_mgmtd_vendor_list,
-		sizeof(ubmc_mgmtd_vendor_list)/sizeof(silc_cstr),
+		.vendor_list = ubmc_mgmtd_vendor_list,
+		.vendor_cnt = sizeof(ubmc_mgmtd_vendor_list)/sizeof(silc_cstr),
 		//storage
-		ubmc_mgmtd_storage_list,
-		sizeof(ubmc_mgmtd_storage_list)/sizeof(silc_mgmtd_storage_path),
-		1,	//multi_eth
-		0,	//permit_ip
-		0,	//com_baudrate
-		1,  //vrf
-		1,  //iptables
-		1,  //ipsec
-		NULL,	//default_add_node
-		NULL,	//default_del_node
-		ubmc_mgmtd_get_node,
-		ubmc_mgmtd_get_cberr,
-		ubmc_mgmtd_get_config_cmd,
-		NULL,	//set_init_config
-		ubmc_mgmtd_action_custom_sys_halt,
-		ubmc_mgmtd_action_sync_hw_clock,
-		NULL,  //password check
-		NULL,  //snmp_get_sysoid
-		ubmc_mgmtd_get_ttyd_cmd,
+		.storage_list = ubmc_mgmtd_storage_list,
+		.storage_cnt = sizeof(ubmc_mgmtd_storage_list)/sizeof(silc_mgmtd_storage_path),
+		//node
+		.node_list = s_ubmc_mgmtd_node_list,
+		.node_cnt = sizeof(s_ubmc_mgmtd_node_list)/sizeof(silc_mgmtd_node_info),
+		//cberr
+		.cberr_list = s_ubmc_mgmtd_cberr_list,
+		.cberr_cnt = sizeof(s_ubmc_mgmtd_cberr_list)/sizeof(silc_mgmtd_cberr_info),
+		//config
+		.config_list = s_ubmc_mgmtd_config_2_cmds,
+		.config_cnt = sizeof(s_ubmc_mgmtd_config_2_cmds)/sizeof(silc_mgmtd_config_cmd_map),
+
+		.multi_eth_support = 1,
+		.permit_ip_support = 0,
+		.com_baudrate_support = 0,
+		.vrf_support = 1,
+		.iptables_support = 1,
+		.ipsec_support = 1,
+
+		.default_node_add_func = NULL,
+		.default_node_del_func = NULL,
+		.set_init_config_func = NULL,
+		.custom_sys_halt_func = ubmc_mgmtd_action_custom_sys_halt,
+		.custom_sync_hw_clock_func = ubmc_mgmtd_action_sync_hw_clock,
+		.custom_user_password_chk_func = NULL,
+		.get_snmp_sysoid_func = NULL,
+		.get_ttyd_cmd_func = ubmc_mgmtd_get_ttyd_cmd,
 };
 
+silc_mgmtd_product_info* mgmtd_get_product_info(void)
+{
+	return &mgmtd_product_info;
+}

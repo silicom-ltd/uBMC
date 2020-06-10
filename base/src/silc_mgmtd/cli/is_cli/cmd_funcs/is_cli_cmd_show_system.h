@@ -322,7 +322,7 @@ static inline void is_cli_show_mgmt_status_cb(silc_mgmtd_if_rsp* p_rsp)
 			is_cli_show_mgmt_if_status(p_node);
 		else if(strcmp(p_node->name, "dhcp") == 0)
 			is_cli_show_mgmt_dhcp_status(p_node);
-		else if(silc_cli_get_product_info()->multi_eth_support)
+		else if(silc_cli_get_product_info() && silc_cli_get_product_info()->multi_eth_support)
 		{
 			if(strcmp(p_node->name, "iptables") == 0)
 				is_cli_show_mgmt_iptables_status(p_node);
@@ -335,61 +335,60 @@ static inline void is_cli_show_mgmt_status_cb(silc_mgmtd_if_rsp* p_rsp)
 static inline void is_cli_show_mgmt_configured_cb(silc_mgmtd_if_rsp* p_rsp)
 {
 	silc_mgmtd_if_node *p_node;
+	int multi_eth_support = 0;
 	int permit_ip_support = 1;
 	int dns_support = 1;
 
+	if(silc_cli_get_product_info())
+	{
+		multi_eth_support = silc_cli_get_product_info()->multi_eth_support;
+		dns_support = silc_cli_get_product_info()->dns_support;
+		permit_ip_support = silc_cli_get_product_info()->permit_ip_support;
+	}
 
 	silc_list_for_each_entry(p_node, &p_rsp->p_node_root->sub_node_list, node)
 	{
-		if(!silc_cli_get_product_info()->multi_eth_support)
+		if(!multi_eth_support)
 		{
 			if(strcmp(p_node->name, "interface") == 0)
 				is_cli_show_mgmt_if_configured(p_node);
 		}
 		else
 		{
-		if(strcmp(p_node->name, "interface-list") == 0)
-			is_cli_show_mgmt_if_list_configured(p_node);
-		else if(strcmp(p_node->name, "address-list") == 0)
-			is_cli_show_mgmt_addr_configured(p_node);
-		else if(strcmp(p_node->name, "default-gateway") == 0)
-			is_cli_show_mgmt_def_gw_configured(p_node);
-		else if(strcmp(p_node->name, "vrf-list") == 0)
-			is_cli_show_mgmt_vrf_configured(p_node);
-		else if(strcmp(p_node->name, "vrf-process-list") == 0)
-			is_cli_show_mgmt_vrf_process_configured(p_node);
-		else if(strcmp(p_node->name, "route-list") == 0)
-			is_cli_show_mgmt_route_configured(p_node);
-		else if(strcmp(p_node->name, "key-list") == 0)
-			is_cli_show_mgmt_key_configured(p_node);
-		else if(strcmp(p_node->name, "cert-list") == 0)
-			is_cli_show_mgmt_cert_configured(p_node);
-		else if(strcmp(p_node->name, "ipsec-enabled") == 0)
-			is_cli_show_mgmt_ipsec_configured(p_node);
-		else if(strcmp(p_node->name, "ipsec-conn") == 0)
-			is_cli_show_mgmt_ipsec_conn_configured(p_node);
-		else if(strcmp(p_node->name, "ipsec-ca") == 0)
-			is_cli_show_mgmt_ipsec_ca_configured(p_node);
-		else if(strcmp(p_node->name, "ipsec-secret") == 0)
-			is_cli_show_mgmt_ipsec_secret_configured(p_node);
-		else if(strcmp(p_node->name, "iptables-rule") == 0)
-			is_cli_show_mgmt_iptables_rule_configured(p_node);
+			if(strcmp(p_node->name, "interface-list") == 0)
+				is_cli_show_mgmt_if_list_configured(p_node);
+			else if(strcmp(p_node->name, "address-list") == 0)
+				is_cli_show_mgmt_addr_configured(p_node);
+			else if(strcmp(p_node->name, "default-gateway") == 0)
+				is_cli_show_mgmt_def_gw_configured(p_node);
+			else if(strcmp(p_node->name, "vrf-list") == 0)
+				is_cli_show_mgmt_vrf_configured(p_node);
+			else if(strcmp(p_node->name, "vrf-process-list") == 0)
+				is_cli_show_mgmt_vrf_process_configured(p_node);
+			else if(strcmp(p_node->name, "route-list") == 0)
+				is_cli_show_mgmt_route_configured(p_node);
+			else if(strcmp(p_node->name, "key-list") == 0)
+				is_cli_show_mgmt_key_configured(p_node);
+			else if(strcmp(p_node->name, "cert-list") == 0)
+				is_cli_show_mgmt_cert_configured(p_node);
+			else if(strcmp(p_node->name, "ipsec-enabled") == 0)
+				is_cli_show_mgmt_ipsec_configured(p_node);
+			else if(strcmp(p_node->name, "ipsec-conn") == 0)
+				is_cli_show_mgmt_ipsec_conn_configured(p_node);
+			else if(strcmp(p_node->name, "ipsec-ca") == 0)
+				is_cli_show_mgmt_ipsec_ca_configured(p_node);
+			else if(strcmp(p_node->name, "ipsec-secret") == 0)
+				is_cli_show_mgmt_ipsec_secret_configured(p_node);
+			else if(strcmp(p_node->name, "iptables-rule") == 0)
+				is_cli_show_mgmt_iptables_rule_configured(p_node);
 		}
 
-		if(silc_cli_get_product_info()->dns_support_func)
-		{
-			dns_support = silc_cli_get_product_info()->dns_support_func();
-		}
 		if(dns_support)
 		{
 			if(strcmp(p_node->name, "dns") == 0)
 				is_cli_show_mgmt_dns_configured(p_node);
 		}
 
-		if(silc_cli_get_product_info()->permit_ip_support_func)
-		{
-			permit_ip_support = silc_cli_get_product_info()->permit_ip_support_func();
-		}
 		if(permit_ip_support)
 		{
 			if(strcmp(p_node->name, "permit-enabled") == 0)
@@ -442,9 +441,9 @@ static inline void is_cli_show_web_configured_cb(silc_mgmtd_if_rsp* p_rsp)
 	silc_mgmtd_if_node *p_node;
 	int show_http = 1;
 
-	if(silc_cli_get_product_info()->show_http_func)
+	if(silc_cli_get_product_info())
 	{
-		show_http = silc_cli_get_product_info()->show_http_func();
+		show_http = silc_cli_get_product_info()->show_http;
 	}
 
 	silc_list_for_each_entry(p_node, &p_rsp->p_node_root->sub_node_list, node)
