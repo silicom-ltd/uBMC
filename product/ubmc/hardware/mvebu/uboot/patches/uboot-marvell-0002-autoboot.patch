@@ -1,15 +1,15 @@
 --- uboot-custom-orig/arch/arm/Kconfig	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/Kconfig	2020-05-26 11:07:56.033567337 +0800
++++ uboot-custom-silicom/arch/arm/Kconfig	2020-06-10 10:55:22.501456745 +0800
 @@ -1342,6 +1342,7 @@
  source "board/spear/spear600/Kconfig"
  source "board/spear/x600/Kconfig"
  source "board/st/stv0991/Kconfig"
-+source "board/silicom/ubmc_esp/Kconfig"
++source "board/silicom/ubmc_m/Kconfig"
  source "board/tcl/sl50/Kconfig"
  source "board/birdland/bav335x/Kconfig"
  source "board/timll/devkit3250/Kconfig"
---- uboot-custom-orig/include/configs/ubmc_esp.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/configs/ubmc_esp.h	2020-05-26 11:07:56.033567337 +0800
+--- uboot-custom-orig/include/configs/ubmc_m.h	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/include/configs/ubmc_m.h	2020-06-10 10:55:22.501456745 +0800
 @@ -0,0 +1,620 @@
 +/*
 + *
@@ -631,8 +631,8 @@
 +#endif /*if 0*/
 +#endif	/* ! __CONFIG_UBMC_ESP_H */
 +
---- uboot-custom-orig/board/silicom/ubmc_esp/board.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_esp/board.c	2020-06-08 10:15:21.845719553 +0800
+--- uboot-custom-orig/board/silicom/ubmc_m/board.c	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-06-10 10:55:22.502456738 +0800
 @@ -0,0 +1,670 @@
 +/*
 + * Copyright (C) 2016 Stefan Roese <sr@denx.de>
@@ -1305,7 +1305,7 @@
 +}
 +//#endif
 --- uboot-custom-orig/board/silicom/silicom_autoboot.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/silicom_autoboot.c	2020-05-26 11:07:56.034567340 +0800
++++ uboot-custom-silicom/board/silicom/silicom_autoboot.c	2020-06-10 10:55:22.502456738 +0800
 @@ -0,0 +1,125 @@
 +/*
 + * silicom_autoboot.c
@@ -1432,8 +1432,8 @@
 +	return 0;
 +}
 +
---- uboot-custom-orig/board/silicom/ubmc_esp/Makefile	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_esp/Makefile	2020-05-26 11:07:56.034567340 +0800
+--- uboot-custom-orig/board/silicom/ubmc_m/Makefile	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/Makefile	2020-06-10 10:55:22.502456738 +0800
 @@ -0,0 +1,10 @@
 +#
 +# Makefile
@@ -1445,8 +1445,8 @@
 +
 +
 +obj-y	+= board.o
---- uboot-custom-orig/board/silicom/ubmc_esp/README	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_esp/README	2020-05-26 11:07:56.034567340 +0800
+--- uboot-custom-orig/board/silicom/ubmc_m/README	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/README	2020-06-10 10:55:22.502456738 +0800
 @@ -0,0 +1,15 @@
 +Summary
 +=======
@@ -1464,7 +1464,7 @@
 +=============
 +
 --- uboot-custom-orig/arch/arm/mach-mvebu/Kconfig	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/mach-mvebu/Kconfig	2020-05-26 11:07:56.034567340 +0800
++++ uboot-custom-silicom/arch/arm/mach-mvebu/Kconfig	2020-06-10 10:55:22.502456738 +0800
 @@ -76,6 +76,11 @@
  	bool "Support Armada 37xx platforms"
  	select ARMADA_3700
@@ -1481,7 +1481,7 @@
  	default "db-88f6820-amc" if TARGET_DB_88F6820_AMC
  	default "turris_omnia" if TARGET_TURRIS_OMNIA
  	default "mvebu_armada-8k" if TARGET_MVEBU_ARMADA_8K
-+	default "ubmc_esp" if TARGET_UBMC_ESP
++	default "ubmc_m" if TARGET_UBMC_M
  	default "db-mv784mp-gp" if TARGET_DB_MV784MP_GP
  	default "ds414" if TARGET_DS414
  	default "maxbcm" if TARGET_MAXBCM
@@ -1489,7 +1489,7 @@
  	default "db-88f6820-gp" if TARGET_DB_88F6820_GP
  	default "db-88f6820-amc" if TARGET_DB_88F6820_AMC
  	default "mvebu_armada-8k" if TARGET_MVEBU_ARMADA_8K
-+	default "ubmc_esp" if TARGET_UBMC_ESP
++	default "ubmc_m" if TARGET_UBMC_M
  	default "db-mv784mp-gp" if TARGET_DB_MV784MP_GP
  	default "ds414" if TARGET_DS414
  	default "maxbcm" if TARGET_MAXBCM
@@ -1501,13 +1501,13 @@
  	default "solidrun" if TARGET_CLEARFOG
  	default "Synology" if TARGET_DS414
  	default "CZ.NIC" if TARGET_TURRIS_OMNIA
---- uboot-custom-orig/board/silicom/ubmc_esp/Kconfig	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_esp/Kconfig	2020-05-26 11:07:56.034567340 +0800
+--- uboot-custom-orig/board/silicom/ubmc_m/Kconfig	1970-01-01 08:00:00.000000000 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/Kconfig	2020-06-10 10:55:22.502456738 +0800
 @@ -0,0 +1,31 @@
 +if TARGET_UBMC_ESP
 +
 +config SYS_BOARD
-+	default "ubmc_esp"
++	default "ubmc_m"
 +
 +config SYS_VENDOR
 +	default "silicom"
@@ -1516,7 +1516,7 @@
 +	default "m3700"
 +
 +config SYS_CONFIG_NAME
-+	default "ubmc_esp"
++	default "ubmc_m"
 +
 +config UMBC_SD_UBOOT
 +	bool "Select to enable uboot build for sd card booting"

@@ -1,5 +1,5 @@
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.c	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-06-08 10:17:46.832121712 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-06-10 10:55:22.505456718 +0800
 @@ -234,7 +234,8 @@
  		printf("No Switch Device Found\n");
  		return;
@@ -76,7 +76,7 @@
  
  	return 0;
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.h	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-05-26 11:07:56.041567355 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-06-10 10:55:22.506456711 +0800
 @@ -94,7 +94,8 @@
  #define PORT_SWITCH_ID_PROD_NUM_6290		0x290
  #define PORT_SWITCH_ID_PROD_NUM_6390		0x390

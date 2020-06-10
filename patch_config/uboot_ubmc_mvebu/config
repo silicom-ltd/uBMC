@@ -5,7 +5,7 @@ PKG_VERSION=custom
 PKG_TAR_NAME=sources-uboot-2018.03-ga-19.06.3.tar.bz2
 PKG_DIR_NAME=uboot-${PKG_VERSION}
 
-PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/mvebu_esp/uboot/patches
+PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/mvebu/uboot/patches
 
 PATCH_NAME_MAIN=
 PATCH_MAIN_EXCEPT_FILE=
