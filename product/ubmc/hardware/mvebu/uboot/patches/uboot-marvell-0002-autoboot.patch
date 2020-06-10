@@ -632,7 +632,7 @@
 +#endif	/* ! __CONFIG_UBMC_ESP_H */
 +
 --- uboot-custom-orig/board/silicom/ubmc_m/board.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-06-10 10:55:22.502456738 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-06-10 14:02:58.553019860 +0800
 @@ -0,0 +1,670 @@
 +/*
 + * Copyright (C) 2016 Stefan Roese <sr@denx.de>
@@ -1131,7 +1131,7 @@
 +int board_late_init(void)
 +{
 +	unsigned int val = 0;
-+#if 1
++#if 0
 +	printf("Use original GPIO's setting  \n");
 +	/*GPIO1_4 RTC_INT# INPUT */
 +	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(16), BIT(16)); 	//Set GPIO1_4 GPIO_EN
@@ -1234,7 +1234,7 @@
 +	printf("--------------->>>gpio1 setting pin value \n");
 +	printf("--------------->>>do gpio setting 1 \n");
 +	*/
-+#if 0
++#if 1
 +	printf("Use swapped GPIO's  setting  \n");
 +	/*GPIO1_4 RTC_INT# INPUT */
 +	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(16), BIT(16)); 	//Set GPIO1_4 GPIO_EN

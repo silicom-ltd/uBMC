@@ -11,7 +11,7 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-10 10:55:22.497456772 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-10 14:12:09.627899398 +0800
 @@ -0,0 +1,537 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
@@ -429,7 +429,7 @@
 +		"HOST_S3_N",		/*"13",*/
 +		"HOST_ERROR_N",	/*"14",*/
 +		"HOST_THERMTRIP_N",	/*"15",*/
-+		"HOST_FRU_EEPROM_MUX_SEL",	/*"16",*/
++		"SPI_HOST_MUX_EN",	/*"16",*/
 +		"SPI_BMC_CS1",
 +		"18",
 +		"19",
@@ -458,9 +458,9 @@
 +		"HOST_PROCHOT_N",	/*"0",*/
 +		"1",
 +		"PSU_RIGHT_PWRGD",	/*"2",448*/
-+		"PSU_LEFT_PWRGD",	/*"3",449*/
-+		"BMC_RSTBTN_OUT_N",		/*"4" 450,*/
-+		"BMC_PWRBTN_OUT_N",		/*"5" 451,*/
++		"DYING_GASP_N",	/*"3",449*/
++		"GPIO_HOST_1",		/*"4" 450,*/
++		"BMC_UART_MUX_SEL",		/*"5" 451,*/
 +		"6",
 +		"7",
 +		"8",
@@ -480,11 +480,11 @@
 +		"FP_RSTBTN_N",				/*"22",*/
 +		"FP_PWRBTN_N",			/*"23",*/
 +		"HOST_BOOT_COMPLETE_N",	/*"24",*/
-+		"DYING_GASP_N",			/*"25",*/
-+		"GPIO_HOST_1",			/*"26",*/
-+		"SPI_HOST_MUX_EN",		/*"27",*/
-+		"RS232_CABLE_DETECTED",	/*"28",*/
-+		"BMC_UART_MUX_SEL";		/*"29";*/
++		"PSU_LEFT_PWRGD",			/*"25",*/
++		"BMC_RSTBTN_OUT_N",			/*"26",*/
++		"HOST_FRU_EEPROM_MUX_SEL",		/*"27",*/
++		"PSU_RIGHT_PWRGD",	/*"28",*/
++		"BMC_PWRBTN_OUT_N";		/*"29";*/
 +};
 +#if 0
 +/*for espressobin support*/

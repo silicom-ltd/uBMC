@@ -1,5 +1,5 @@
 ext4load mmc ${mmcdev}:3 0x8000000 /dt.dtb
 ext4load mmc ${mmcdev}:3 0x2000000 /Image
 ext4load mmc ${mmcdev}:3 0x8080000 /rootfs.cpio.uboot
-setenv bootargs console=ttyMV0,115200n8 root=/dev/mmcblk0p1 rw rootwait net.ifnames=0 biosdevname=0
+setenv bootargs console=ttyMV0,115200n8 root=/dev/ram0 rw quiet loglevel=2
 booti 0x2000000 0x8080000 0x8000000
