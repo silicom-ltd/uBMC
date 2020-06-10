@@ -1120,11 +1120,11 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sync_sensor_kernel_shm = skyd_sync_sensor_state_to_kernel,
 				.sync_sensor_gui_shm = skyd_sync_sensor_state_to_gui,
 				.sensor_event_handler = skyd_event_handler,
-				.ipmitool_factor.m	= 5,
+				.ipmitool_factor.m	= 100,
 				.ipmitool_factor.b	= 0,
 				.ipmitool_factor.k1 = 0,
-				.ipmitool_factor.k2 = -1,
-				.ipmitool_factor.minification = 500
+				.ipmitool_factor.k2 = -3,
+				.ipmitool_factor.minification = 100
 		},
 		{
 				.dev_name = SKYD_POWER_SUPPLY_DEV,

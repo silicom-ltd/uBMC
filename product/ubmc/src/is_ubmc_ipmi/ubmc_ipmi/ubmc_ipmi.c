@@ -572,14 +572,69 @@ int get_machine_model(void)
 	fclose(fp);
 	return device_type;
 }
+
+#define PRODUCT_SUB_PATH "/etc/product_sub.txt"
+#define UBMC_SUB_NAME_MAX 20
+#define UBMC_ESP_NAME "UBMC_M"
+
+#define UBMC_DEFAULT 0
+#define UBMC_ESP 1
+int get_machine_prod_sub(void)
+{
+	int ret;
+	int ubmc_sub_type = UBMC_DEFAULT;
+	char buf[UBMC_SUB_NAME_MAX];
+	char prod_sub_name[UBMC_SUB_NAME_MAX];
+	char len;
+	FILE *fp;
+	if(access(PRODUCT_SUB_PATH,F_OK) != 0)
+	{
+		ubmc_error("Can not find %s file :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fp = fopen(PRODUCT_SUB_PATH,"r+");
+	if(fp == NULL)
+	{
+		ubmc_error("open %s fail :%s",PRODUCT_SUB_PATH,strerror(errno));
+		return -1;
+	}
+	fgets(buf,UBMC_SUB_NAME_MAX,fp);
+	if (buf[strlen(buf)-1] == '\n')
+		buf[strlen(buf)-1] = '\0';
+	strcpy(prod_sub_name,buf);
+	if(strcmp(prod_sub_name,UBMC_ESP_NAME) == 0)
+	{
+		ubmc_sub_type = UBMC_ESP;
+	}
+	else
+	{
+		ubmc_sub_type = UBMC_DEFAULT;
+	}
+	fclose(fp);
+	return ubmc_sub_type;
+}
 int get_device_type(struct ubmc_ipmi_s *ubmc_ipmi)
 {
 	int ret = 0;
+	int ubmc_product_sub_type = 0;
 	device_type_t device_type;
 	if((ret == 1) || (ubmc_ipmi == NULL))
 	{
 		return -1;
 	}
+	ubmc_product_sub_type = get_machine_prod_sub();
+	if(ubmc_product_sub_type < 0)
+	{
+		ubmc_error("Invalid product_sub_type on %s!",PRODUCT_SUB_PATH);
+		return -1;
+
+	}
+	else if(UBMC_ESP == ubmc_product_sub_type)
+	{
+		ubmc_ipmi->ubmc_board_info.device_type = SKYD;
+		return ubmc_ipmi->ubmc_board_info.device_type;
+	}
+	/*If ubmc subname is no defined ,we read the model info*/
 	ret = get_machine_model();
 	if(ret < 0 || ret >= UNKNOW)
 	{
