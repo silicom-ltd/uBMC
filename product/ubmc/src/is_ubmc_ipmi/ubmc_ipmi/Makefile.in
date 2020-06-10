@@ -100,6 +100,7 @@ am_ubmc_ipmi_OBJECTS = ubmc_ipmi-ubmc_ipmi.$(OBJEXT) \
 	ubmc_ipmi-ubmc_ipmi_pm_l.$(OBJEXT) \
 	ubmc_ipmi-ubmc_ipmi_pm_sm.$(OBJEXT) \
 	ubmc_ipmi-ubmc_ipmi_pm_xs.$(OBJEXT) \
+	ubmc_ipmi-ubmc_ipmi_pm_skyd.$(OBJEXT) \
 	ubmc_ipmi-ubmc_ipmi_lan.$(OBJEXT) \
 	ubmc_ipmi-ubmc_ipmi_check_st.$(OBJEXT)
 ubmc_ipmi_OBJECTS = $(am_ubmc_ipmi_OBJECTS)
@@ -297,6 +298,7 @@ ubmc_ipmi_SOURCES = \
 	ubmc_ipmi_pm_l.c \
 	ubmc_ipmi_pm_sm.c \
 	ubmc_ipmi_pm_xs.c \
+	ubmc_ipmi_pm_skyd.c \
 	ubmc_ipmi_lan.c \
 	ubmc_ipmi_check_st.c 
 
@@ -404,6 +406,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_ipmi_hst_pwr_monitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_ipmi_lan.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_l.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_sm.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_xs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ubmc_ipmi-ubmc_shm_state.Po@am__quote@
@@ -512,6 +515,20 @@ ubmc_ipmi-ubmc_ipmi_pm_xs.obj: ubmc_ipmi_pm_xs.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ubmc_ipmi_pm_xs.c' object='ubmc_ipmi-ubmc_ipmi_pm_xs.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ubmc_ipmi_CFLAGS) $(CFLAGS) -c -o ubmc_ipmi-ubmc_ipmi_pm_xs.obj `if test -f 'ubmc_ipmi_pm_xs.c'; then $(CYGPATH_W) 'ubmc_ipmi_pm_xs.c'; else $(CYGPATH_W) '$(srcdir)/ubmc_ipmi_pm_xs.c'; fi`
+
+ubmc_ipmi-ubmc_ipmi_pm_skyd.o: ubmc_ipmi_pm_skyd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ubmc_ipmi_CFLAGS) $(CFLAGS) -MT ubmc_ipmi-ubmc_ipmi_pm_skyd.o -MD -MP -MF $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Tpo -c -o ubmc_ipmi-ubmc_ipmi_pm_skyd.o `test -f 'ubmc_ipmi_pm_skyd.c' || echo '$(srcdir)/'`ubmc_ipmi_pm_skyd.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Tpo $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ubmc_ipmi_pm_skyd.c' object='ubmc_ipmi-ubmc_ipmi_pm_skyd.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ubmc_ipmi_CFLAGS) $(CFLAGS) -c -o ubmc_ipmi-ubmc_ipmi_pm_skyd.o `test -f 'ubmc_ipmi_pm_skyd.c' || echo '$(srcdir)/'`ubmc_ipmi_pm_skyd.c
+
+ubmc_ipmi-ubmc_ipmi_pm_skyd.obj: ubmc_ipmi_pm_skyd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ubmc_ipmi_CFLAGS) $(CFLAGS) -MT ubmc_ipmi-ubmc_ipmi_pm_skyd.obj -MD -MP -MF $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Tpo -c -o ubmc_ipmi-ubmc_ipmi_pm_skyd.obj `if test -f 'ubmc_ipmi_pm_skyd.c'; then $(CYGPATH_W) 'ubmc_ipmi_pm_skyd.c'; else $(CYGPATH_W) '$(srcdir)/ubmc_ipmi_pm_skyd.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Tpo $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_pm_skyd.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ubmc_ipmi_pm_skyd.c' object='ubmc_ipmi-ubmc_ipmi_pm_skyd.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ubmc_ipmi_CFLAGS) $(CFLAGS) -c -o ubmc_ipmi-ubmc_ipmi_pm_skyd.obj `if test -f 'ubmc_ipmi_pm_skyd.c'; then $(CYGPATH_W) 'ubmc_ipmi_pm_skyd.c'; else $(CYGPATH_W) '$(srcdir)/ubmc_ipmi_pm_skyd.c'; fi`
 
 ubmc_ipmi-ubmc_ipmi_lan.o: ubmc_ipmi_lan.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ubmc_ipmi_CFLAGS) $(CFLAGS) -MT ubmc_ipmi-ubmc_ipmi_lan.o -MD -MP -MF $(DEPDIR)/ubmc_ipmi-ubmc_ipmi_lan.Tpo -c -o ubmc_ipmi-ubmc_ipmi_lan.o `test -f 'ubmc_ipmi_lan.c' || echo '$(srcdir)/'`ubmc_ipmi_lan.c
