@@ -18,8 +18,8 @@ test -b ${TARGET_DEV} || error_quit "Specified device must be a block device"
 #zero out 
 dd if=/dev/zero of=$TARGET_DEV bs=1024 count=1024
 PRODUCT_SUB=$(get_product_sub_name)
-#UBMC_ESP boot from /dev/mmcblkxboo0,so let's init the partition
-if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+#UBMC_M boot from /dev/mmcblkxboo0,so let's init the partition
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 	#echo 0 > /sys/block/$TARGET_NAME"boot0"/force_ro
 	#dd if=/dev/zero of=$TARGET_DEV"boot0" bs=1024 count=2048 conv=fdatasync
 	#echo 1 > /sys/block/$TARGET_NAME"boot0"/force_ro
@@ -52,7 +52,7 @@ FIRMWARE_PART_TYPE=primary
 FIRMWARE_PART_NUM=1
 #ubmc TI use fat as partition format
 #ubmc Marvell use ext4 as partition format
-if [ "${PRODUCT_SUB}" != "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" != "UBMC_M" ]; then
 FIRMWARE_PART_FS=fat16
 FIRMWARE_PART_MKFS=fat
 FIRMWARE_PART_MKFS_OPT=none

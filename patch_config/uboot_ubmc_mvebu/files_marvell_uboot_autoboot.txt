@@ -1,9 +1,8 @@
 /arch/arm/Kconfig
-/include/configs/ubmc_esp.h
-/board/silicom/ubmc_esp/ubmc_esp.c
-/board/silicom/ubmc_esp/board.c
+/include/configs/ubmc_m.h
+/board/silicom/ubmc_m/board.c
 /board/silicom/silicom_autoboot.c
-/board/silicom/ubmc_esp/Makefile
-/board/silicom/ubmc_esp/README
+/board/silicom/ubmc_m/Makefile
+/board/silicom/ubmc_m/README
 /arch/arm/mach-mvebu/Kconfig
-/board/silicom/ubmc_esp/Kconfig
+/board/silicom/ubmc_m/Kconfig

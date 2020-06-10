@@ -49,7 +49,7 @@ version_files[6]="uboot_version.txt"
 vendor_idx=7
 vendor_old_idx=8
 img_idx_max=6
-if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
     infos[4]="boot0   "
     infos[5]="boot1   "
     infos[6]="vendor    "

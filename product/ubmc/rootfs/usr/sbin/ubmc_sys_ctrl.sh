@@ -8,6 +8,14 @@ bios_upg_status=/tmp/bmc_bios_upgrade.status
 flash_img=/tmp/bmc_cli_upload_bios.img
 host_bios_backup_auto=/var/images/host_bios_auto_backup.bin
 host_bios_backup_manual=/var/images/host_bios_manual_backup.bin
+bios_size=16777216
+
+PRODUCT_SUB=$(get_product_sub_name)
+VENDOR=$(get_vendor_name)
+
+if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
+	bios_size=33554432
+fi
 
 #$1 is 0 or 1 
 #1 means enable host falsh
@@ -16,9 +24,9 @@ control_host_flash_mux()
 {
 	UBMC_XS_SLM_FLASH_MUX_PIN=27
 	#BANK 2 PIN 27 
-	UBMC_SKYD_FLASH_MUX_PIN=473  
-	PRODUCT_SUB=$(get_product_sub_name)
-	if [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+	#UBMC_SKYD_FLASH_MUX_PIN=473
+	UBMC_SKYD_FLASH_MUX_PIN=492  
+	if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 		PINNUM=$UBMC_SKYD_FLASH_MUX_PIN
 	else
 		PINNUM=$UBMC_XS_SLM_FLASH_MUX_PIN
@@ -33,6 +41,7 @@ control_host_flash_mux()
 		fi
 	fi
 }
+
 prepare_init()
 {
     ori_str=$(echo $($prog -p))
@@ -50,15 +59,13 @@ mount_mtd()
 	if [ "" != "$(lsmod|grep m25p80)" ]; then
 		rmmod m25p80
 	fi
-	echo 1 > /sys/class/gpio/gpio27/value
-	#control_host_flash_mux 1
+	control_host_flash_mux 1
 	modprobe m25p80
 }
 
 umount_mtd()
 {
-	echo 0 > /sys/class/gpio/gpio27/value
-	#control_host_flash_mux 0
+	control_host_flash_mux 0
 	rmmod m25p80
 }
 
@@ -156,19 +163,27 @@ upgrade_raw_image()
 read_bios()
 {
 	bios_img=$1
-	dd conv=notrunc if=${mtd0} of=${bios_img} bs=4096 count=2048
-	dd conv=notrunc if=${mtd1} of=${bios_img} bs=4096 count=2048 seek=2048
+	if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
+		dd conv=notrunc if=${mtd1} of=${bios_img} bs=4096 count=8192
+	else
+		dd conv=notrunc if=${mtd0} of=${bios_img} bs=4096 count=2048
+		dd conv=notrunc if=${mtd1} of=${bios_img} bs=4096 count=2048 seek=2048
+	fi
 }
 
 write_bios()
 {
 	bios_img=$1
-	bios_img_part0=/tmp/bmc_bios_img_part0
-	bios_img_part1=/tmp/bmc_bios_img_part1
-	dd if=${bios_img} of=${bios_img_part0} bs=4096 count=2048 skip=0
-	dd if=${bios_img} of=${bios_img_part1} bs=4096 count=2048 skip=2048
-	flashcp ${bios_img_part0} ${mtd0}
-	flashcp ${bios_img_part1} ${mtd1}
+	if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
+		flashcp ${bios_img} ${mtd1}
+	else
+		bios_img_part0=/tmp/bmc_bios_img_part0
+		bios_img_part1=/tmp/bmc_bios_img_part1
+		dd if=${bios_img} of=${bios_img_part0} bs=4096 count=2048 skip=0
+		dd if=${bios_img} of=${bios_img_part1} bs=4096 count=2048 skip=2048
+		flashcp ${bios_img_part0} ${mtd0}
+		flashcp ${bios_img_part1} ${mtd1}
+	fi
 }
 
 backup_bios()
@@ -188,9 +203,9 @@ backup_bios()
 restore_bios()
 {
 	bios_img=${host_bios_backup_auto}
-	if [ ! -e ${bios_img} ] || [ "$(du -b ${bios_img} |cut -f1)" != 16777216 ]; then
+	if [ ! -e ${bios_img} ] || [ "$(du -b ${bios_img} |cut -f1)" != "$bios_size" ]; then
 		bios_img=${host_bios_backup_manual}
-		if [ ! -e ${bios_img} ] || [ "$(du -b ${bios_img} |cut -f1)" != 16777216 ]; then
+		if [ ! -e ${bios_img} ] || [ "$(du -b ${bios_img} |cut -f1)" != "$bios_size" ]; then
 			output_bios_upg_status "Error: the BIOS backup not found" "1"
 		fi
 		output_bios_upg_status "Processing: restore the BIOS to the manual-saved backup"
@@ -236,7 +251,7 @@ upgrade_signed_image()
 	mount_mtd
 
 	host_img=${host_bios_backup_auto}
-	if [ ! -e ${host_img} ] || [ "$(du -b ${host_img} |cut -f1)" != 16777216 ]; then
+	if [ ! -e ${host_img} ] || [ "$(du -b ${host_img} |cut -f1)" != "$bios_size" ]; then
 		output_bios_upg_status "Processing: back up the BIOS"
 		read_bios ${host_img}
 	else
@@ -314,8 +329,7 @@ upgrade_signed_image()
 
 upgrade_flash()
 {
-	PRODUCT_SUB=$(get_product_sub_name)
-	if [ "${PRODUCT_SUB}" != "" ]; then
+	if [ "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
 		output_bios_upg_status "Error: Product ${PRODUCT_SUB} not supported yet" "1"
 	fi
 
@@ -334,10 +348,12 @@ upgrade_flash()
 	fi
 
 	img_size=$(du -b ${flash_img} |cut -f1)
-	if [ "${img_size}" -eq 16777216 ]; then
-		#upgrade_raw_image ${flash_img} $2
-		output_bios_upg_status "Error: raw image upgrade is not allowed" "1"
-	elif [ "${img_size}" -gt 16777216 ] && [ "${img_size}" -lt 18874368 ]; then
+	if [ "${img_size}" -eq "$bios_size" ]; then
+		if [ "$VENDOR" == "ATT" ]; then
+			output_bios_upg_status "Error: non-secure BIOS upgrade is not allowed in ATT" "1"
+		fi
+		upgrade_raw_image ${flash_img} $2
+	elif [ "${img_size}" -gt "$bios_size" ] && [ "${img_size}" -lt "$(($bios_size+2097152))" ]; then
 		upgrade_signed_image ${flash_img}
 	else
 		output_bios_upg_status "Error: ${flash_img} size ${img_size} is not right" "1"

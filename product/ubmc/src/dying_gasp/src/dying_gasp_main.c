@@ -140,9 +140,9 @@ void *umount_varlog_handle(void *arg)
 
 #define PRODUCT_SUB_PATH "/etc/product_sub.txt"
 #define UBMC_SUB_NAME_MAX 20
-#define UBMC_ESP_NAME "UBMC_ESP"
+#define UBMC_M_NAME "UBMC_M"
 #define UBMC_DEFAULT 0
-#define UBMC_ESP 1
+#define UBMC_M 1
 int get_machine_prod_sub(void)
 {
 	int ret;
@@ -167,9 +167,9 @@ int get_machine_prod_sub(void)
 	if (buf[strlen(buf)-1] == '\n')
 		buf[strlen(buf)-1] = '\0';
 	strcpy(prod_sub_name,buf);
-	if(strcmp(prod_sub_name,UBMC_ESP_NAME) == 0)
+	if(strcmp(prod_sub_name,UBMC_M_NAME) == 0)
 	{
-		ubmc_sub_type = UBMC_ESP;
+		ubmc_sub_type = UBMC_M;
 	}
 	else
 	{
@@ -218,7 +218,7 @@ int poll_dying_gasp()
 		DG_DEBUG_ERR("Can not get right Product Sub Name \n");
 		return -1;
 	}
-	else if(UBMC_ESP == ubmc_sub_type)
+	else if(UBMC_M == ubmc_sub_type)
 	{
 		if(bank_num == 0)
 		{

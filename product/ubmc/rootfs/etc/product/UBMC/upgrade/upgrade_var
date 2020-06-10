@@ -34,7 +34,7 @@ sys_mmc_name=${sys_mmc_dev##*/}
 software_boot_flag_addr=MMCDEV/0x10000
 software_upgrade_flag_addr=MMCDEV/0x11000
 
-if [ "${PRODUCT_SUB}" == "UBMC_EVAL" -o "${PRODUCT_SUB}" == "" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_T" -o "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
 	uimage_name="zImage"
 	#flash write load factor
 	uimage_load=12
@@ -50,8 +50,8 @@ if [ "${PRODUCT_SUB}" == "UBMC_EVAL" -o "${PRODUCT_SUB}" == "" ]; then
 		mlo_name="MLO"
 		mlo_addr=FIRMWARE/${mlo_name}
 	fi
-#for UBMC_ESP
-elif [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
+#for UBMC_M
+elif [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 	uimage_name="Image"
 	uboot_name="flash-image.bin"
 	#uboot_flash_addr=${sys_mmc_name}"boot0"
@@ -62,7 +62,7 @@ elif [ "${PRODUCT_SUB}" == "UBMC_ESP" ]; then
 	uimage_load=12
 	rootfs_load=73
 	uboot_load=3
-	#ubmc_esp using the mmcblkxboot0 to boot ,so we add uboot_flash to support install uboot-image.bin to there.
+	#ubmc_m using the mmcblkxboot0 to boot ,so we add uboot_flash to support install uboot-image.bin to there.
 	upgrade_parts="uimage rootfs dtb sw_ver uboot_flash uboot uboot_ver uboot0scr uboot1scr vendor"
 	firmware_parts="uboot"
 	package_parts="sw uboot vendor"
