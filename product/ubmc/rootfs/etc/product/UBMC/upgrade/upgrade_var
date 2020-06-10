@@ -34,7 +34,7 @@ sys_mmc_name=${sys_mmc_dev##*/}
 software_boot_flag_addr=MMCDEV/0x10000
 software_upgrade_flag_addr=MMCDEV/0x11000
 
-if [ "${PRODUCT_SUB}" == "UBMC_EVAL" -o "${PRODUCT_SUB}" == "" ]; then
+if [ "${PRODUCT_SUB}" == "UBMC_T" -o "${PRODUCT_SUB}" == "UBMC_EVAL" ]; then
 	uimage_name="zImage"
 	#flash write load factor
 	uimage_load=12
