@@ -151,8 +151,23 @@ struct ubmc_ipmi_sensor_thresh skyd_volt_54v_thresh =
 	.status = UBMC_IPMI_NORMAL,
 };
 
+struct gpio_s skyd_ps1_used_state = {.gpio_num = 471,.tri = TRI_NULL};
+struct gpio_s skyd_ps2_used_state = {.gpio_num = 474,.tri = TRI_NULL};
 int ubmc_ipmi_skyd_init(void *data,uint32_t flag)
 {
+	int fd;
+	fd = ubmc_ipmi_open_gpio_value_file(&skyd_ps1_used_state);
+	if(fd < 0)
+	{
+		ubmc_error("open gpio value file fail :%d \n",fd);
+		return -1;
+	}
+	fd = ubmc_ipmi_open_gpio_value_file(&skyd_ps2_used_state);
+	if(fd < 0)
+	{
+		ubmc_error("open gpio value file fail :%d \n",fd);
+		return -1;
+	}
 	return 0;
 }
 
@@ -277,8 +292,7 @@ static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_
 }
 #endif
 
-struct gpio_s skyd_ps1_used_state = {.gpio_num = 448,.tri = TRI_NULL};
-struct gpio_s skyd_ps2_used_state = {.gpio_num = 449,.tri = TRI_NULL};
+
 static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_t value,void *output)
 {
 	//before set the value ,should check the value
@@ -333,12 +347,12 @@ static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_
 				UBMC_SENSOR_SET_GUI_INT(power_supply_state,voltage_out,index,value);
 				if(index == 0)
 				{
-					power_supply_present = 1;//ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
+					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
 					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
 				}
 				else if(index == 1)
 				{
-					power_supply_present = 1;//ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
+					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
 					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
 				}
 				else if(index == 2)
@@ -588,6 +602,7 @@ static int skyd_sensor_read_dev_value(void* sensor_data ,void* private_date,uint
 				}
 				//printf("get the val %d ret is %d \n",val,ret);
 				//ubmc_pmbus_get_linear_value(val,&fvalue);
+				//To see the PSU datesheet
 				value = 2*9*val/10; //converted to mv
 
 			break;
