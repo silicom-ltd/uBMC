@@ -5,7 +5,7 @@ PKG_VERSION=custom
 PKG_TAR_NAME=sources-linux-4.14.76-SDK-10.1.1.0.tar.bz2
 PKG_DIR_NAME=${PKG_NAME}-${PKG_VERSION}
 
-PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/mvebu_esp/kernel/patches
+PATCH_LOCATION=${BR2_ROOT}/../product/ubmc/hardware/mvebu/kernel/patches
 PATCH_NAME_MAIN=
 PATCH_MAIN_EXCEPT_FILE=
 

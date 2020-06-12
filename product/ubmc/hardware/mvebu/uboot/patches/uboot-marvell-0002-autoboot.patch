@@ -632,8 +632,8 @@
 +#endif	/* ! __CONFIG_UBMC_ESP_H */
 +
 --- uboot-custom-orig/board/silicom/ubmc_m/board.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-06-10 14:02:58.553019860 +0800
-@@ -0,0 +1,670 @@
++++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-06-11 11:04:34.977045990 +0800
+@@ -0,0 +1,627 @@
 +/*
 + * Copyright (C) 2016 Stefan Roese <sr@denx.de>
 + *
@@ -1131,6 +1131,7 @@
 +int board_late_init(void)
 +{
 +	unsigned int val = 0;
++	puts("\nInitializing uBMC Firmware. Version " CONFIG_LOCALVERSION "\n");
 +#if 0
 +	printf("Use original GPIO's setting  \n");
 +	/*GPIO1_4 RTC_INT# INPUT */
@@ -1190,50 +1191,6 @@
 +	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(29), BIT(29));	//Set GPIO2_29 output
 +
 +#endif
-+
-+
-+/*
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(0), BIT(0));	//Set GPIO2_0 GPIO_EN
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(2), BIT(2));	//Set SB_SDIO_GPIO_EN  GPIO2_24-GPIO2_29
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(5), BIT(5));	//Set GPIO2_3 GPIO_EN
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(9), BIT(9));	//Set GPIO2_4 GPIO_EN
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(11), BIT(11));	//Set GPIO2_20 GPIO_EN
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(12), BIT(12));	//Set GPIO2_21 GPIO_EN
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(13), BIT(13));	//Set GPIO2_22 GPIO_EN
-+	clrsetbits_le32(BANK1_BASE + SELECTION, BIT(14), BIT(14));	//Set GPIO2_23 GPIO_EN
-+	printf("--------------->>>gpio2 setting pin mux \n");
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(3), BIT(3));	//Set GPIO2_3 output		//--->SPI_HOST_MUX-->output-->low
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(4), BIT(4));	//Set GPIO2_4 output
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(5), BIT(5));	//Set GPIO2_5 output
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(21), BIT(21));	//Set GPIO2_21 output
-+	//clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(27), BIT(27));	//Set GPIO2_27 output	//--->PSU_LEFT_PWRGD-->input
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(25), BIT(25));	//Set GPIO2_25 output		//--->HOST_FRU_EEPROM_MUX_SEL-->output-->low
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_EN, BIT(29), BIT(29));	//Set GPIO2_29 output
-+	printf("--------------->>>gpio2 setting pin direction \n");
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_VAL, BIT(4), BIT(4));	//Set GPIO2_4 output high
-+	clrsetbits_le32(BANK1_BASE + OUTPUT_VAL, BIT(5), BIT(5));	//Set GPIO2_5 output high
-+	printf("--------------->>>gpio2 setting pin value \n");
-+
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(3), BIT(3));	//Set GPIO1_11 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(4), BIT(4));	//Set GPIO1_12 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(5), BIT(5));	//Set GPIO1_13 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(6), BIT(6));	//Set GPIO1_14 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(7), BIT(7));	//Set GPIO1_7 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(8), BIT(8));	//Set GPIO1_6 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(16), BIT(16)); 	//Set GPIO1_4 GPIO_EN
-+	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(18), BIT(18));	//Set GPIO1_15 GPIO1_16 GPIO_EN
-+	printf("--------------->>>gpio1 setting pin mux \n");
-+
-+	clrsetbits_le32(BANK0_BASE + OUTPUT_EN, BIT(5), BIT(5));	//Set GPIO1_5 output
-+	clrsetbits_le32(BANK0_BASE + OUTPUT_EN, BIT(6), BIT(6));	//Set GPIO1_6 output
-+	clrsetbits_le32(BANK0_BASE + OUTPUT_EN, BIT(7), BIT(7));	//Set GPIO1_7 output
-+	//clrsetbits_le32(BANK0_BASE + OUTPUT_EN, BIT(16), BIT(16));	//Set GPIO1_16 output			//--->Dying gasp-->input
-+	printf("--------------->>>gpio1 setting pin direction \n");
-+	clrsetbits_le32(BANK0_BASE + OUTPUT_VAL, BIT(5), BIT(5));	//Set GPIO1_5 output high
-+	clrsetbits_le32(BANK0_BASE + OUTPUT_VAL, BIT(6), BIT(6));	//Set GPIO1_6 output high
-+	printf("--------------->>>gpio1 setting pin value \n");
-+	printf("--------------->>>do gpio setting 1 \n");
-+	*/
 +#if 1
 +	printf("Use swapped GPIO's  setting  \n");
 +	/*GPIO1_4 RTC_INT# INPUT */
@@ -1305,8 +1262,8 @@
 +}
 +//#endif
 --- uboot-custom-orig/board/silicom/silicom_autoboot.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/silicom_autoboot.c	2020-06-10 10:55:22.502456738 +0800
-@@ -0,0 +1,125 @@
++++ uboot-custom-silicom/board/silicom/silicom_autoboot.c	2020-06-11 11:31:59.903974254 +0800
+@@ -0,0 +1,126 @@
 +/*
 + * silicom_autoboot.c
 + *
@@ -1346,6 +1303,7 @@
 +	struct blk_desc * mmc_blk_dev;
 +	char mmc_dev_str[16];
 +	env_set("bootdev", "mmc");
++	env_set("silent", "1");
 +	sprintf(mmc_dev_str, "%u", emmc_dev);
 +
 +	unsigned long flag_addrs[2] = { UBMC_BOOT_FLAG_ADDR, UBMC_UPGRADE_FLAG_ADDR };
