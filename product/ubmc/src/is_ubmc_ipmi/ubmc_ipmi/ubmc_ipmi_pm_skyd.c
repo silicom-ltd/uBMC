@@ -42,71 +42,67 @@ struct ubmc_ipmi_sensor_thresh skyd_temp_inlet_amb_thresh =
 
 struct ubmc_ipmi_sensor_thresh skyd_fan1_thresh =
 {
-	.lnr = FAN1_TACH_LNR,
-	.lcr = FAN1_TACH_LCR,
-	.lnc = FAN1_TACH_LNC,
-	.unc = FAN1_TACH_UNC,
-	.ucr = FAN1_TACH_UCR,
-	.unr = FAN1_TACH_UNR,
+	.lnr = 2400,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 16000,
 	.status = UBMC_IPMI_NORMAL,
 };
 
-
-struct ubmc_ipmi_sensor_thresh skyd_volt_5_0_thresh =
+struct ubmc_ipmi_sensor_thresh skyd_volt_vccin_thresh =
 {
-	.lnr = VOLT_5_0_LNR,
-	.lcr = VOLT_5_0_LCR,
-	.lnc = VOLT_5_0_LNC,
-	.unc = VOLT_5_0_UNC,
-	.ucr = VOLT_5_0_UCR,
-	.unr = VOLT_5_0_UNR,
+	.lnr = 15000,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 20000,
 	.status = UBMC_IPMI_NORMAL,
 };
 
-struct ubmc_ipmi_sensor_thresh skyd_volt_3_3_thresh =
+struct ubmc_ipmi_sensor_thresh skyd_volt_vnn_thresh =
 {
-	.lnr = VOLT_3_3_LNR,
-	.lcr = VOLT_3_3_LCR,
-	.lnc = VOLT_3_3_LNC,
-	.unc = VOLT_3_3_UNC,
-	.ucr = VOLT_3_3_UCR,
-	.unr = VOLT_3_3_UNR,
+	.lnr = 8500,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 10000,
 	.status = UBMC_IPMI_NORMAL,
 };
-
-struct ubmc_ipmi_sensor_thresh skyd_vccsram_thresh =
+struct ubmc_ipmi_sensor_thresh skyd_volt_vccio_thresh =
 {
-	.lnr = VCCSRAM_LNR,
-	.lcr = VCCSRAM_LCR,
-	.lnc = VCCSRAM_LNC,
-	.unc = VCCSRAM_UNC,
-	.ucr = VCCSRAM_UCR,
-	.unr = VCCSRAM_UNR,
+	.lnr = 8000,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 11000,
 	.status = UBMC_IPMI_NORMAL,
 };
-
-struct ubmc_ipmi_sensor_thresh skyd_vccp_thresh =
+struct ubmc_ipmi_sensor_thresh skyd_volt_vccsa_thresh =
 {
-	.lnr = VCCP_LNR,
-	.lcr = VCCP_LCR,
-	.lnc = VCCP_LNC,
-	.unc = VCCP_UNC,
-	.ucr = VCCP_UCR,
-	.unr = VCCP_UNR,
+	.lnr = 5000,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 11000,
 	.status = UBMC_IPMI_NORMAL,
 };
 
 struct ubmc_ipmi_sensor_thresh skyd_volt_1_0_5_thresh =
 {
-	.lnr = VOLT_1_0_5_LNR,
-	.lcr = VOLT_1_0_5_LCR,
-	.lnc = VOLT_1_0_5_LNC,
-	.unc = VOLT_1_0_5_UNC,
-	.ucr = VOLT_1_0_5_UCR,
-	.unr = VOLT_1_0_5_UNR,
+	.lnr = 10100,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 10900,
 	.status = UBMC_IPMI_NORMAL,
 };
-
 struct ubmc_ipmi_sensor_thresh skyd_mem_vddq_thresh =
 {
 	.lnr = MEM_VDDQ_LNR,
@@ -118,41 +114,45 @@ struct ubmc_ipmi_sensor_thresh skyd_mem_vddq_thresh =
 	.status = UBMC_IPMI_NORMAL,
 };
 
-struct ubmc_ipmi_sensor_thresh skyd_cpu_vnn_thresh =
-{
-	.lnr = CPU_VNN_LNR,
-	.lcr = CPU_VNN_LCR,
-	.lnc = CPU_VNN_LNC,
-	.unc = CPU_VNN_UNC,
-	.ucr = CPU_VNN_UCR,
-	.unr = CPU_VNN_UNR,
-	.status = UBMC_IPMI_NORMAL,
-};
-
 struct ubmc_ipmi_sensor_thresh skyd_volt_1_8_thresh =
 {
-	.lnr = VOLT_1_8_LNR,
+	.lnr = 17100,
 	.lcr = VOLT_1_8_LCR,
 	.lnc = VOLT_1_8_LNC,
 	.unc = VOLT_1_8_UNC,
 	.ucr = VOLT_1_8_UCR,
-	.unr = VOLT_1_8_UNR,
+	.unr = 18900,
 	.status = UBMC_IPMI_NORMAL,
 };
 
-struct ubmc_ipmi_sensor_thresh skyd_volt_54v_thresh =
+struct ubmc_ipmi_sensor_thresh skyd_volt_12v_thresh =
 {
-	.lnr = PS_54V_LNR,
-	.lcr = PS_54V_LCR,
-	.lnc = PS_54V_LNC,
-	.unc = PS_54V_UNC,
-	.ucr = PS_54V_UCR,
-	.unr = PS_54V_UNR,
+	.lnr = 10800,
+	.lcr = UBMC_IPMI_N_A,
+	.lnc = UBMC_IPMI_N_A,
+	.unc = UBMC_IPMI_N_A,
+	.ucr = UBMC_IPMI_N_A,
+	.unr = 12700,
 	.status = UBMC_IPMI_NORMAL,
 };
 
+struct gpio_s skyd_ps1_used_state = {.gpio_num = 471,.tri = TRI_NULL};
+struct gpio_s skyd_ps2_used_state = {.gpio_num = 474,.tri = TRI_NULL};
 int ubmc_ipmi_skyd_init(void *data,uint32_t flag)
 {
+	int fd;
+	fd = ubmc_ipmi_open_gpio_value_file(&skyd_ps1_used_state);
+	if(fd < 0)
+	{
+		ubmc_error("open gpio value file fail :%d \n",fd);
+		return -1;
+	}
+	fd = ubmc_ipmi_open_gpio_value_file(&skyd_ps2_used_state);
+	if(fd < 0)
+	{
+		ubmc_error("open gpio value file fail :%d \n",fd);
+		return -1;
+	}
 	return 0;
 }
 
@@ -277,8 +277,7 @@ static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_
 }
 #endif
 
-struct gpio_s skyd_ps1_used_state = {.gpio_num = 448,.tri = TRI_NULL};
-struct gpio_s skyd_ps2_used_state = {.gpio_num = 449,.tri = TRI_NULL};
+
 static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_t value,void *output)
 {
 	//before set the value ,should check the value
@@ -333,12 +332,12 @@ static int skyd_sync_sensor_state_to_gui(void* sensor_data ,void* ipmi_p,uint32_
 				UBMC_SENSOR_SET_GUI_INT(power_supply_state,voltage_out,index,value);
 				if(index == 0)
 				{
-					power_supply_present = 1;//ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
+					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps1_used_state);
 					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
 				}
 				else if(index == 1)
 				{
-					power_supply_present = 1;//ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
+					power_supply_present = ubmc_ipmi_read_gpio_value(&skyd_ps2_used_state);
 					UBMC_SENSOR_SET_GUI_INT(power_supply_state,status,index,power_supply_present);
 				}
 				else if(index == 2)
@@ -577,7 +576,14 @@ static int skyd_sensor_read_dev_value(void* sensor_data ,void* private_date,uint
 		{
 			case PS_DEVICE_FAN_VAL_REG:
 				ret = ubmc_smbus_read_value(ubmc_sensor_arry->sensor_dev_name,ubmc_sensor_arry->dev_adr,ubmc_sensor_arry->sensor_value_reg,&val,1);
-				value = val;
+				if((signed short)val < 0)
+				{
+					value = 0;
+				}
+				else
+				{
+					value = val;
+				}
 				//printf("get the fan speed %d ret is %d \n",value,ret);
 			break;
 			case PS_DEVICE_VO_VAL_REG:
@@ -588,6 +594,7 @@ static int skyd_sensor_read_dev_value(void* sensor_data ,void* private_date,uint
 				}
 				//printf("get the val %d ret is %d \n",val,ret);
 				//ubmc_pmbus_get_linear_value(val,&fvalue);
+				//To see the PSU datesheet
 				value = 2*9*val/10; //converted to mv
 
 			break;
@@ -932,7 +939,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_channel_id = 0,
 				.index_of_gui_array = 0,
 				.sensor_id = 1,
-				.sensor_thresh = &skyd_volt_1_8_thresh,
+				.sensor_thresh = &skyd_volt_1_8_thresh,	/*1.71 1.89*/
 				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
@@ -998,7 +1005,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_channel_id = 3,
 				.index_of_gui_array = 3,
 				.sensor_id = 4,
-				.sensor_thresh = &skyd_volt_1_0_5_thresh,
+				.sensor_thresh = &skyd_volt_vccsa_thresh,
 				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
@@ -1020,7 +1027,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_channel_id = 4,
 				.index_of_gui_array = 4,
 				.sensor_id = 5,
-				.sensor_thresh = &skyd_volt_1_8_thresh,
+				.sensor_thresh = &skyd_volt_vccin_thresh, /*1.5 2.0*/
 				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
@@ -1042,7 +1049,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_channel_id = 5,
 				.index_of_gui_array = 5,
 				.sensor_id = 6,
-				.sensor_thresh = &skyd_volt_1_0_5_thresh,
+				.sensor_thresh = &skyd_volt_vnn_thresh,	/*0.85 1.0*/
 				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
@@ -1064,7 +1071,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				.sensor_channel_id = 6,
 				.index_of_gui_array = 6,
 				.sensor_id = 7,
-				.sensor_thresh = &skyd_volt_1_0_5_thresh,
+				.sensor_thresh = &skyd_volt_vccio_thresh,	/*0.8 1.1*/
 				.sensor_value_multiple = 10,
 				.sensor_read_value_mode = FILE_MODE,
 				.update_sensor_state = skyd_update_sensor_state_callback,
@@ -1109,7 +1116,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				//.sensor_channel_id = 15,	//not used
 				.index_of_gui_array = 0,
 				.sensor_id = 1,
-				.sensor_thresh = &skyd_volt_54v_thresh,
+				.sensor_thresh = &skyd_volt_12v_thresh,
 				.sensor_value_multiple = 1,
 				.sensor_read_value_mode = DEV_MODE,
 				.dev_adr = PS1_DEVICE_ADR,
@@ -1136,7 +1143,7 @@ struct ubmc_sensor_config_s ubmc_skyd_sensor_cfg[SKYD_SENSOR_MAX_NUM] =
 				//.sensor_channel_id = 14,		//not used
 				.index_of_gui_array = 1,
 				.sensor_id = 2,
-				.sensor_thresh = &skyd_volt_54v_thresh,
+				.sensor_thresh = &skyd_volt_12v_thresh,
 				.sensor_value_multiple = 1,
 				.sensor_read_value_mode = DEV_MODE,
 				.dev_adr = PS2_DEVICE_ADR,
