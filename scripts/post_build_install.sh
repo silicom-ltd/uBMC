@@ -3,6 +3,7 @@ set +e
 
 echo "=============Target post install ==============="
 PRODUCT=$(cat ${TARGET_DIR}/etc/product.txt)
+PRODUCT_SUB=$(cat ${TARGET_DIR}/etc/product_sub.txt 2>/dev/null)
 #rm -rf ${TARGET_DIR}/etc/product
 #We copy files needed for install image into target
 #We don't want to store them in two different rootfs skeleton
@@ -21,4 +22,9 @@ cp -a ${PWD}/../base/rootfs/usr/sbin/is_copy_file_and_sync ${TARGET_DIR}/usr/sbi
 cp -a ${PWD}/../base/rootfs/usr/sbin/is_upgrade.sh ${TARGET_DIR}/usr/sbin/
 cp -a ${PWD}/../base/rootfs/usr/sbin/silc_util.sh ${TARGET_DIR}/usr/sbin/
 cp -a ${PWD}/../base/rootfs/etc/silicom-is-public.key ${TARGET_DIR}/etc/
+if [ "${PRODUCT_SUB}" == "UBMC_M" ];then
+	sed -i "s/SILC_PRODUCT_TTY/ttyMV0/g" ${TARGET_DIR}/etc/inittab
+else
+	sed -i "s/SILC_PRODUCT_TTY/ttyS0/g" ${TARGET_DIR}/etc/inittab
+fi
 

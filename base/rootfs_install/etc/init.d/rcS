@@ -36,6 +36,5 @@ if [ "$REPLY" == "Y" ] || [ "$REPLY" == "y" ] ; then
   /usr/sbin/is_install_system.sh
 else
   echo "Not installing. You can log in as root, and run is_install_system.sh manually"
-  /bin/sh
 fi
 

@@ -6,7 +6,7 @@
  	}
 -
 +	/*Reslove tty can not do hang ioctl(0, SNDCTL_TMR_CONTINUE or TCSETSF*/
-+#if 1
++#if 0
  	if (opt & TERMIOS_WAIT) {
  		tty_wait_until_sent(tty, 0);
  		if (signal_pending(current))
@@ -24,7 +24,7 @@
  	if (old) {
  		termios->c_iflag &= INPCK | IGNPAR;
 -		termios->c_iflag |= old->c_iflag & ~(INPCK | IGNPAR);
-+		termios->c_iflag |= old->c_iflag & ~(INPCK | IGNPAR|ICRNL|INLCR);
++		termios->c_iflag |= old->c_iflag & ~(INPCK |IGNPAR| INLCR);
  		termios->c_cflag &= CREAD | CBAUD;
  		termios->c_cflag |= old->c_cflag & ~(CREAD | CBAUD);
  		termios->c_cflag |= CS8;
