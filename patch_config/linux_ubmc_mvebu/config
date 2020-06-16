@@ -24,8 +24,11 @@ PATCH_FLIST[2]=files_linux_ubmc_tty_ioctl.txt
 PATCH_NAME[3]=linux_ubmc_hwmon_pmbus_max31785.patch
 PATCH_FLIST[3]=files_linux_ubmc_hwmon_pmbus_max31785.txt
 
-PATCH_NAME[4]=linux-ti-008-ubmc_uart_sim.patch
-PATCH_FLIST[4]=files_linux_ubmc_uart_sim.txt
+PATCH_NAME[4]=linux-mvebu-004-ubmc_pinctr.patch
+PATCH_FLIST[4]=files_linux_ubmc_pinctl.txt
+
+PATCH_NAME[5]=linux-ti-008-ubmc_uart_sim.patch
+PATCH_FLIST[5]=files_linux_ubmc_uart_sim.txt
 
 #PATCH_GEN_REQ_CLEAN=1
 
