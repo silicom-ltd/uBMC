@@ -1,0 +1,51 @@
+--- linux-custom-orig/drivers/pinctrl/mvebu/pinctrl-armada-37xx.c	2019-10-21 23:25:45.000000000 +0800
++++ linux-custom-silicom/drivers/pinctrl/mvebu/pinctrl-armada-37xx.c	2020-06-16 18:11:14.992700427 +0800
+@@ -116,6 +116,15 @@
+ 		.funcs = {_func1, "gpio"}	\
+ 	}
+ 
++#define PIN_GRP_LED_GPIO(_name, _start, _nr, _mask, _func1)	\
++	{					\
++		.name = _name,			\
++		.start_pin = _start,		\
++		.npins = _nr,			\
++		.reg_mask = _mask,		\
++		.val = {_mask, 0},		\
++		.funcs = {_func1, "gpio"}	\
++	}
+ #define PIN_GRP_GPIO_2(_name, _start, _nr, _mask, _val1, _val2, _func1)   \
+ 	{					\
+ 		.name = _name,			\
+@@ -170,10 +179,10 @@
+ 	PIN_GRP_EXTRA("uart2", 9, 2, BIT(1) | BIT(13) | BIT(14) | BIT(19),
+ 		      BIT(1) | BIT(13) | BIT(14), BIT(1) | BIT(19),
+ 		      18, 2, "gpio", "uart"),
+-	PIN_GRP_GPIO("led0_od", 11, 1, BIT(20), "led"),
+-	PIN_GRP_GPIO("led1_od", 12, 1, BIT(21), "led"),
+-	PIN_GRP_GPIO("led2_od", 13, 1, BIT(22), "led"),
+-	PIN_GRP_GPIO("led3_od", 14, 1, BIT(23), "led"),
++	PIN_GRP_LED_GPIO("led0_od", 11, 1, BIT(20), "led"),
++	PIN_GRP_LED_GPIO("led1_od", 12, 1, BIT(21), "led"),
++	PIN_GRP_LED_GPIO("led2_od", 13, 1, BIT(22), "led"),
++	PIN_GRP_LED_GPIO("led3_od", 14, 1, BIT(23), "led"),
+ 
+ };
+ 
+@@ -338,7 +347,8 @@
+ 		return -ENOTSUPP;
+ 
+ 	val = grp->val[func];
+-
++	dev_dbg(info->dev, "func is %d mask is %x val is %x\n",
++			func,mask, val);
+ 	regmap_update_bits(info->regmap, reg, mask, val);
+ 
+ 	return 0;
+@@ -1011,7 +1021,6 @@
+ 	struct device_node *np = dev->of_node;
+ 	struct regmap *regmap;
+ 	int ret;
+-
+ 	info = devm_kzalloc(dev, sizeof(struct armada_37xx_pinctrl),
+ 			    GFP_KERNEL);
+ 	if (!info)
