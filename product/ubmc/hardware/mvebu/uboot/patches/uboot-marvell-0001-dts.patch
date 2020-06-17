@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-06-10 10:55:22.497456772 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-06-15 11:14:20.933911632 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,7 +11,7 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-12 12:27:33.259354681 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-17 12:27:36.000000000 +0800
 @@ -0,0 +1,537 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
@@ -457,7 +457,7 @@
 +	gpio-line-names =
 +		"HOST_PROCHOT_N",		/*"0",*/
 +		"1",
-+		"PSU_RIGHT_PWRGD",		/*"2",448*/
++		"RS232_CABLE_DETECTED",		/*"2",448*/
 +		"DYING_GASP_N",			/*"3",449*/
 +		"GPIO_HOST_1",			/*"4" 450,*/
 +		"BMC_UART_MUX_SEL",		/*"5" 451,*/
@@ -551,7 +551,7 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-06-10 10:55:22.497456772 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-06-16 17:59:15.641088625 +0800
 @@ -0,0 +1,586 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
@@ -1140,7 +1140,7 @@
 +	};
 +};
 --- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-06-10 10:55:22.497456772 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-06-15 11:14:20.933911632 +0800
 @@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) 2018 Marvell
