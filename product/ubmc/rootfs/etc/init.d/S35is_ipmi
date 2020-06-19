@@ -84,13 +84,18 @@ load_driver_for_skyd()
 }
 get_machine_model()
 {	
+	PRODUCT_SUB=$(cat /etc/product_sub.txt 2>/dev/null)
 	eeprom_op -p
-	if [ -f $MODEL_PATH ];then
-		value=$(cat $MODEL_PATH)
-		MODEL=$value
-	else
-		MODEL="NONE"
-	fi	
+	if [ "${PRODUCT_SUB}" == "UBMC_T" ]; then
+		if [ -f $MODEL_PATH ]; then
+			value=$(cat $MODEL_PATH)
+			MODEL=$value
+		else
+			MODEL="NONE"
+		fi
+	elif [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
+		MODEL="SKYD"
+	fi
 }
 
 case "$1" in
@@ -117,7 +122,7 @@ case "$1" in
 			load_driver_for_large
 #			ubmc_fan_control -t 2 -T 76 -v 0 -V 255 &
 			;;
-			"ATT-V950")
+			"SKYD")
 			load_driver_for_skyd
 			;;
 			*)

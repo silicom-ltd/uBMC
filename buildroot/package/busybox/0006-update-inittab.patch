@@ -64,7 +64,7 @@ diff -uNr busybox-1.23.1/init/init.c busybox-1.23.1-update-inittab/init/init.c
 +
 +	if(get_console_info(speed, termtype) != 0)
 +	{
-+		message(L_CONSOLE | L_LOG, "Can not get terminal info from /proc/cmdline");
++//		message(L_CONSOLE | L_LOG, "Can not get terminal info from /proc/cmdline");
 +		return -1;
 +	}
 +//	message(L_CONSOLE | L_LOG, "Get tty info speed %s type %s", speed, termtype);
