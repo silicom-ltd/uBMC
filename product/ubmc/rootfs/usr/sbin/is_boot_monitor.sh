@@ -13,8 +13,13 @@ def read_input(f, timeout):
 
 if __name__ == "__main__":
 	shadow_reset = "$6$Uou6dRAibApEg1or$kOsyfsxF1Q.6Az4fvskfd6pAgw2wOXNUx1FmVkJVxPJckKra5q8IwFFCMgiHhJnBLIAtRjVywvgKToTSkB9kl."
+	tty = "/dev/ttyS0"
 
-	f = open("/dev/ttyS0","r")
+	product_sub = sys.argv[1]
+	if product_sub == "UBMC_M":
+		tty = "/dev/ttyMV0"
+
+	f = open(tty,"r")
 
 	password = read_input(f, 15)
 	shadow = crypt.crypt(password, shadow_reset)
