@@ -18,9 +18,6 @@ start() {
 	fi
 	#change permission on socket location
 	if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
-#Fix me
-		/usr/bin/is_console_manager -H /dev/ttyMV1 -O /dev/ttyMV0 &
-		killall -q is_console_manager
 		/usr/bin/is_console_manager -H /dev/ttyMV1 -O /dev/ttyMV0 &
 	else
 		/usr/bin/is_console_manager -H /dev/ttyS1 -O /dev/ttyS0 &

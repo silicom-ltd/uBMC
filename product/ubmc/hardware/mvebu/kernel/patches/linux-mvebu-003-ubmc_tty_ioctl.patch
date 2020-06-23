@@ -1,5 +1,5 @@
 --- linux-custom-orig/drivers/tty/tty_ioctl.c	2019-10-21 23:25:45.000000000 +0800
-+++ linux-custom-silicom/drivers/tty/tty_ioctl.c	2020-06-01 13:42:03.272603311 +0800
++++ linux-custom-silicom/drivers/tty/tty_ioctl.c	2020-06-15 11:10:49.976477992 +0800
 @@ -404,13 +404,14 @@
  			ld->ops->flush_buffer(tty);
  		tty_ldisc_deref(ld);
@@ -18,13 +18,13 @@
  
  	/* FIXME: Arguably if tmp_termios == tty->termios AND the
 --- linux-custom-orig/drivers/tty/serial/mvebu-uart.c	2019-10-21 23:25:45.000000000 +0800
-+++ linux-custom-silicom/drivers/tty/serial/mvebu-uart.c	2020-06-02 10:41:19.043914261 +0800
++++ linux-custom-silicom/drivers/tty/serial/mvebu-uart.c	2020-06-15 11:10:49.976477992 +0800
 @@ -508,7 +508,7 @@
  	/* Only the following flag changes are supported */
  	if (old) {
  		termios->c_iflag &= INPCK | IGNPAR;
 -		termios->c_iflag |= old->c_iflag & ~(INPCK | IGNPAR);
-+		termios->c_iflag |= old->c_iflag & ~(INPCK |IGNPAR| INLCR);
++		termios->c_iflag |= old->c_iflag & ~(INPCK |IGNPAR| INLCR|ICRNL);
  		termios->c_cflag &= CREAD | CBAUD;
  		termios->c_cflag |= old->c_cflag & ~(CREAD | CBAUD);
  		termios->c_cflag |= CS8;
