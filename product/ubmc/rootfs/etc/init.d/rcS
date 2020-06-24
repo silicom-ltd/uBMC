@@ -38,7 +38,7 @@ else
 fi
 #disable input echoing and start is_boot_monitor
 stty -echo
-/usr/sbin/is_boot_monitor.sh &
+/usr/sbin/is_boot_monitor.sh ${PRODUCT_SUB} &
 
 INITLOG_SZIE=4M
 INITLOG=/tmp/init_log
