@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-06-15 11:14:20.933911632 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-06-28 16:16:30.063657925 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-17 12:27:36.000000000 +0800
-@@ -0,0 +1,537 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-29 15:06:15.816322544 +0800
+@@ -0,0 +1,539 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -267,7 +267,9 @@
 +	};
 +	
 +};
-+
++&wdt{
++	status = "okay";
++};
 +&i2c0 {
 +	pinctrl-names = "default";
 +	pinctrl-0 = <&i2c1_pins>;
@@ -551,8 +553,8 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-06-16 17:59:15.641088625 +0800
-@@ -0,0 +1,586 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-06-29 15:08:44.224265916 +0800
+@@ -0,0 +1,591 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
 + *
@@ -1019,7 +1021,12 @@
 +				status = "disabled";
 +			};
 +
-+
++			wdt: watchdog-timer@8300 {
++				compatible = "marvell,armada-3700-wdt";
++				reg = <0xd064 0x4>,
++					<0x8300 0x40>;
++				clocks = <&xtalclk>;
++			};
 +			xor@60900 {
 +				compatible = "marvell,armada-3700-xor";
 +				reg = <0x60900 0x100>,
@@ -1140,7 +1147,7 @@
 +	};
 +};
 --- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-06-15 11:14:20.933911632 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-06-28 16:16:30.063657925 +0800
 @@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) 2018 Marvell
