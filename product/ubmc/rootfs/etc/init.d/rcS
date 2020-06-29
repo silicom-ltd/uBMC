@@ -29,13 +29,14 @@ if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
 	modprobe armada3700_wdt
 else
 	modprobe omap_wdt
-	WATCHDOG_DEV=/dev/watchdog
-	if [ -e ${WATCHDOG_DEV} ]; then
-		touch ${WATCHDOG_DEV}
-	else
-		echo "${WATCHDOG_DEV} not found"
-	fi
 fi
+WATCHDOG_DEV=/dev/watchdog
+if [ -e ${WATCHDOG_DEV} ]; then
+	touch ${WATCHDOG_DEV}
+else
+	echo "${WATCHDOG_DEV} not found"
+fi
+
 #disable input echoing and start is_boot_monitor
 stty -echo
 /usr/sbin/is_boot_monitor.sh ${PRODUCT_SUB} &
