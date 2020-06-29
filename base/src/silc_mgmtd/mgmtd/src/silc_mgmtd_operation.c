@@ -598,7 +598,9 @@ silc_mgmtd_if_rsp* silc_mgmtd_op_req_handle(silc_mgmtd_if_req* p_req)
 				p_req->type == SILC_MGMTD_IF_REQ_MODIFY ||
 				p_req->type == SILC_MGMTD_IF_REQ_DELETE)
 		{
-			silc_mgmtd_memdb_node_w_unlock(p_db_node);
+			//p_db_node will be freed in silc_mgmtd_op_do_delete_request() if OK
+			if(p_req->type != SILC_MGMTD_IF_REQ_DELETE || ret != 0)
+				silc_mgmtd_memdb_node_w_unlock(p_db_node);
 		}
 		else
 		{

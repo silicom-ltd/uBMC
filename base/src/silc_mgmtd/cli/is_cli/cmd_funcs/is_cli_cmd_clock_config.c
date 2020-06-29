@@ -43,7 +43,7 @@ int is_cli_cmd_clock_config(silc_list* p_token_list)
 				sprintf(path, IS_CLI_PATH_ACTION_SYSTEM"/%s", p_l1_token->map_name);
 				if(silc_cli_cmd_do_simple_action(path, p_l1_token->val_str, err_info, 200) != 0)
 				{
-					silc_cli_print("%% Set %s failed! Error: %s.\n", p_l1_token->name, err_info);
+					silc_cli_err_cmd_set_err_info(err_info);
 					return -1;
 				}
 				// update session timestamp or it might cause idle timeout quit
@@ -73,7 +73,7 @@ int is_cli_cmd_clock_config(silc_list* p_token_list)
 			sprintf(path, IS_CLI_PATH_CONFIG_SYSTEM_DATETIME"/%s", p_token->map_name);
 			if(silc_cli_cmd_do_simple_modify(path, tz_name, err_info, 200) != 0)
 			{
-				silc_cli_print("%% Set time zone %s failed! Error: %s.\n", tz_name, err_info);
+				silc_cli_err_cmd_set_err_info(err_info);
 				return -1;
 			}
 			return 0;
