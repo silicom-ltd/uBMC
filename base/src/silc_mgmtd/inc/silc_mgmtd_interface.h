@@ -519,6 +519,11 @@ silc_bool silc_mgmtd_if_cmp_vendor_id(silc_mgmtd_vendor_id id);
 
 void silc_mgmtd_if_product_info_set(silc_cstr product_name, int product_id, silc_cstr* vendor_list, int vendor_cnt);
 
+silc_bool silc_mgmtd_if_check_name(silc_cstr val);
+silc_bool silc_mgmtd_if_multi_cmd(silc_cstr val);
+silc_bool silc_mgmtd_if_file_exist(silc_cstr path);
+silc_bool silc_mgmtd_if_dir_exist(silc_cstr path);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1954,3 +1954,49 @@ silc_bool silc_mgmtd_if_cmp_vendor_id(silc_mgmtd_vendor_id id)
 {
 	return (silc_mgmtd_if_get_vendor_id() == id);
 }
+
+silc_bool silc_mgmtd_if_check_name(silc_cstr name)
+{
+	int len = strlen(name);
+	char *p = name;
+
+	if(len == 0 || len > SILC_MGMTD_IF_NAME_MAX_LEN)
+	{
+		return silc_false;
+	}
+	while (*p)
+	{
+		if ((*p < 'a' || *p > 'z')
+			&& (*p < 'A' || *p > 'Z')
+			&& (*p < '0' || *p > '9')
+			&& (*p != '-')
+			&& (*p != '_')
+			&& (*p != '.'))
+		{
+			return silc_false;
+		}
+		p++;
+	}
+	return silc_true;
+}
+
+silc_bool silc_mgmtd_if_multi_cmd(silc_cstr val)
+{
+	if(strstr(val, ";") || strstr(val, "&") || strstr(val, "|"))
+		return silc_true;
+	return silc_false;
+}
+
+silc_bool silc_mgmtd_if_file_exist(silc_cstr path)
+{
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return (S_ISREG(path_stat.st_mode) == 1);
+}
+
+silc_bool silc_mgmtd_if_dir_exist(silc_cstr path)
+{
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return (S_ISDIR(path_stat.st_mode) == 1);
+}

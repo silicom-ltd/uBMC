@@ -66,7 +66,30 @@ int is_cli_cmd_service_config_get_req_info(silc_list* p_token_list, is_cli_cmd_r
 		if(strcmp(p_token->name, "com") == 0)
 			sprintf(p_req_info->path, IS_CLI_PATH_CONFIG_SYSTEM_COM);
 		else if(strcmp(p_token->name, "ssh") == 0)
+		{
+			silc_cli_token* p_l1_token;
+			p_l1_token = is_cli_cmd_get_next_rl_token(p_token_list, p_token);
+			if(p_l1_token && strcmp(p_l1_token->name, "host-key") == 0)
+			{
+				silc_cli_token* p_l2_token = is_cli_cmd_get_next_rl_token(p_token_list, p_l1_token);
+				if(p_l2_token && strcmp(p_l2_token->name, "remove") == 0)
+				{
+					char cmd[256];
+					silc_cstr host = p_l2_token->val_str;
+					if(!silc_cli_check_name(host))
+					{
+						silc_cli_err_cmd_set_err_info("Invalid host %s", host);
+						return -1;
+					}
+					sprintf(cmd, "ssh-keygen -R %s", host);
+					system(cmd);
+					p_req_info->type = 0;
+					return 0;
+				}
+				return -1;
+			}
 			sprintf(p_req_info->path, IS_CLI_PATH_CONFIG_SYSTEM_SSH);
+		}
 		else if(strcmp(p_token->name, "http") == 0)
 			sprintf(p_req_info->path, IS_CLI_PATH_CONFIG_SYSTEM_HTTP);
 		else if(strcmp(p_token->name, "https") == 0)
@@ -103,8 +126,9 @@ int is_cli_cmd_service_config(silc_list* p_token_list)
 	memset(&req_info, 0, sizeof(req_info));
 	if(is_cli_cmd_service_config_get_req_info(p_token_list, &req_info) != 0)
 		return -1;
-
-	if(strlen(req_info.path) == 0 || req_info.root_val == 0 || req_info.type == 0)
+	if(req_info.type == 0)
+		return 0;
+	if(strlen(req_info.path) == 0 || req_info.root_val == 0)
 	{
 		silc_cli_err_cmd_set_invalid_cmd();
 		return -1;

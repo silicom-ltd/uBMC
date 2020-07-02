@@ -6,8 +6,6 @@
 int is_file_exist(silc_cstr path);
 int is_write_file(silc_cstr path, silc_cstr buf, int len);
 
-#define MAX_FILENAME_LEN	32
-
 #ifndef SILC_MGMTD_LOCAL_DEBUG
 #define IS_MGMTD_MGMT_IF_NAME	"eth0"
 #else
@@ -439,28 +437,6 @@ int is_mgmtd_system_mgmt_check_perimit(silc_mgmtd_node* p_node)
 	return 0;
 }
 
-int is_check_filename(silc_cstr name)
-{
-	int i, len = strlen(name);
-	char c;
-
-	if(len == 0 || len > MAX_FILENAME_LEN)
-	{
-		return -1;
-	}
-	for(i=0; i<len; i++)
-	{
-		c = name[i];
-		if ((c < '0' || c > '9') &&
-			(c < 'a' || c > 'z') &&
-			(c < 'A' || c > 'Z') &&
-			(c != '-') && (c != '_') && (c != '.'))
-			return -1;
-	}
-
-	return 0;
-}
-
 int ipsec_secret_use_keyfile(silc_cstr secret_type)
 {
 	return (strcmp("RSA", secret_type) == 0 ||
@@ -496,11 +472,6 @@ int is_mgmtd_system_mgmt_check_key(silc_mgmtd_if_req_type type, silc_mgmtd_node*
 	if(SILC_MGMTD_IF_REQ_CHECK_ADD == type)
 	{
 		silc_mgmtd_node *p_content;
-		if(is_check_filename(p_node->value.val.string_val))
-		{
-			SILC_ERR("Key ID %s is invalid", p_node->value.val.string_val);
-			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
-		}
 		p_content = silc_mgmtd_memdb_find_sub_node(p_node, "key-content");
 		if(!p_content->tmp_value.val.string_val || strlen(p_content->tmp_value.val.string_val) == 0)
 		{
@@ -555,11 +526,6 @@ int is_mgmtd_system_mgmt_check_cert(silc_mgmtd_if_req_type type, silc_mgmtd_node
 	if(SILC_MGMTD_IF_REQ_CHECK_ADD == type)
 	{
 		silc_mgmtd_node *p_content;
-		if(is_check_filename(p_node->value.val.string_val))
-		{
-			SILC_ERR("Cert ID %s is invalid", p_node->value.val.string_val);
-			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
-		}
 		p_content = silc_mgmtd_memdb_find_sub_node(p_node, "cert-content");
 		if(!p_content->tmp_value.val.string_val || strlen(p_content->tmp_value.val.string_val) == 0)
 		{
@@ -1519,7 +1485,7 @@ int is_mgmtd_system_mgmt_check_iptables_rule(silc_mgmtd_if_req_type type, silc_m
 		silc_cstr_array* arg_list;
 		silc_cstr arg;
 
-		if(strstr(rule, ";"))
+		if(silc_mgmtd_if_multi_cmd(rule))
 		{
 			SILC_ERR("Invalid iptables rule '%s'", rule);
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
@@ -1707,6 +1673,15 @@ int is_mgmtd_match_apply_node(silc_mgmtd_node* p_req_node, char* node_name, silc
 int is_mgmtd_system_mgmt_check_req(silc_mgmtd_if_req_type type, silc_mgmtd_node* p_req_node)
 {
 	silc_mgmtd_node *p_node;
+
+	if(type == SILC_MGMTD_IF_REQ_CHECK_ADD && p_req_node->value.type == SILC_MGMTD_VAR_STRING)
+	{
+		if(!silc_mgmtd_if_check_name(p_req_node->value.val.string_val))
+		{
+			SILC_ERR("New node %s name %s is invalid", p_req_node->name, p_req_node->value.val.string_val);
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
+	}
 
 	if(is_mgmtd_match_apply_node(p_req_node, "permit-ip", &p_node))
 		return is_mgmtd_system_mgmt_check_perimit(p_node);

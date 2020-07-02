@@ -255,9 +255,9 @@ int ubmc_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_in
 				}
 				else if(strcmp(p_l2_token->name, "filter") == 0)
 				{
-					if (strlen(p_l2_token->val_str) > 128 )
+					if (!silc_cli_check_log_filter(p_l2_token->val_str))
 					{
-						silc_cli_err_cmd_set_invalid_param("filter is too long, please <128");
+						silc_cli_err_cmd_set_invalid_param("Invalid filter");
 						return -1;
 					}
 					return silc_cli_show_log(UBMC_HOSTLOG_FILE, p_l2_token->val_str);

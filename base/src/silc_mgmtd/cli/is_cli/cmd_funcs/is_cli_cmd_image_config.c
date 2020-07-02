@@ -20,6 +20,11 @@ int is_cli_upload_image(silc_list* p_token_list, silc_cli_token* p_l1_token)
 	p_l2_token = is_cli_cmd_get_next_rl_token(p_token_list, p_l1_token);
 	if(p_l2_token && strcmp(p_l2_token->name, "as") == 0)
 	{
+		if(!silc_cli_check_name(p_l2_token->val_str))
+		{
+			silc_cli_err_cmd_set_err_info("Invalid image name %s.", p_l2_token->val_str);
+			return -1;
+		}
 		snprintf(distfile, CMD_BUFFER_SIZE, "%s/%s", LOCAL_IMAGE_PATH, p_l2_token->val_str);
 	}
 	else if(strncmp(url, "scp://", strlen("scp://")) == 0)

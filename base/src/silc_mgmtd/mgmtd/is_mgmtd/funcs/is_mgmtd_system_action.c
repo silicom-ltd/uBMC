@@ -27,6 +27,17 @@ int is_mgmtd_system_action(silc_mgmtd_if_req_type type, void* p_db_node, void* c
 
 	if(type != SILC_MGMTD_IF_REQ_ACTION)
 		return 0;
+	if(p_node->tmp_value.type == SILC_MGMTD_VAR_STRING)
+	{
+		//validate input string
+		silc_cstr value = p_node->tmp_value.val.string_val;
+		if(value && value[0])
+		{
+			if(silc_mgmtd_if_multi_cmd(value) ||
+					strstr(value, " ") || strstr(value, "\t"))
+				return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
+	}
 
 	if(strcmp(p_node->name, "reboot") == 0)
 	{
@@ -86,8 +97,6 @@ int is_mgmtd_system_action(silc_mgmtd_if_req_type type, void* p_db_node, void* c
 	else if(strcmp(p_node->name, "save-config-as") == 0)
 	{
 		silc_cstr filename = p_node->tmp_value.val.string_val;
-		if(strstr(filename, ";") || strstr(filename, " ") || strstr(filename, "\t"))
-			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 		SILC_LOG("System save config as %s", filename);
 		if(silc_mgmtd_cfg_save_as_config_to_file(filename) != 0)
 			return IS_MGMTD_ERR_BASE_INVALID_PARAM;

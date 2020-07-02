@@ -171,18 +171,52 @@ int is_cli_cmd_aaa_change_passwd(silc_cli_token *p_token, silc_list* p_token_lis
 	return is_cli_cmd_aaa_change_passwd_req(user, old_pass, new_pass);
 }
 
+silc_bool is_cli_cmd_validate_base64(silc_cstr val)
+{
+	silc_cstr start, end;
+	char c;
+
+	start = val;
+	end = val+strlen(val)-1;
+	if(*start == '\'' || *start == '\"')
+	{
+		if(*start != *end)
+			return silc_false;
+		start++;
+		end--;
+	}
+
+	do
+	{
+		c = *start;
+		if ((c < '0' || c > '9') &&
+				(c < 'a' || c > 'z') &&
+				(c < 'A' || c > 'Z') &&
+				(c != '+') && (c != '/') && (c != '='))
+			return silc_false;
+		start++;
+	} while (start <= end);
+
+	return silc_true;
+}
+
 int is_cli_cmd_aaa_decrypt_shadow(silc_cstr enc_shadow)
 {
 	int len = strlen(enc_shadow);
 	char cmd[320];
-	char enc_str[256];
 
-	strcpy(enc_str, enc_shadow);
-	silc_mgmtd_if_base64_unescape(enc_str);
-
-	sprintf(cmd, "echo '%s'| openssl enc -base64 -d", enc_str);
-	if(silc_mgmtd_if_exec_system_cmd(cmd, enc_shadow, &len, 1000, silc_false) != 0)
+	if(!is_cli_cmd_validate_base64(enc_shadow))
+	{
+		silc_cli_err_cmd_set_err_info("Invalid encrypted password '%s'", enc_shadow);
 		return -1;
+	}
+
+	sprintf(cmd, "echo %s| openssl enc -base64 -d", enc_shadow);
+	if(silc_mgmtd_if_exec_system_cmd(cmd, enc_shadow, &len, 1000, silc_false) != 0)
+	{
+		silc_cli_err_cmd_set_err_info("Fail to exec cmd '%s'", cmd);
+		return -1;
+	}
 	if(enc_shadow[strlen(enc_shadow)-1] == '\n')
 		enc_shadow[strlen(enc_shadow)-1] = 0;
 	return 0;
@@ -201,12 +235,16 @@ int is_cli_cmd_aaa_config(silc_list* p_token_list)
 			if(!p_l1_token || strcmp(p_l1_token->name, "new-password") == 0)
 				return is_cli_cmd_aaa_change_passwd(p_token, p_token_list);
 			else if(strcmp(p_l1_token->name, "new-encrypt-password") == 0)
-				is_cli_cmd_aaa_decrypt_shadow(p_l1_token->val_str);
+			{
+				if(is_cli_cmd_aaa_decrypt_shadow(p_l1_token->val_str))
+					return -1;
+			}
 		}
 		if(strcmp(p_token->name, "encrypt-password") == 0)
 		{
 			// get the decrypt shadow
-			is_cli_cmd_aaa_decrypt_shadow(p_token->val_str);
+			if(is_cli_cmd_aaa_decrypt_shadow(p_token->val_str))
+				return -1;
 		}
 	}
 

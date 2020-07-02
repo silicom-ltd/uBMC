@@ -1090,38 +1090,6 @@ silc_cli_token* is_cli_cmd_get_next_rl_token(silc_list* p_token_list, silc_cli_t
 	return silc_list_entry(p_token->rl_node.next, silc_cli_token, rl_node);
 }
 
-silc_bool is_cli_cmd_validate_index(silc_cstr val)
-{
-	silc_cstr start, end;
-	char c;
-
-	if(!val || !val[0])
-		return silc_false;
-
-	start = val;
-	end = val+strlen(val)-1;
-	if(start[0] == '\'' || start[0] == '"')
-	{
-		start++;
-		if(start == end)
-			return silc_false;
-		end--;
-	}
-
-	do
-	{
-		c = *start;
-		if ((c < '0' || c > '9') &&
-				(c < 'a' || c > 'z') &&
-				(c < 'A' || c > 'Z') &&
-				(c != '-') && (c != '_') && (c != '.'))
-			return silc_false;
-		start++;
-	} while (start < end);
-
-	return silc_true;
-}
-
 int is_cli_cmd_do_request_core(is_cli_cmd_req_info* p_req_info, silc_list* p_token_list, int timeout_sec)
 {
 	int loop;
@@ -1134,7 +1102,7 @@ int is_cli_cmd_do_request_core(is_cli_cmd_req_info* p_req_info, silc_list* p_tok
 	silc_cstr_array* p_arr;
 
 	if(p_req_info->type == SILC_MGMTD_IF_REQ_ADD &&
-			!is_cli_cmd_validate_index(p_req_info->root_val))
+			!silc_cli_check_name(p_req_info->root_val))
 	{
 		// index can't be empty or space-prefix
 		silc_cli_err_cmd_set_err_info("Invalid index value");
@@ -1283,6 +1251,7 @@ int silc_cli_upload_file(silc_cstr url, silc_cstr user, silc_cstr passwd, silc_c
 		silc_cli_err_cmd_set_err_info("Invalid url");
 		return -1;
 	}
+
 	if(silc_mgmtd_if_exec_system_cmd(cmd, NULL, NULL, 1000000, silc_false) != 0)
 	{
 		silc_cli_err_cmd_set_err_info("Fail to get %s", url);
@@ -1358,8 +1327,13 @@ int silc_cli_show_log(silc_cstr log, silc_cstr filter)
 	sprintf(cmd, "for f in $(ls -rt %s*); do cat $f >> %s; done", log, filename);
 	system(cmd);
 
-	if (filter)
-		sprintf(cmd, "grep -i '%s' %s|less", filter, filename);
+	if(filter)
+	{
+		if(filter[0] == '\'' || filter[0] == '"')
+			sprintf(cmd, "grep -i %s %s|less", filter, filename);
+		else
+			sprintf(cmd, "grep -i '%s' %s|less", filter, filename);
+	}
 	else
 		sprintf(cmd, "less %s", filename);
 	system(cmd);
@@ -1368,4 +1342,73 @@ int silc_cli_show_log(silc_cstr log, silc_cstr filter)
 	system("rm -rf "IS_TMP_LOG_FILE"*");
 
 	return 0;
+}
+
+silc_bool silc_cli_check_log_filter(silc_cstr filter)
+{
+
+	silc_cstr start, end;
+	char c;
+
+	if(!filter || !filter[0])
+		return silc_false;
+
+	if (strlen(filter) > 128 )
+		return silc_false;
+
+	start = filter;
+	end = filter+strlen(filter)-1;
+	if(*start == '\'' || *start == '"')
+	{
+		if(*start != *end)
+			return silc_false;
+		if((start+1) == end)
+			return silc_false;
+		start++;
+		end--;
+	}
+
+	do
+	{
+		c = *start;
+		if (c == '\'' || c == '"')
+			return silc_false;
+		start++;
+	} while (start <= end);
+
+	return silc_true;
+}
+
+silc_bool silc_cli_check_name(silc_cstr val)
+{
+	silc_cstr start, end;
+	char c;
+
+	if(!val || !val[0])
+		return silc_false;
+
+	start = val;
+	end = val+strlen(val)-1;
+	if(*start == '\'')
+	{
+		if(*start != *end)
+			return silc_false;
+		if((start+1) == end)
+			return silc_false;
+		start++;
+		end--;
+	}
+
+	do
+	{
+		c = *start;
+		if ((c < '0' || c > '9') &&
+				(c < 'a' || c > 'z') &&
+				(c < 'A' || c > 'Z') &&
+				(c != '-') && (c != '_') && (c != '.'))
+			return silc_false;
+		start++;
+	} while (start <= end);
+
+	return silc_true;
 }

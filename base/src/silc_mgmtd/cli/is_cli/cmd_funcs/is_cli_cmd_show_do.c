@@ -61,7 +61,7 @@ int is_cli_cmd_show_file(silc_cstr filename)
 	free(buff);
 #else
 	char cmd[256];
-	if(access(filename, F_OK) != 0)
+	if(!silc_mgmtd_if_file_exist(filename))
 	{
 		silc_cli_err_cmd_set_err_info("Invalid file %s", filename);
 		return -1;
@@ -286,10 +286,9 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 			}
 			else if(strcmp(p_l1_token->name, "filter") == 0)
 			{
-				//silc_cli_token *p_l2_token = is_cli_cmd_get_next_rl_token(p_token_list, p_l1_token);
-				if (strlen(p_l1_token->val_str) > 128 )
+				if (!silc_cli_check_log_filter(p_l1_token->val_str))
 				{
-					silc_cli_err_cmd_set_invalid_param("filter is too long, please <128");
+					silc_cli_err_cmd_set_invalid_param("Invalid filter");
 					return -1;
 				}
 				return silc_cli_show_log(IS_LOG_FILE, p_l1_token->val_str);
@@ -391,6 +390,11 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 			else if(p_l1_token && strcmp(p_l1_token->name, "detail") == 0)
 			{
 				char filename[256];
+				if(!silc_cli_check_name(p_token->val_str))
+				{
+					silc_cli_err_cmd_set_err_info("Invalid file name %s.", p_token->val_str);
+					return -1;
+				}
 				sprintf(filename, "/config/extend/%s", p_l1_token->val_str);
 				return is_cli_cmd_show_file(filename);
 			}
@@ -466,7 +470,7 @@ int is_cli_cmd_show_do(silc_list* p_token_list)
 	if(is_cli_cmd_show_do_get_req_info(p_token_list, &req_info) != 0)
 		return -1;
 
-	if(strlen(req_info.path) == 0)
+	if(req_info.path[0] == 0)
 		return 0;
 
 	if(req_info.root_val == 0 || req_info.type == 0)

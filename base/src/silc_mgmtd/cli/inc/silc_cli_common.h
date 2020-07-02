@@ -96,6 +96,8 @@ int silc_cli_upload_file(silc_cstr url, silc_cstr user, silc_cstr passwd, silc_c
 int silc_cli_cmd_confirm(silc_cstr prompt, silc_cstr y_msg, silc_cstr n_msg);
 int silc_cli_show_cmd_output(silc_cstr cmd);
 int silc_cli_show_log(silc_cstr log, silc_cstr filter);
+silc_bool silc_cli_check_log_filter(silc_cstr filter);
+silc_bool silc_cli_check_name(silc_cstr val);
 
 #ifdef __cplusplus
 }

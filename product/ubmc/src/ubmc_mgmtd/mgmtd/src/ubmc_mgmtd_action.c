@@ -180,8 +180,13 @@ int is_mgmtd_remove_image(silc_mgmtd_node* p_node)
 	char out[512];
 	int len = 512;
 	silc_cstr filename = p_node->tmp_value.val.string_val;
+	if(!silc_mgmtd_if_check_name(filename))
+	{
+		SILC_ERR("Invalid image name '%s'", filename);
+		return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+	}
 
-	snprintf(cmd,CMD_BUFFER_SIZE,"%s -r %s/%s",CDROM_OP_BIN_PATH, LOCAL_IMAGE_PATH, filename);
+	snprintf(cmd,CMD_BUFFER_SIZE,"%s -r '%s/%s'",CDROM_OP_BIN_PATH, LOCAL_IMAGE_PATH, filename);
 	if(silc_mgmtd_if_exec_system_cmd(cmd, out, &len, 100000, silc_false) != 0)
 	{
 		SILC_ERR("Fail to exec '%s' error '%s'", cmd, silc_mgmtd_lib_err_str());
@@ -216,8 +221,13 @@ int is_mgmtd_bmc_action_usbcdrom(silc_mgmtd_node* p_node)
 		if(!p_image || p_image->tmp_value.type == SILC_MGMTD_VAR_NULL)
 			return IS_MGMTD_ERR_BASE_MISS_PARAM;
 		img = p_image->tmp_value.val.string_val;
+		if(!silc_mgmtd_if_check_name(img))
+		{
+			SILC_ERR("Invalid image name '%s'", img);
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
 
-		snprintf(cmd,CMD_BUFFER_SIZE,"%s -a %s/%s",CDROM_OP_BIN_PATH, LOCAL_IMAGE_PATH, img);
+		snprintf(cmd,CMD_BUFFER_SIZE,"%s -a '%s/%s'",CDROM_OP_BIN_PATH, LOCAL_IMAGE_PATH, img);
 		SILC_LOG("Attach the host USB CD-ROM with a local image: %s", img);
 	}
 	else if(strcmp(p_node->name, "attach-remote") == 0)
@@ -238,7 +248,7 @@ int is_mgmtd_bmc_action_usbcdrom(silc_mgmtd_node* p_node)
 		user = p_user->tmp_value.val.string_val;
 		passwd = p_passwd->tmp_value.val.string_val;
 
-		snprintf(cmd,CMD_BUFFER_SIZE,"%s -A %s %s %s %s",CDROM_OP_BIN_PATH, addr ,path ,user ,passwd);
+		snprintf(cmd,CMD_BUFFER_SIZE,"%s -A '%s' '%s' '%s' '%s'",CDROM_OP_BIN_PATH, addr ,path ,user ,passwd);
 		SILC_LOG("Attach the host USB CD-ROM with a remote image: %s:%s", addr, path);
 	}
 	else if(strcmp(p_node->name, "detach") == 0)

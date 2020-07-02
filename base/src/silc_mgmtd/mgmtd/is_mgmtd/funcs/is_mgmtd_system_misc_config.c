@@ -389,7 +389,12 @@ int is_mgmtd_system_misc_check_modify(void* p_db_node, void* conn_entry)
 		len = strlen(tz);
 		if (len == 0)
 		{
-			return IS_MGMTD_ERR_BASE_NOT_SUPPORT;
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
+		}
+		if(strstr(tz, ".") || silc_mgmtd_if_multi_cmd(tz))
+		{
+			SILC_ERR("Invalid zoneinfo %s", tz);
+			return IS_MGMTD_ERR_BASE_INVALID_PARAM;
 		}
 		sprintf(pathname, "%s/%s", IS_ZONEINFO_DIR, tz);
 		if (0 != access(pathname, F_OK))
