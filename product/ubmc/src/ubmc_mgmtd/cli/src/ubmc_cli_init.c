@@ -13,6 +13,8 @@ extern int ubmc_cli_cmd_show(silc_list* p_token_list);
 
 extern int ubmc_cli_dync_get_cdrom_list(void* data, char* output_val_buf, int* p_val_str_len);
 
+extern int ubmc_cli_dync_get_image_list(void* data, char* output_val_buf, int* p_val_str_len);
+
 // token
 static silc_cli_token_info s_ubmc_cli_token_info_list[] = {
 		{"user_exec show device", "Display device information", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, ubmc_cli_cmd_show, NULL, 0, 0, 0},
@@ -83,6 +85,8 @@ static silc_cli_token_info s_ubmc_cli_token_info_list[] = {
 		{"configure no bmc console sw-flowctrl", "Disable software flow control", "", "com-swflowctrl", "false", TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},
 		{"configure no bmc usb-cdrom", "Configure BMC usb cdrom", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},
 		{"configure no bmc usb-cdrom local-iso", "Remove the local ISO files", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_DYNAMIC, NULL, ubmc_cli_dync_get_cdrom_list, 2048, 0, 0},
+
+		{"configure no images", "Remove the local image files", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_DYNAMIC, ubmc_cli_cmd_no_do, ubmc_cli_dync_get_image_list, 2048, 0, 1},
 
 		{"configure phonehome", "Configure PhoneHome service", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, ubmc_cli_cmd_phonehome_config, NULL, 0, 0, 1},
 		{"configure phonehome start", "Start PhoneHome service", "", NULL, "true", TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},

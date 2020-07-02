@@ -122,13 +122,6 @@ int is_cli_cmd_no_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info* 
 				return 0;
 			}
 		}
-		else if(strcmp(p_token->name, "images") == 0)
-		{
-			sprintf(p_req_info->path, "/action/bmc/images/remove-local-image");
-			p_req_info->root_val = p_token->val_str;
-			p_req_info->type = SILC_MGMTD_IF_REQ_ACTION;
-			return 0;
-		}
 		else if(strcmp(p_token->name, "radius") == 0)
 		{
 			if(!p_l1_token)

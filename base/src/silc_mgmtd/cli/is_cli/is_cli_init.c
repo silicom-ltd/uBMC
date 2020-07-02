@@ -298,7 +298,6 @@ static silc_cli_token_info s_silc_cli_token_info_list[] = {
 {"configure name", "Configure device name, it will display in cli prompt", "hostname [a-zA-Z0-9-_.]", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_VARIABLE, is_cli_cmd_misc_config, NULL, 0, 0, 0},
 {"configure no", "Disable or remove certain configuration options", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, is_cli_cmd_no_do, NULL, 0, 0, 0},
 {"configure no configuration", "Remove the system configuration", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_DYNAMIC, NULL, is_cli_dync_get_config_list, 2048, 0, 0},
-{"configure no images", "Remove the local image files", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_DYNAMIC, NULL, is_cli_dync_get_image_list, 2048, 0, 1},
 {"configure no management", "Remove management configuration options", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},
 {"configure no management eth-if", "Configure ethernet interface", "", NULL, NULL, TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 2},
 {"configure no management eth-if enable", "Disable management interface", "", "state", "false", TOKEN_MODE_SINGLE, TOKEN_TYPE_STATIC, NULL, NULL, 0, 0, 0},
