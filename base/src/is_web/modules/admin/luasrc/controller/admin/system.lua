@@ -538,6 +538,8 @@ function action_upgrade()
 				if output:find("MANUFACTURE") or output:find("ATT") then 
 					upgrade_image_m()
 				else
+					upgrade_image_m()
+--[[
 					nixio.fs.unlink(tmpfile)
 					local verify_ret = verify_image()
 					luci.template.render("admin/upgrade", {
@@ -546,6 +548,7 @@ function action_upgrade()
 						verify_result=verify_ret,
 						upg_flag=1,
 					} )
+]]--
 				end
 			else
 				upgrade_image()
