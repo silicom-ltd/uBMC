@@ -66,6 +66,7 @@ if [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
     dst_fnames[5]="boot1.scr"
     dst_fnames[6]="vendor.txt"
     dst_fnames[7]="vendor_old.txt"
+    version_files[6]=""
     vendor_idx=6
     vendor_old_idx=7
     img_idx_max=5
