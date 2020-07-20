@@ -30,6 +30,8 @@ PATCH_FLIST[4]=files_linux_ubmc_pinctl.txt
 PATCH_NAME[5]=linux-ti-008-ubmc_uart_sim.patch
 PATCH_FLIST[5]=files_linux_ubmc_uart_sim.txt
 
+PATCH_NAME[5]=linux-mvebu-009-ubmc_net_ncsi.patch
+PATCH_FLIST[5]=files_linux_ubmc_net_ncsi.txt
 #PATCH_GEN_REQ_CLEAN=1
 
 
