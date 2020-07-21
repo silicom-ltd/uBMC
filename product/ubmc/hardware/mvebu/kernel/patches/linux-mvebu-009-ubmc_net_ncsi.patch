@@ -1,10 +1,10 @@
 --- linux-custom-orig/drivers/net/ethernet/marvell/mvneta.c	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/marvell/mvneta.c	2020-07-14 11:31:17.549649747 +0800
++++ linux-custom-silicom/drivers/net/ethernet/marvell/mvneta.c	2020-07-21 11:27:53.116353707 +0800
 @@ -38,6 +38,10 @@
  #include <net/ipv6.h>
  #include <net/tso.h>
  
-+//#define NO_SILC_MOD
++#define NO_SILC_MOD
 +#ifndef NO_SILC_MOD
 +#include <net/ncsi.h>
 +#endif
@@ -73,7 +73,7 @@
  	struct mvneta_port *pp = netdev_priv(ndev);
  	u32 val;
 -
-+	printk("ncsi mvneta_mac_link_down \n");
++	//printk("ncsi mvneta_mac_link_down \n");
 +#ifndef NO_SILC_MOD
 +		if(pp->ncsi_dev)
 +		{
@@ -88,16 +88,15 @@
  	mvneta_port_down(pp);
  
  	if (!phylink_autoneg_inband(mode)) {
-@@ -3679,7 +3728,7 @@
+@@ -3679,7 +3728,6 @@
  {
  	struct mvneta_port *pp = netdev_priv(ndev);
  	u32 val;
 -
-+	printk("ncsi Do mvneta_mac_link_up \n");
  	if (!phylink_autoneg_inband(mode)) {
  		val = mvreg_read(pp, MVNETA_GMAC_AUTONEG_CONFIG);
  		val &= ~MVNETA_GMAC_FORCE_LINK_DOWN;
-@@ -3693,6 +3742,33 @@
+@@ -3693,6 +3741,33 @@
  		pp->eee_active = phy_init_eee(phy, 0) >= 0;
  		mvneta_set_eee(pp, pp->eee_active && pp->tx_lpi_enabled);
  	}
@@ -131,12 +130,12 @@
  }
  
  static const struct phylink_mac_ops mvneta_phylink_ops = {
-@@ -3995,7 +4071,18 @@
+@@ -3995,7 +4070,18 @@
  		netdev_warn(dev, "ndo_stop not supported on MUSDK port\n");
  		return 0;
  	}
 -
-+	printk("ncsi mvneta_stop \n");
++	//printk("ncsi mvneta_stop \n");
 +#ifndef NO_SILC_MOD
 +		if(pp->ncsi_dev)
 +		{
@@ -151,7 +150,7 @@
  	if (!pp->neta_armada3700) {
  		/* Inform that we are stopping so we don't want to setup the
  		 * driver for new CPUs in the notifiers. The code of the
-@@ -4123,6 +4210,11 @@
+@@ -4123,6 +4209,11 @@
  		sizeof(drvinfo->version));
  	strlcpy(drvinfo->bus_info, dev_name(&dev->dev),
  		sizeof(drvinfo->bus_info));
@@ -163,7 +162,7 @@
  }
  
  
-@@ -4582,6 +4674,35 @@
+@@ -4582,6 +4673,35 @@
  	return 0;
  }
  
@@ -199,7 +198,7 @@
  /* Device initialization routine */
  static int mvneta_probe(struct platform_device *pdev)
  {
-@@ -4641,6 +4762,7 @@
+@@ -4641,6 +4761,7 @@
  
  	dev->ethtool_ops = &mvneta_eth_tool_ops;
  
@@ -207,7 +206,7 @@
  	pp = netdev_priv(dev);
  	spin_lock_init(&pp->lock);
  	pp->phylink = phylink;
-@@ -4827,6 +4949,21 @@
+@@ -4827,6 +4948,21 @@
  	/* Port may be configured by Uboot to transmit IDLE, so a remote side
  	 * feels the link as UP. Stop TX in same way as in mvneta_start/stop.
  	 */
@@ -229,7 +228,7 @@
  	if (pp->phylink) {
  		if (rtnl_is_locked()) {
  			if (!mvneta_mdio_probe(pp))
-@@ -4837,6 +4974,7 @@
+@@ -4837,6 +4973,7 @@
  				mvneta_mdio_remove(pp);
  			rtnl_unlock();
  		}
@@ -237,7 +236,7 @@
  	}
  
  	if (pp->musdk_port)
-@@ -4874,7 +5012,9 @@
+@@ -4874,7 +5011,9 @@
  {
  	struct net_device  *dev = platform_get_drvdata(pdev);
  	struct mvneta_port *pp = netdev_priv(dev);
@@ -249,7 +248,7 @@
  	clk_disable_unprepare(pp->clk_bus);
  	clk_disable_unprepare(pp->clk);
 --- linux-custom-orig/drivers/net/ethernet/marvell/Kconfig	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/marvell/Kconfig	2020-07-14 11:31:17.551649732 +0800
++++ linux-custom-silicom/drivers/net/ethernet/marvell/Kconfig	2020-07-21 11:11:54.820704140 +0800
 @@ -57,7 +57,7 @@
  
  config MVNETA
@@ -260,7 +259,7 @@
  	select PHYLINK
  	---help---
 --- linux-custom-orig/net/ncsi/ncsi-cmd.c	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-cmd.c	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-cmd.c	2020-07-21 11:11:54.820704140 +0800
 @@ -17,7 +17,7 @@
  #include <net/ncsi.h>
  #include <net/net_namespace.h>
@@ -772,7 +771,7 @@
  }
 +
 --- linux-custom-orig/net/ncsi/ncsi-rsp.c	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-rsp.c	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-rsp.c	2020-07-21 11:11:55.547697733 +0800
 @@ -24,9 +24,13 @@
  				 unsigned short payload)
  {
@@ -1070,7 +1069,7 @@
  		return ncsi_aen_handler(ndp, skb);
  
 --- linux-custom-orig/net/ncsi/ncsi-manage.c	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-manage.c	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-manage.c	2020-07-21 11:11:55.565697574 +0800
 @@ -38,7 +38,7 @@
  	return sizes[table];
  }
@@ -1744,7 +1743,7 @@
  
  			WARN_ON_ONCE(chained ||
 --- linux-custom-orig/net/ncsi/ncsi-pkt.h	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-pkt.h	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-pkt.h	2020-07-21 11:11:55.583697416 +0800
 @@ -326,6 +326,32 @@
  	unsigned char           pad[18];
  };
@@ -1792,7 +1791,7 @@
  
  #endif /* __NCSI_PKT_H__ */
 --- linux-custom-orig/net/ncsi/internal.h	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/internal.h	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/internal.h	2020-07-21 11:11:55.601697257 +0800
 @@ -97,12 +97,16 @@
  	u32 size;	/* Valid entries in ncm_data[] */
  	u32 data[8];	/* Data entries                */
@@ -1858,7 +1857,7 @@
 +
  #endif /* __NCSI_INTERNAL_H__ */
 --- linux-custom-orig/net/ncsi/Kconfig	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/Kconfig	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/Kconfig	2020-07-21 11:11:55.618697107 +0800
 @@ -3,7 +3,7 @@
  #
  
@@ -1869,7 +1868,7 @@
  	---help---
  	  This module provides NCSI (Network Controller Sideband Interface)
 --- linux-custom-orig/net/ncsi/Makefile	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/Makefile	2020-07-14 11:31:16.514657623 +0800
++++ linux-custom-silicom/net/ncsi/Makefile	2020-07-21 11:11:55.635696957 +0800
 @@ -1,4 +1,6 @@
  #
  # Makefile for NCSI API
@@ -1880,7 +1879,7 @@
 +obj-$(CONFIG_NET_NCSI)	+= ncsi.o
 \ No newline at end of file
 --- linux-custom-orig/include/net/ncsi.h	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/include/net/ncsi.h	2020-07-14 11:31:15.460665644 +0800
++++ linux-custom-silicom/include/net/ncsi.h	2020-07-21 11:11:55.636696948 +0800
 @@ -28,7 +28,8 @@
  	void		  (*handler)(struct ncsi_dev *ndev);
  };
