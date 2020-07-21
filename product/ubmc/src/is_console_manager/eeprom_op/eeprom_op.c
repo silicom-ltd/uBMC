@@ -745,12 +745,13 @@ static int create_model_file(u8 *eeprom)
 #define UBMC_S_PN	"80500-0179"
 #define UBMC_M_PN	"80500-0180"
 #define UBMC_L_PN	"80500-0181"
-#define UBMC_SKYD_PN	"80500-0191"	//For testing
+#define UBMC_SKYD_PN	"80400-0152"
+
 #define UBMC_XS_MODEL	"ATT-V150"
 #define UBMC_S_MODEL	"ATT-V250"
 #define UBMC_M_MODEL	"ATT-V450"
 #define UBMC_L_MODEL	"ATT-V850"
-#define UBMC_SKYD_MODEL	"ATT-V950"		//For testing
+#define UBMC_SKYD_MODEL	"Barcelona"
 #define UBMC_PN_MAXSIZE 10
 static int create_model_file_by_pn(u8 *eeprom)
 {
