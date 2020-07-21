@@ -390,9 +390,9 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 			else if(p_l1_token && strcmp(p_l1_token->name, "detail") == 0)
 			{
 				char filename[256];
-				if(!silc_cli_check_name(p_token->val_str))
+				if(!silc_cli_check_name(p_l1_token->val_str))
 				{
-					silc_cli_err_cmd_set_err_info("Invalid file name %s.", p_token->val_str);
+					silc_cli_err_cmd_set_err_info("Invalid file name %s.", p_l1_token->val_str);
 					return -1;
 				}
 				sprintf(filename, "/config/extend/%s", p_l1_token->val_str);
