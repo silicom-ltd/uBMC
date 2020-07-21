@@ -495,6 +495,14 @@ static int skyd_update_sensor_state_callback(void* sensor_data ,void* private_da
 			//do not return ,just set value to -1,means can not get the value ,N/A
 			value = -1;
 		}
+		else
+		{
+			if(strcmp(ubmc_sensor_arry->sensor_name,"TEMP_HOST_CPU") == 0)
+			{
+				value = value + 15000 ; //The CPU temp is measured by PCB temp on SKY-D system.
+			}
+		}
+
 	}
 	else if(ubmc_sensor_arry->read_value_mode == DEV_MODE)
 	{
