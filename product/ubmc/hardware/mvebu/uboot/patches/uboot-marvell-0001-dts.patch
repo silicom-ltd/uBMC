@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-06-28 16:16:30.063657925 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-08-03 18:09:13.607439462 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,7 +11,7 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-06-29 15:06:15.816322544 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-08-03 18:09:13.607439462 +0800
 @@ -0,0 +1,539 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
@@ -329,22 +329,22 @@
 +};
 +#endif
 +
-+#if 0
-+&usb3 {
-+	status = "disabled";
-+	usb-phy = <&usb3_phy>;
-+	dr_mode = "device"
-+	/* Generic PHY, providing serdes lanes */
-+	phys = <&comphy 2>;
-+	phy-names = "usb";
-+};
-+#endif
-+
 +&u3d{
 +	status = "okay";
++	/*phys = <&comphy 0 COMPHY_USB3>;*/
++	/*phys = <&a3700_comphy 0 0xa0fc>;*/
++
++	phy-names = "usb";
 +};
-+&usb2 {
++
++&udc {
 +	status = "okay";
++	phys = <&utmi_usb32>;
++	phy-names = "usb";
++};
++
++&usb2 {
++	status = "disabled";
 +	usb-phy = <&usb2_phy>;
 +	phys = <&utmi_usb2>;
 +	phy-names = "usb";
@@ -355,7 +355,7 @@
 +	status = "okay";
 +};
 +&utmi_usb2 {
-+	status = "okay";
++	status = "disabled";
 +};
 +
 +/*&eth0 {
@@ -553,8 +553,8 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-06-29 15:08:44.224265916 +0800
-@@ -0,0 +1,591 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-08-03 18:09:13.608439454 +0800
+@@ -0,0 +1,584 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
 + *
@@ -969,27 +969,21 @@
 +				clocks = <&sb_periph_clk 7>;
 +				status = "disabled";
 +			};
-+			#if 0
 +			u3d: u3d@50000 {
-+				status = "disabled";
-+				 /* NUM1 phys =  <&a3700_comphy 0 0x21fc>; */
-+				/* NUM2 phys =  <&a3700_comphy 0 0x31fc>; */
-+				phys = <&a3700_comphy0 0xa0fc>; /* NUM3 */
-+				/* Either NUM1,NUM2,NUM3 corresponds to mode COMPHY_USB3 because
-+				these are the only three modes and I have tested
-+				phys = <&a3700_comphy 0 COMPHY_USB3> and the kernel does not complain
-+                               */
-+				phy-names = "usb";
-+			};
-+			#endif
-+			/*see /Documentation/devicetree/bindings/phy/phy-mvebu.txt*/
-+			u3d: u3d@50000 {
-+				status = "disabled";
 +				compatible = "marvell,armada3700-u3d";
-+				 /* NUM1 phys =  <&a3700_comphy 0 0x21fc>; */
-+				/* NUM2 phys =  <&a3700_comphy 0 0x31fc>; */
-+				phys = <&utmi_usb32>; /* NUM3 */
-+				phy-names = "usb";
++				/* 0: 0x50000: USB 3.0 Device port 0: DEV_INFO_REG(0:15 - version_id) */
++				reg = <0x50000 0x2000>;
++				interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
++				clocks = <&sb_periph_clk 12>;
++				status = "disabled";
++			};
++
++			udc: udc@54100 {
++				compatible = "marvell,mv-udc";
++				reg = <0x54100 0x2000>;
++				interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
++				clocks = <&sb_periph_clk 12>;
++				status = "disabled";
 +			};
 +			usb3: usb@58000 {
 +				compatible = "marvell,armada3700-xhci",
@@ -1005,14 +999,13 @@
 +				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
 +				status = "disabled";
 +			};
-+            utmi_usb32: utmi@5d000 {
-+                compatible = "marvell,armada-3700-utmi-phy";
-+                reg = <0x5d000 0x1000>;
-+               /* utmi-port = <UTMI_PHY_TO_USB3_HOST0>;*/
-+                utmi-port = <UTMI_PHY_TO_USB3_DEVICE0>;
-+                #phy-cells = <0>;
-+                status = "disabled";
-+            }; 
++			utmi_usb32: utmi@5d000 {
++				compatible = "marvell,armada-3700-utmi-phy";
++				reg = <0x5d000 0x1000>;
++				utmi-port = <UTMI_PHY_TO_USB3_HOST0>;
++				#phy-cells = <0>;
++				status = "disabled";
++			};
 +			utmi_usb2: utmi@5f000 {
 +				compatible = "marvell,armada-3700-utmi-phy";
 +				reg = <0x5f000 0x1000>;
@@ -1147,7 +1140,7 @@
 +	};
 +};
 --- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-06-28 16:16:30.063657925 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-08-03 18:09:13.608439454 +0800
 @@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) 2018 Marvell
@@ -1168,3 +1161,148 @@
 +#define UTMI_PHY_INVALID		0xff
 +
 +#endif /* _DT_BINDINGS_PHY_UTMI_MVEBU */
+--- uboot-custom-orig/include/dt-bindings/comphy/comphy_data.h	2019-06-03 05:21:35.000000000 +0800
++++ uboot-custom-silicom/include/dt-bindings/comphy/comphy_data.h	2020-08-03 18:09:13.609439446 +0800
+@@ -50,6 +50,142 @@
+ #define UTMI_PHY_TO_USB3_HOST1		1
+ #define UTMI_PHY_TO_USB3_DEVICE0	2
+ #define UTMI_PHY_INVALID		0xff
++/*Add from kernel /include/dt-bindings/phy/phy-comphy-mvebu.h */
++/*Because we use the dtb generated by uboot for kernel*/
+ 
++/* A lane is described by 4 fields:
++ *  *      - bit 1~0 represent comphy polarity invert
++ *   *      - bit 7~2 represent comphy speed
++ *    *      - bit 11~8 represent unit index
++ *     *      - bit 16~12 represent mode
++ *      *      - bit 17 represent comphy indication of clock source
++ *       *      - bit 31~18 reserved
++ *        */
++
++#define COMPHY_INVERT_OFFSET	0
++#define COMPHY_INVERT_LEN	2
++#define COMPHY_INVERT_MASK	COMPHY_MASK(COMPHY_INVERT_OFFSET, COMPHY_INVERT_LEN)
++#define COMPHY_SPEED_OFFSET	(COMPHY_INVERT_OFFSET + COMPHY_INVERT_LEN)
++#define COMPHY_SPEED_LEN	6
++#define COMPHY_SPEED_MASK	COMPHY_MASK(COMPHY_SPEED_OFFSET, COMPHY_SPEED_LEN)
++#define COMPHY_UNIT_ID_OFFSET	(COMPHY_SPEED_OFFSET + COMPHY_SPEED_LEN)
++#define COMPHY_UNIT_ID_LEN	4
++#define COMPHY_UNIT_ID_MASK	COMPHY_MASK(COMPHY_UNIT_ID_OFFSET, COMPHY_UNIT_ID_LEN)
++#define COMPHY_MODE_OFFSET	(COMPHY_UNIT_ID_OFFSET + COMPHY_UNIT_ID_LEN)
++#define COMPHY_MODE_LEN		5
++#define COMPHY_MODE_MASK	COMPHY_MASK(COMPHY_MODE_OFFSET, COMPHY_MODE_LEN)
++#define COMPHY_CLK_SRC_OFFSET	(COMPHY_MODE_OFFSET + COMPHY_MODE_LEN)
++#define COMPHY_CLK_SRC_LEN	1
++#define COMPHY_CLK_SRC_MASK	COMPHY_MASK(COMPHY_CLK_SRC_OFFSET, COMPHY_CLK_SRC_LEN)
++#define COMPHY_PCI_WIDTH_OFFSET	(COMPHY_CLK_SRC_OFFSET + COMPHY_CLK_SRC_LEN)
++#define COMPHY_PCI_WIDTH_LEN	3
++#define COMPHY_PCI_WIDTH_MASK	COMPHY_MASK(COMPHY_PCI_WIDTH_OFFSET, COMPHY_PCI_WIDTH_LEN)
++#define COMPHY_DEF(mode, id, speed, invert)	\
++		(((mode) << COMPHY_MODE_OFFSET) | ((id) << COMPHY_UNIT_ID_OFFSET) | \
++			((speed) << COMPHY_SPEED_OFFSET) | ((invert) << COMPHY_INVERT_OFFSET))
++
++#define COMPHY_MASK(offset, len)	(((1 << (len)) - 1) << (offset))
++
++/* Macro the extract the mode from lane description */
++#define COMPHY_GET_MODE(x)		(((x) & COMPHY_MODE_MASK) >> COMPHY_MODE_OFFSET)
++/* Macro the extract the unit index from lane description */
++#define COMPHY_GET_ID(x)		(((x) & COMPHY_UNIT_ID_MASK) >> COMPHY_UNIT_ID_OFFSET)
++/* Macro the extract the speed from lane description */
++#define COMPHY_GET_SPEED(x)		(((x) & COMPHY_SPEED_MASK) >> COMPHY_SPEED_OFFSET)
++/* Macro the extract the polarity invert from lane description */
++#define COMPHY_GET_POLARITY_INVERT(x)	(((x) & COMPHY_INVERT_MASK) >> COMPHY_INVERT_OFFSET)
++/* Macro the extract the clock source indication from lane description */
++#define COMPHY_GET_CLK_SRC(x)		(((x) & COMPHY_CLK_SRC_MASK) >> COMPHY_CLK_SRC_OFFSET)
++
++/* Comphy unit index macro */
++#define COMPHY_UNIT_ID0		0
++#define COMPHY_UNIT_ID1		1
++#define COMPHY_UNIT_ID2		2
++#define COMPHY_UNIT_ID3		3
++
++/* Comphy description macro with default speed and invert */
++#define	COMPHY_UNUSED		0xFFFFFFFF
++#define COMPHY_SATA0		COMPHY_DEF(COMPHY_SATA_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_SATA1		COMPHY_DEF(COMPHY_SATA_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_SGMII0		COMPHY_DEF(COMPHY_SGMII_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* SGMII 1G */
++#define COMPHY_SGMII1		COMPHY_DEF(COMPHY_SGMII_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* SGMII 1G */
++#define COMPHY_SGMII2		COMPHY_DEF(COMPHY_SGMII_MODE,  COMPHY_UNIT_ID2, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* SGMII 1G */
++#define COMPHY_HS_SGMII0	COMPHY_DEF(COMPHY_HS_SGMII_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* SGMII 2.5G */
++#define COMPHY_HS_SGMII1	COMPHY_DEF(COMPHY_HS_SGMII_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* SGMII 2.5G */
++#define COMPHY_HS_SGMII2	COMPHY_DEF(COMPHY_HS_SGMII_MODE,  COMPHY_UNIT_ID2, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* SGMII 2.5G */
++#define COMPHY_USB3H0		COMPHY_DEF(COMPHY_USB3H_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_USB3H1		COMPHY_DEF(COMPHY_USB3H_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_USB3D0		COMPHY_DEF(COMPHY_USB3D_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_PCIE0		COMPHY_DEF(COMPHY_PCIE_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_PCIE1		COMPHY_DEF(COMPHY_PCIE_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_PCIE2		COMPHY_DEF(COMPHY_PCIE_MODE,  COMPHY_UNIT_ID2, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_PCIE3		COMPHY_DEF(COMPHY_PCIE_MODE,  COMPHY_UNIT_ID3, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_RXAUI0		COMPHY_DEF(COMPHY_RXAUI_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_RXAUI1		COMPHY_DEF(COMPHY_RXAUI_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_XFI0		COMPHY_DEF(COMPHY_XFI_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_SFI0		COMPHY_DEF(COMPHY_SFI_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_XFI1		COMPHY_DEF(COMPHY_XFI_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_SFI1		COMPHY_DEF(COMPHY_SFI_MODE,  COMPHY_UNIT_ID1, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)
++#define COMPHY_USB3		COMPHY_DEF(COMPHY_USB3_MODE,  COMPHY_UNIT_ID0, \
++							COMPHY_SPEED_DEFAULT, COMPHY_POLARITY_NO_INVERT)	/* USB3 Host&Device */
++
++#define COMPHY_SATA_MODE	0x1
++#define COMPHY_SGMII_MODE	0x2	/* SGMII 1G */
++#define COMPHY_HS_SGMII_MODE	0x3	/* SGMII 2.5G */
++#define COMPHY_USB3H_MODE	0x4
++#define COMPHY_USB3D_MODE	0x5
++#define COMPHY_PCIE_MODE	0x6
++#define COMPHY_RXAUI_MODE	0x7
++#define COMPHY_XFI_MODE		0x8
++#define COMPHY_SFI_MODE		0x9
++#define COMPHY_USB3_MODE	0xa
++
++/* Polarity invert macro */
++#define COMPHY_POLARITY_NO_INVERT	0
++#define COMPHY_POLARITY_TXD_INVERT	1
++#define COMPHY_POLARITY_RXD_INVERT	2
++#define COMPHY_POLARITY_ALL_INVERT	(COMPHY_POLARITY_TXD_INVERT | COMPHY_POLARITY_RXD_INVERT)
++#if 0
++/* COMPHY speed macro */
++#define COMPHY_SPEED_1_25G		0 /* SGMII 1G */
++#define COMPHY_SPEED_2_5G		1
++#define COMPHY_SPEED_3_125G		2 /* SGMII 2.5G */
++#define COMPHY_SPEED_5G			3
++#define COMPHY_SPEED_5_15625G		4 /* XFI 5G */
++#define COMPHY_SPEED_6G			5
++#define COMPHY_SPEED_10_3125G		6 /* XFI 10G */
++#define COMPHY_SPEED_MAX		0x3F
++/* The  default speed for IO with fixed known speed */
++#define COMPHY_SPEED_DEFAULT		COMPHY_SPEED_MAX
++#endif
++/* Commands for comphy driver */
++#define COMPHY_COMMAND_DIGITAL_PWR_OFF		0x00000001
++#define COMPHY_COMMAND_DIGITAL_PWR_ON		0x00000002
++#define COMPHY_COMMAND_PCIE_WIDTH_1		0x00000003
++#define COMPHY_COMMAND_PCIE_WIDTH_2		0x00000004
++#define COMPHY_COMMAND_PCIE_WIDTH_4		0x00000005
++#define COMPHY_COMMAND_PCIE_WIDTH_UNSUPPORT	0x00000006
++#define COMPHY_COMMAND_SFI_RX_TRAINING		0x00000007
+ #endif /* _COMPHY_DATA_H_ */
+ 
