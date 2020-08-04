@@ -24,7 +24,7 @@
  	tristate "Marvell USB2.0 Device Controller"
  	depends on HAS_DMA
 --- linux-custom-orig/drivers/usb/gadget/udc/mvebu_glue.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/usb/gadget/udc/mvebu_glue.c	2020-08-03 18:09:41.719214295 +0800
++++ linux-custom-silicom/drivers/usb/gadget/udc/mvebu_glue.c	2020-08-04 11:14:09.804933499 +0800
 @@ -0,0 +1,189 @@
 +/*
 + * Copyright (C) 2013 Marvell International Ltd. All rights reserved.
@@ -62,7 +62,7 @@
 +
 +	udc20 = udc30 = NULL;
 +	list_for_each_entry(udc, udc_list, list) {
-+		printk("usb:Do udc_detect udc->gadget->name is %s \n",udc->gadget->name);
++		//printk("usb:Do udc_detect udc->gadget->name is %s \n",udc->gadget->name);
 +		if (strncmp(udc->gadget->name, "mv_udc", 6) == 0)
 +			udc20 = udc;
 +
@@ -80,7 +80,7 @@
 +	cp->work = &glue_work;
 +	glue.u20 = udc20;
 +	glue.u30 = udc30;
-+	printk("usb:Do udc_detect glue.usb2_connect is %d \n",glue.usb2_connect);
++	//printk("usb:Do udc_detect glue.usb2_connect is %d \n",glue.usb2_connect);
 +	if (glue.usb2_connect)
 +		return udc20;
 +	else
@@ -216,8 +216,8 @@
 +
 +device_initcall(mvc2_glue_init);
 --- linux-custom-orig/drivers/usb/gadget/udc/mvebu_u3d.c	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/usb/gadget/udc/mvebu_u3d.c	2020-08-03 18:09:41.720214287 +0800
-@@ -0,0 +1,2673 @@
++++ linux-custom-silicom/drivers/usb/gadget/udc/mvebu_u3d.c	2020-08-04 11:13:45.872112446 +0800
+@@ -0,0 +1,2659 @@
 +/*
 + * Copyright (C) 2013 Marvell International Ltd. All rights reserved.
 + *
@@ -264,7 +264,6 @@
 +#include <linux/gpio.h>
 +#include <linux/phy/phy.h>
 +#include <linux/usb/composite.h>
-+#define DEBUG
 +#include "mvebu_u3d.h"
 +
 +#define DRIVER_DESC    "Marvell Central IP USB3.0 Device Controller driver"
@@ -2116,18 +2115,7 @@
 +		break;
 +	}
 +}
-+static void mvebu_u3d_reg_dump(struct mvc2 *cp)
-+{
-+	unsigned int tmp;
-+	tmp = MV_CP_READ(cp->reg->global_control);
-+	pr_info("USB device: global_control is %x \n",tmp);
-+	tmp = MV_CP_READ(cp->reg->ref_int);
-+	pr_info("USB device: topint is %x \n",tmp);
-+	tmp = MV_CP_READ(cp->reg->ref_inten);
-+	pr_info("USB device: ref_inten is %x \n",tmp);
 +
-+	return 0;
-+}
 +static irqreturn_t mvc2_irq(int irq, void *devid)
 +{
 +	struct mvc2 *cp = devid;
@@ -2671,7 +2659,6 @@
 +		}
 +
 +		INIT_WORK(&cp->vbus_work, mvc2_vbus_work);
-+		printk("usb:mvc2_probe do vbus_work \n");
 +	}
 +
 +	cp->reg = devm_kzalloc(&pdev->dev, sizeof(struct mvc2_register),
@@ -2744,7 +2731,6 @@
 +
 +	dev_set_drvdata(cp->dev, cp);
 +	dev_info(cp->dev, "Detected ver %x from Marvell Central IP.\n", ver);
-+	printk("usb:Done  mvc2_probe ver is %x \n",ver);
 +	return 0;
 +
 +err_alloc_eps:
@@ -2892,8 +2878,8 @@
 +MODULE_AUTHOR("Lei Wen <leiwen@marvell.com>");
 +MODULE_LICENSE("GPL");
 --- linux-custom-orig/drivers/usb/gadget/udc/mvebu_u3d.h	1970-01-01 08:00:00.000000000 +0800
-+++ linux-custom-silicom/drivers/usb/gadget/udc/mvebu_u3d.h	2020-08-03 18:09:41.720214287 +0800
-@@ -0,0 +1,573 @@
++++ linux-custom-silicom/drivers/usb/gadget/udc/mvebu_u3d.h	2020-08-04 11:19:00.066796227 +0800
+@@ -0,0 +1,578 @@
 +/**
 + * core.h - Marvell Central IP usb3 core header
 + *
@@ -2930,6 +2916,11 @@
 + * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 + * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 + */
++/*
++ * Please note that ,this some files about UDC U3D is ported from Marvell kernel 4.4.120
++ *
++ * Add by Jason
++ * */
 +#ifndef __DRIVERS_USB_MVC2_H
 +#define __DRIVERS_USB_MVC2_H
 +
@@ -3468,13 +3459,26 @@
 +
 +#endif
 --- linux-custom-orig/drivers/usb/gadget/udc/mv_udc_core.c	2019-10-21 23:25:45.000000000 +0800
-+++ linux-custom-silicom/drivers/usb/gadget/udc/mv_udc_core.c	2020-08-03 18:09:41.720214287 +0800
++++ linux-custom-silicom/drivers/usb/gadget/udc/mv_udc_core.c	2020-08-04 11:19:45.261464162 +0800
 @@ -1,4 +1,3 @@
 -// SPDX-License-Identifier: GPL-2.0+
  /*
   * Copyright (C) 2011 Marvell International Ltd. All rights reserved.
   * Author: Chao Xie <chao.xie@marvell.com>
-@@ -34,12 +33,16 @@
+@@ -9,7 +8,11 @@
+  * Free Software Foundation;  either version 2 of the  License, or (at your
+  * option) any later version.
+  */
+-
++/*
++ * Please note that ,this some files about UDC U3D is ported from Marvell kernel 4.4.120
++ *
++ * Add by Jason
++ * */
+ #include <linux/module.h>
+ #include <linux/pci.h>
+ #include <linux/dma-mapping.h>
+@@ -34,12 +37,15 @@
  #include <linux/irq.h>
  #include <linux/platform_device.h>
  #include <linux/clk.h>
@@ -3484,7 +3488,6 @@
  #include <asm/unaligned.h>
 -
 +#include <linux/gpio.h>
-+#define DEBUG 1
  #include "mv_udc.h"
  
  #define DRIVER_DESC		"Marvell PXA USB Device Controller driver"
@@ -3492,7 +3495,7 @@
  
  #define ep_dir(ep)	(((ep)->ep_num == 0) ? \
  				((ep)->udc->ep0_dir) : ((ep)->direction))
-@@ -69,7 +72,7 @@
+@@ -69,7 +75,7 @@
  	.bDescriptorType =	USB_DT_ENDPOINT,
  	.bEndpointAddress =	0,
  	.bmAttributes =		USB_ENDPOINT_XFER_CONTROL,
@@ -3501,7 +3504,7 @@
  };
  
  static void ep0_reset(struct mv_udc *udc)
-@@ -87,11 +90,11 @@
+@@ -87,11 +93,11 @@
  		ep->dqh = &udc->ep_dqh[i];
  
  		/* configure ep0 endpoint capabilities in dQH */
@@ -3516,7 +3519,7 @@
  
  		epctrlx = readl(&udc->op_regs->epctrlx[0]);
  		if (i) {	/* TX */
-@@ -129,7 +132,7 @@
+@@ -129,7 +135,7 @@
  {
  	struct mv_dtd	*curr_dtd;
  	struct mv_dqh	*curr_dqh;
@@ -3525,7 +3528,7 @@
  	int i, direction;
  	int retval = 0;
  	u32 errors;
-@@ -139,19 +142,20 @@
+@@ -139,19 +145,20 @@
  	direction = index % 2;
  
  	curr_dtd = curr_req->head;
@@ -3549,7 +3552,7 @@
  					>> DTD_LENGTH_BIT_POS;
  			actual -= remaining_length;
  
-@@ -171,7 +175,8 @@
+@@ -171,7 +178,8 @@
  				errors);
  			if (errors & DTD_STATUS_HALTED) {
  				/* Clear the errors and Halt condition */
@@ -3559,7 +3562,7 @@
  				retval = -EPIPE;
  			} else if (errors & DTD_STATUS_DATA_BUFF_ERR) {
  				retval = -EPROTO;
-@@ -190,8 +195,8 @@
+@@ -190,8 +198,8 @@
  	else
  		bit_pos = 1 << (16 + curr_req->ep->ep_num);
  
@@ -3570,7 +3573,7 @@
  			while (readl(&udc->op_regs->epstatus) & bit_pos)
  				udelay(1);
  			break;
-@@ -248,7 +253,8 @@
+@@ -248,7 +256,8 @@
  
  	spin_unlock(&ep->udc->lock);
  
@@ -3580,7 +3583,7 @@
  
  	spin_lock(&ep->udc->lock);
  	ep->stopped = stopped;
-@@ -273,7 +279,7 @@
+@@ -273,7 +282,7 @@
  		struct mv_req *lastreq;
  		lastreq = list_entry(ep->queue.prev, struct mv_req, queue);
  		lastreq->tail->dtd_next =
@@ -3589,7 +3592,7 @@
  
  		wmb();
  
-@@ -321,11 +327,12 @@
+@@ -321,11 +330,12 @@
  	}
  
  	/* Write dQH next pointer and terminate bit to 0 */
@@ -3605,7 +3608,7 @@
  
  	/* Ensure that updates to the QH will occur before priming. */
  	wmb();
-@@ -348,7 +355,7 @@
+@@ -348,7 +358,7 @@
  	/* how big will this transfer be? */
  	if (usb_endpoint_xfer_isoc(req->ep->ep.desc)) {
  		dqh = req->ep->dqh;
@@ -3614,7 +3617,7 @@
  				& 0x3;
  		*length = min(req->req.length - req->req.actual,
  				(unsigned)(mult * req->ep->ep.maxpacket));
-@@ -398,7 +405,7 @@
+@@ -398,7 +408,7 @@
  
  	temp |= mult << 10;
  
@@ -3623,7 +3626,7 @@
  
  	mb();
  
-@@ -411,8 +418,11 @@
+@@ -411,8 +421,11 @@
  	unsigned count;
  	int is_last, is_first = 1;
  	struct mv_dtd *dtd, *last_dtd = NULL;
@@ -3635,7 +3638,7 @@
  	do {
  		dtd = build_dtd(req, &count, &dma, &is_last);
  		if (dtd == NULL)
-@@ -422,7 +432,7 @@
+@@ -422,7 +435,7 @@
  			is_first = 0;
  			req->head = dtd;
  		} else {
@@ -3644,7 +3647,7 @@
  			last_dtd->next_dtd_virt = dtd;
  		}
  		last_dtd = dtd;
-@@ -430,8 +440,7 @@
+@@ -430,8 +443,7 @@
  	} while (!is_last);
  
  	/* set terminate bit to 1 for the last dTD */
@@ -3654,7 +3657,7 @@
  	req->tail = dtd;
  
  	return 0;
-@@ -445,8 +454,7 @@
+@@ -445,8 +457,7 @@
  	struct mv_dqh *dqh;
  	u16 max = 0;
  	u32 bit_pos, epctrlx, direction;
@@ -3664,7 +3667,7 @@
  	unsigned long flags;
  
  	ep = container_of(_ep, struct mv_ep, ep);
-@@ -466,6 +474,8 @@
+@@ -466,6 +477,8 @@
  	 * disable HW zero length termination select
  	 * driver handles zero length packet through req->req.zero
  	 */
@@ -3673,7 +3676,7 @@
  	bit_pos = 1 << ((direction == EP_DIR_OUT ? 0 : 16) + ep->ep_num);
  
  	/* Check if the Endpoint is Primed */
-@@ -480,20 +490,21 @@
+@@ -480,20 +493,21 @@
  			(unsigned)bit_pos);
  		goto en_done;
  	}
@@ -3700,7 +3703,7 @@
  		/* 3 transactions at most */
  		if (mult > 3)
  			goto en_done;
-@@ -505,12 +516,12 @@
+@@ -505,12 +519,12 @@
  	spin_lock_irqsave(&udc->lock, flags);
  	/* Get the endpoint queue head address */
  	dqh = ep->dqh;
@@ -3717,7 +3720,7 @@
  
  	ep->ep.maxpacket = max;
  	ep->ep.desc = desc;
-@@ -561,7 +572,7 @@
+@@ -561,7 +575,7 @@
  	struct mv_udc *udc;
  	struct mv_ep *ep;
  	struct mv_dqh *dqh;
@@ -3726,7 +3729,7 @@
  	unsigned long flags;
  
  	ep = container_of(_ep, struct mv_ep, ep);
-@@ -576,9 +587,10 @@
+@@ -576,9 +590,10 @@
  	spin_lock_irqsave(&udc->lock, flags);
  
  	direction = ep_dir(ep);
@@ -3738,7 +3741,7 @@
  
  	/* Disable the endpoint for Rx or Tx and reset the endpoint type */
  	epctrlx = readl(&udc->op_regs->epctrlx[ep->ep_num]);
-@@ -758,11 +770,12 @@
+@@ -758,11 +773,12 @@
  	u32 bit_pos;
  
  	/* Write dQH next pointer and terminate bit to 0 */
@@ -3754,7 +3757,7 @@
  
  	/* Ensure that updates to the QH will occure before priming. */
  	wmb();
-@@ -826,8 +839,8 @@
+@@ -826,8 +842,8 @@
  			struct mv_dqh *qh;
  
  			qh = ep->dqh;
@@ -3765,7 +3768,7 @@
  		}
  
  		/* The request hasn't been processed, patch up the TD chain */
-@@ -837,7 +850,6 @@
+@@ -837,7 +853,6 @@
  		prev_req = list_entry(req->queue.prev, struct mv_req, queue);
  		writel(readl(&req->tail->dtd_next),
  				&prev_req->tail->dtd_next);
@@ -3773,7 +3776,7 @@
  	}
  
  	done(ep, req, -ECONNRESET);
-@@ -945,7 +957,7 @@
+@@ -945,7 +960,7 @@
  	return mv_ep_set_halt_wedge(_ep, 1, 1);
  }
  
@@ -3782,7 +3785,7 @@
  	.enable		= mv_ep_enable,
  	.disable	= mv_ep_disable,
  
-@@ -960,9 +972,9 @@
+@@ -960,9 +975,9 @@
  	.fifo_flush	= mv_ep_fifo_flush,	/* flush fifo */
  };
  
@@ -3794,30 +3797,19 @@
  }
  
  static void udc_clock_disable(struct mv_udc *udc)
-@@ -1013,12 +1025,13 @@
+@@ -1013,7 +1028,6 @@
  	tmp = readl(&udc->op_regs->usbcmd);
  	tmp &= ~USBCMD_RUN_STOP;
  	writel(tmp, &udc->op_regs->usbcmd);
 -
-+	//printk("Do udc_reset 1 \n");
  	/* Reset the controller to get default values */
  	writel(USBCMD_CTRL_RESET, &udc->op_regs->usbcmd);
  
- 	/* wait for reset to complete */
- 	loops = LOOPS(RESET_TIMEOUT);
-+	//printk("Do udc_reset 2 \n");
- 	while (readl(&udc->op_regs->usbcmd) & USBCMD_CTRL_RESET) {
- 		if (loops == 0) {
- 			dev_err(&udc->dev->dev,
-@@ -1026,38 +1039,44 @@
- 			return -ETIMEDOUT;
- 		}
+@@ -1028,36 +1042,32 @@
  		loops--;
-+		printk("Do udc_reset loops is %d  \n",loops);
  		udelay(LOOPS_USEC);
  	}
 -
-+	//printk("Do udc_reset 3 \n");
  	/* set controller to device mode */
  	tmp = readl(&udc->op_regs->usbmode);
  	tmp |= USBMODE_CTRL_MODE_DEVICE;
@@ -3828,41 +3820,33 @@
  
  	writel(tmp, &udc->op_regs->usbmode);
 -
-+	//printk("Do udc_reset 5 \n");
  	writel(0x0, &udc->op_regs->epsetupstat);
 -
-+	//printk("Do udc_reset 6 \n");
  	/* Configure the Endpoint List Address */
  	writel(udc->ep_dqh_dma & USB_EP_LIST_ADDRESS_MASK,
  		&udc->op_regs->eplistaddr);
 -
-+	//printk("Do udc_reset 7 \n");
  	portsc = readl(&udc->op_regs->portsc[0]);
  	if (readl(&udc->cap_regs->hcsparams) & HCSPARAMS_PPC)
  		portsc &= (~PORTSCX_W1C_BITS | ~PORTSCX_PORT_POWER);
 -
-+	//printk("Do udc_reset 8 portsc is %x \n",portsc);
 +	udc->force_fs = 1;
  	if (udc->force_fs)
  		portsc |= PORTSCX_FORCE_FULL_SPEED_CONNECT;
  	else
  		portsc &= (~PORTSCX_FORCE_FULL_SPEED_CONNECT);
 -
-+	//printk("Do udc_reset 9 udc->force_fs is %d \n",udc->force_fs);
 +#if 1
  	writel(portsc, &udc->op_regs->portsc[0]);
 -
-+	//printk("Do udc_reset 10 \n");
  	tmp = readl(&udc->op_regs->epctrlx[0]);
-+	//printk("Do udc_reset 11 \n");
  	tmp &= ~(EPCTRL_TX_EP_STALL | EPCTRL_RX_EP_STALL);
  	writel(tmp, &udc->op_regs->epctrlx[0]);
 +#endif
-+	//printk("Do udc_reset 12 \n");
  
  	return 0;
  }
-@@ -1070,11 +1089,8 @@
+@@ -1070,11 +1080,8 @@
  		return 0;
  
  	dev_dbg(&udc->dev->dev, "enable udc\n");
@@ -3876,7 +3860,7 @@
  		retval = udc->pdata->phy_init(udc->phy_regs);
  		if (retval) {
  			dev_err(&udc->dev->dev,
-@@ -1100,7 +1116,7 @@
+@@ -1100,7 +1107,7 @@
  {
  	if (udc->active) {
  		dev_dbg(&udc->dev->dev, "disable udc\n");
@@ -3885,7 +3869,7 @@
  			udc->pdata->phy_deinit(udc->phy_regs);
  		udc_clock_disable(udc);
  		udc->active = 0;
-@@ -1190,22 +1206,28 @@
+@@ -1190,12 +1197,11 @@
  	struct mv_udc *udc;
  	unsigned long flags;
  	int retval = 0;
@@ -3900,34 +3884,28 @@
  	dev_dbg(&udc->dev->dev, "%s: softconnect %d, vbus_active %d\n",
  			__func__, udc->softconnect, udc->vbus_active);
  
- 	if (udc->driver && udc->softconnect && udc->vbus_active) {
-+		//printk("Do mv_udc_enable \n");
+@@ -1203,9 +1209,11 @@
  		retval = mv_udc_enable(udc);
-+		//printk("Done  mv_udc_enable retval is %d \n",retval);
  		if (retval == 0) {
  			/* Clock is disabled, need re-init registers */
 +#if 1
  			udc_reset(udc);
-+			//printk("Done  udc_reset \n");
  			ep0_reset(udc);
-+			//printk("Done  ep0_reset \n");
  			udc_start(udc);
-+			//printk("Done  udc_start \n");
 +#endif
  		}
  	} else if (udc->driver && udc->vbus_active) {
  		/* stop all the transfer in queue*/
-@@ -1213,7 +1235,8 @@
+@@ -1213,7 +1221,7 @@
  		udc_stop(udc);
  		mv_udc_disable(udc);
  	}
 -
-+	//printk("Done mv_udc_pullup \n");
 +#endif
  	spin_unlock_irqrestore(&udc->lock, flags);
  	return retval;
  }
-@@ -1354,7 +1377,7 @@
+@@ -1354,7 +1362,7 @@
  	struct mv_udc *udc;
  	int retval = 0;
  	unsigned long flags;
@@ -3936,7 +3914,7 @@
  	udc = container_of(gadget, struct mv_udc, gadget);
  
  	if (udc->driver)
-@@ -1370,6 +1393,9 @@
+@@ -1370,6 +1378,9 @@
  	udc->ep0_state = WAIT_FOR_SETUP;
  	udc->ep0_dir = EP_DIR_OUT;
  
@@ -3946,7 +3924,7 @@
  	spin_unlock_irqrestore(&udc->lock, flags);
  
  	if (udc->transceiver) {
-@@ -1386,7 +1412,7 @@
+@@ -1386,7 +1397,7 @@
  	/* When boot with cable attached, there will be no vbus irq occurred */
  	if (udc->qwork)
  		queue_work(udc->qwork, &udc->vbus_work);
@@ -3955,7 +3933,7 @@
  	return 0;
  }
  
-@@ -1397,6 +1423,9 @@
+@@ -1397,6 +1408,9 @@
  
  	udc = container_of(gadget, struct mv_udc, gadget);
  
@@ -3965,7 +3943,7 @@
  	spin_lock_irqsave(&udc->lock, flags);
  
  	mv_udc_enable(udc);
-@@ -1518,7 +1547,7 @@
+@@ -1518,7 +1532,7 @@
  
  static void ch9setaddress(struct mv_udc *udc, struct usb_ctrlrequest *setup)
  {
@@ -3974,7 +3952,7 @@
  
  	/* update usb state */
  	udc->usb_state = USB_STATE_ADDRESS;
-@@ -1548,8 +1577,8 @@
+@@ -1548,8 +1562,8 @@
  			== USB_RECIP_ENDPOINT) {
  		u8 ep_num, direction;
  
@@ -3985,7 +3963,7 @@
  				? EP_DIR_IN : EP_DIR_OUT;
  		status = ep_is_stall(udc, ep_num, direction)
  				<< USB_ENDPOINT_HALT;
-@@ -1570,7 +1599,7 @@
+@@ -1570,7 +1584,7 @@
  
  	if ((setup->bRequestType & (USB_TYPE_MASK | USB_RECIP_MASK))
  		== ((USB_TYPE_STANDARD | USB_RECIP_DEVICE))) {
@@ -3994,7 +3972,7 @@
  		case USB_DEVICE_REMOTE_WAKEUP:
  			udc->remote_wakeup = 0;
  			break;
-@@ -1579,12 +1608,12 @@
+@@ -1579,12 +1593,12 @@
  		}
  	} else if ((setup->bRequestType & (USB_TYPE_MASK | USB_RECIP_MASK))
  		== ((USB_TYPE_STANDARD | USB_RECIP_ENDPOINT))) {
@@ -4011,7 +3989,7 @@
  				|| ep_num > udc->max_eps)
  				goto out;
  			ep = &udc->eps[ep_num * 2 + direction];
-@@ -1613,12 +1642,12 @@
+@@ -1613,12 +1627,12 @@
  
  	if ((setup->bRequestType & (USB_TYPE_MASK | USB_RECIP_MASK))
  		== ((USB_TYPE_STANDARD | USB_RECIP_DEVICE))) {
@@ -4026,7 +4004,7 @@
  				||  udc->gadget.speed != USB_SPEED_HIGH)
  				ep0_stall(udc);
  
-@@ -1627,19 +1656,19 @@
+@@ -1627,19 +1641,19 @@
  				&& udc->usb_state != USB_STATE_DEFAULT)
  				ep0_stall(udc);
  
@@ -4051,7 +4029,7 @@
  				|| ep_num > udc->max_eps)
  				goto out;
  			spin_unlock(&udc->lock);
-@@ -1698,7 +1727,7 @@
+@@ -1698,7 +1712,7 @@
  	/* delegate USB standard requests to the gadget driver */
  	if (delegate == true) {
  		/* USB requests handled by gadget */
@@ -4060,7 +4038,7 @@
  			/* DATA phase from gadget, STATUS phase from udc */
  			udc->ep0_dir = (setup->bRequestType & USB_DIR_IN)
  					?  EP_DIR_IN : EP_DIR_OUT;
-@@ -1792,7 +1821,7 @@
+@@ -1792,7 +1806,7 @@
  	struct mv_ep	*curr_ep;
  	struct mv_req *curr_req, *temp_req;
  	int status;
@@ -4069,7 +4047,7 @@
  	/*
  	 * We use separate loops for ENDPTSETUPSTAT and ENDPTCOMPLETE
  	 * because the setup packets are to be read ASAP
-@@ -2000,6 +2029,32 @@
+@@ -2000,6 +2014,32 @@
  	udc->errors++;
  }
  
@@ -4102,7 +4080,7 @@
  static irqreturn_t mv_udc_irq(int irq, void *dev)
  {
  	struct mv_udc *udc = (struct mv_udc *)dev;
-@@ -2013,6 +2068,7 @@
+@@ -2013,6 +2053,7 @@
  
  	status = readl(&udc->op_regs->usbsts);
  	intr = readl(&udc->op_regs->usbintr);
@@ -4110,7 +4088,7 @@
  	status &= intr;
  
  	if (status == 0) {
-@@ -2026,8 +2082,10 @@
+@@ -2026,8 +2067,10 @@
  	if (status & USBSTS_ERR)
  		irq_process_error(udc);
  
@@ -4122,7 +4100,7 @@
  
  	if (status & USBSTS_PORT_CHANGE)
  		irq_process_port_change(udc);
-@@ -2035,8 +2093,10 @@
+@@ -2035,8 +2078,10 @@
  	if (status & USBSTS_INT)
  		irq_process_tr_complete(udc);
  
@@ -4134,7 +4112,7 @@
  
  	spin_unlock(&udc->lock);
  
-@@ -2058,12 +2118,15 @@
+@@ -2058,12 +2103,15 @@
  {
  	struct mv_udc *udc;
  	unsigned int vbus;
@@ -4153,7 +4131,7 @@
  	dev_info(&udc->dev->dev, "vbus is %d\n", vbus);
  
  	if (vbus == VBUS_HIGH)
-@@ -2107,6 +2170,12 @@
+@@ -2107,6 +2155,12 @@
  	/* free dev, wait for the release() finished */
  	wait_for_completion(udc->done);
  
@@ -4166,7 +4144,7 @@
  	return 0;
  }
  
-@@ -2115,69 +2184,105 @@
+@@ -2115,69 +2169,103 @@
  	struct mv_usb_platform_data *pdata = dev_get_platdata(&pdev->dev);
  	struct mv_udc *udc;
  	int retval = 0;
@@ -4205,7 +4183,6 @@
 +
 +		/* VBUS pin via GPIO */
 +		udc->vbus_pin = of_get_named_gpio(pdev->dev.of_node, "vbus-gpio", 0);
-+		printk("%s:Do of_get_named_gpio gpio is %d \n ",__FUNCTION__,udc->vbus_pin);
 +		if (udc->vbus_pin < 0)
 +			udc->vbus_pin = -ENODEV;
 +
@@ -4217,7 +4194,6 @@
 +				goto disable_phys;
 +
 +			err = phy_power_on(udc->utmi_phy);
-+			printk("%s:Do phy_power_on err is %d \n ",__FUNCTION__,err);
 +			if (err) {
 +				phy_exit(udc->utmi_phy);
 +				goto disable_phys;
@@ -4315,7 +4291,7 @@
  	retval = mv_udc_enable_internal(udc);
  	if (retval)
  		return retval;
-@@ -2244,13 +2349,14 @@
+@@ -2244,13 +2332,14 @@
  	udc->ep0_dir = EP_DIR_OUT;
  	udc->remote_wakeup = 0;
  
@@ -4333,22 +4309,20 @@
  	if (devm_request_irq(&pdev->dev, udc->irq, mv_udc_irq,
  		IRQF_SHARED, driver_name, udc)) {
  		dev_err(&pdev->dev, "Request irq %d for UDC failed\n",
-@@ -2274,7 +2380,8 @@
+@@ -2274,7 +2363,7 @@
  	/* VBUS detect: we can disable/enable clock on demand.*/
  	if (udc->transceiver)
  		udc->clock_gating = 1;
 -	else if (pdata->vbus) {
 +	else if (pdata && pdata->vbus) {
-+		printk("%s:Do pdata && pdata->vbus \n ",__FUNCTION__);
  		udc->clock_gating = 1;
  		retval = devm_request_threaded_irq(&pdev->dev,
  				pdata->vbus->irq, NULL,
-@@ -2286,6 +2393,30 @@
+@@ -2286,6 +2375,28 @@
  			udc->clock_gating = 0;
  		}
  
 +	} else if (gpio_is_valid(udc->vbus_pin)) {
-+		printk("%s:Do udc->vbus_pin \n ",__FUNCTION__);
 +		udc->clock_gating = 1;
 +		if (!devm_gpio_request(&pdev->dev, udc->vbus_pin, "mv-udc")) {
 +			retval = devm_request_irq(&pdev->dev,
@@ -4370,19 +4344,10 @@
 +
 +	/* if using VBUS interrupt, initialize work queue */
 +	if ((pdata && pdata->vbus) || gpio_is_valid(udc->vbus_pin)) {
-+		printk("%s:initialize work queue\n ",__FUNCTION__);
  		udc->qwork = create_singlethread_workqueue("mv_udc_queue");
  		if (!udc->qwork) {
  			dev_err(&pdev->dev, "cannot create workqueue\n");
-@@ -2301,6 +2432,7 @@
- 	 * If not, it means that VBUS detection is not supported, we
- 	 * have to enable vbus active all the time to let controller work.
- 	 */
-+	printk("%s:udc clock_gating is %d \n ",__FUNCTION__,udc->clock_gating);
- 	if (udc->clock_gating)
- 		mv_udc_disable_internal(udc);
- 	else
-@@ -2326,6 +2458,11 @@
+@@ -2326,6 +2437,11 @@
  			udc->ep_dqh, udc->ep_dqh_dma);
  err_disable_clock:
  	mv_udc_disable_internal(udc);
@@ -4394,7 +4359,7 @@
  
  	return retval;
  }
-@@ -2341,7 +2478,7 @@
+@@ -2341,7 +2457,7 @@
  	if (udc->transceiver)
  		return 0;
  
@@ -4403,7 +4368,7 @@
  		if (udc->pdata->vbus->poll() == VBUS_HIGH) {
  			dev_info(&udc->dev->dev, "USB cable is connected!\n");
  			return -EAGAIN;
-@@ -2362,6 +2499,12 @@
+@@ -2362,6 +2478,12 @@
  		mv_udc_disable_internal(udc);
  	}
  
@@ -4416,7 +4381,7 @@
  	return 0;
  }
  
-@@ -2376,6 +2519,20 @@
+@@ -2376,6 +2498,20 @@
  	if (udc->transceiver)
  		return 0;
  
@@ -4437,7 +4402,7 @@
  	if (!udc->clock_gating) {
  		retval = mv_udc_enable_internal(udc);
  		if (retval)
-@@ -2411,12 +2568,19 @@
+@@ -2411,12 +2547,19 @@
  	mv_udc_disable(udc);
  }
  
@@ -4457,20 +4422,33 @@
  #ifdef CONFIG_PM
  		.pm	= &mv_udc_pm_ops,
  #endif
-@@ -2427,4 +2591,5 @@
+@@ -2427,4 +2570,5 @@
  MODULE_ALIAS("platform:mv-udc");
  MODULE_DESCRIPTION(DRIVER_DESC);
  MODULE_AUTHOR("Chao Xie <chao.xie@marvell.com>");
 +MODULE_VERSION(DRIVER_VERSION);
  MODULE_LICENSE("GPL");
 --- linux-custom-orig/drivers/usb/gadget/udc/mv_udc.h	2019-10-21 23:25:45.000000000 +0800
-+++ linux-custom-silicom/drivers/usb/gadget/udc/mv_udc.h	2020-08-03 18:09:41.721214279 +0800
++++ linux-custom-silicom/drivers/usb/gadget/udc/mv_udc.h	2020-08-04 11:19:43.987473522 +0800
 @@ -1,4 +1,3 @@
 -// SPDX-License-Identifier: GPL-2.0+
  /*
   * Copyright (C) 2011 Marvell International Ltd. All rights reserved.
   *
-@@ -197,6 +196,8 @@
+@@ -10,7 +9,11 @@
+ 
+ #ifndef __MV_UDC_H
+ #define __MV_UDC_H
+-
++/*
++ * Please note that ,this some files about UDC U3D is ported from Marvell kernel 4.4.120
++ *
++ * Add by Jason
++ * */
+ #define VUSBHS_MAX_PORTS	8
+ 
+ #define DQH_ALIGNMENT		2048
+@@ -197,6 +200,8 @@
  	struct mv_req			*status_req;
  	struct usb_ctrlrequest		local_setup_buff;
  
@@ -4479,7 +4457,7 @@
  	unsigned int		resume_state;	/* USB state to resume */
  	unsigned int		usb_state;	/* USB current state */
  	unsigned int		ep0_state;	/* Endpoint zero state */
-@@ -215,6 +216,8 @@
+@@ -215,6 +220,8 @@
  				active:1,
  				stopped:1;      /* stop bit is setted */
  
