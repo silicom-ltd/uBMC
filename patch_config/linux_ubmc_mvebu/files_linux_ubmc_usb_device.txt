@@ -1,0 +1,9 @@
+drivers/usb/gadget/udc/Makefile
+drivers/usb/gadget/udc/Kconfig
+drivers/usb/gadget/udc/mvebu_glue.c
+drivers/usb/gadget/udc/mvebu_u3d.c
+drivers/usb/gadget/udc/mvebu_u3d.h
+drivers/usb/gadget/udc/mv_udc_core.c
+drivers/usb/gadget/udc/mv_udc.h
+drivers/usb/gadget/udc/core.c
+include/linux/usb/composite.h

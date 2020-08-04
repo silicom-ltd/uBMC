@@ -2,3 +2,4 @@ arch/arm/dts/Makefile
 arch/arm/dts/ubmc_m.dts
 arch/arm/dts/ubmc_m.dtsi
 include/dt-bindings/phy/phy-utmi-mvebu.h
+include/dt-bindings/comphy/comphy_data.h 
