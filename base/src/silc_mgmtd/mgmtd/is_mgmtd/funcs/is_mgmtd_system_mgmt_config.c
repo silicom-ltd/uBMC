@@ -1093,7 +1093,7 @@ int is_mgmtd_run_vrf_process_cmd(silc_cstr proc, silc_cstr cmd)
 	num = is_mgmtd_get_vrf_process_config(proc, vrf_list, MAX_VRF_NUM);
 	if(num == 0)
 	{
-		system(cmd);
+		silc_mgmtd_if_system_cmd_later(cmd, 1);
 		return 0;
 	}
 	for(i=0; i<num; i++)

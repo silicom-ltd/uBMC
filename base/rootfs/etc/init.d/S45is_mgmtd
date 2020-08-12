@@ -99,7 +99,7 @@ wait_mgmtd_up()
 			break
 		fi
 		TIMEOUT=$(($TIMEOUT+1))
-		if [ $TIMEOUT == 120 ]; then
+		if [ $TIMEOUT == 300 ]; then
 			echo "is_mgmtd has hung";
 			break
 		fi
@@ -107,7 +107,7 @@ wait_mgmtd_up()
 
 	#is_mgmtd fail to start
 	#if backup exists, use it to retry
-	if [ -e "${mgmtd_conf_bk}" ]; then
+	if [ -e "${mgmtd_conf_bk}" ] && [ "$(diff ${mgmtd_conf_bk} ${mgmtd_conf})" != "" ]; then
 		mv ${mgmtd_conf_bk} ${mgmtd_conf}
 		rm -rf ${mgmtd_conf_bk_cs}
 		sha1sum ${mgmtd_conf} > ${mgmtd_conf_cs}
