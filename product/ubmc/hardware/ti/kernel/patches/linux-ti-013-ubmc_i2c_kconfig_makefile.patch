@@ -1,0 +1,39 @@
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/Makefile	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/Makefile	2020-07-31 17:34:46.435125147 +0800
+@@ -76,7 +76,11 @@
+ obj-$(CONFIG_I2C_MXS)		+= i2c-mxs.o
+ obj-$(CONFIG_I2C_NOMADIK)	+= i2c-nomadik.o
+ obj-$(CONFIG_I2C_OCORES)	+= i2c-ocores.o
+-obj-$(CONFIG_I2C_OMAP)		+= i2c-omap.o
++#obj-$(CONFIG_I2C_OMAP)		+= i2c-omap.o
++obj-m						+= i2c-omap.o
++ubmc-ipmi-slave-objs := ubmc-ipmi.o ubmc-ssif.o ubmc-i2c-slave.o ubmc-ipmi-sel.o ubmc-ipmi-lan.o ubmc-ipmi-pxa.o ubmc-ipmi-omap.o
++obj-$(CONFIG_I2C_IPMI_UBMC)	+= ubmc-ipmi-slave.o ubmc-muxdump.o
++obj-$(CONFIG_I2C_OMAP)      += i2c-omap.o
+ obj-$(CONFIG_I2C_PASEMI)	+= i2c-pasemi.o
+ obj-$(CONFIG_I2C_PCA_PLATFORM)	+= i2c-pca-platform.o
+ obj-$(CONFIG_I2C_PMCMSP)	+= i2c-pmcmsp.o
+--- linux-ti2018.02-rc4-int-orig/drivers/i2c/busses/Kconfig	2018-07-15 00:46:29.000000000 +0800
++++ linux-ti2018.02-rc4-int-silicom/drivers/i2c/busses/Kconfig	2020-07-31 17:34:46.435125147 +0800
+@@ -760,7 +760,7 @@
+ config I2C_OMAP
+ 	tristate "OMAP I2C adapter"
+ 	depends on ARCH_OMAP || ARCH_K3
+-	default y if MACH_OMAP_H3 || MACH_OMAP_OSK
++	default m if MACH_OMAP_H3 || MACH_OMAP_OSK
+ 	help
+ 	  If you say yes to this option, support will be included for the
+ 	  I2C interface on the Texas Instruments OMAP1/2 family of processors.
+@@ -1326,4 +1326,12 @@
+ 	  This driver can also be built as a module. If so, the module will be
+ 	  called i2c-zx2967.
+ 
++config I2C_IPMI_UBMC
++	tristate "SILICOM IPMI UBMC for SILC"
++	depends on  I2C_OMAP || I2C_PXA
++	default m
++	help 
++		OMAP ubmc ipmi client
++		
++	
+ endmenu

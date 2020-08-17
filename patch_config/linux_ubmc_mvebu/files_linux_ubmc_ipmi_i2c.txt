@@ -3,8 +3,6 @@
 /drivers/i2c/busses/ubmc-ipmi.c
 /drivers/i2c/busses/ubmc-i2c-slave.c
 /drivers/i2c/busses/ubmc-i2c-slave.h
-/drivers/i2c/busses/Makefile
-/drivers/i2c/busses/Kconfig
 /drivers/i2c/busses/ubmc-i2c-ipmi.h
 /drivers/i2c/busses/ubmc-ipmi-sdr.h
 /drivers/i2c/busses/i2c-omap.h

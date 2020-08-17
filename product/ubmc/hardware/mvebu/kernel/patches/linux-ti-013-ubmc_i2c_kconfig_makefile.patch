@@ -1,0 +1,30 @@
+--- linux-custom-orig/drivers/i2c/busses/Makefile	2019-10-21 23:25:44.000000000 +0800
++++ linux-custom-silicom/drivers/i2c/busses/Makefile	2020-08-13 10:49:02.165811640 +0800
+@@ -76,7 +76,11 @@
+ obj-$(CONFIG_I2C_MXS)		+= i2c-mxs.o
+ obj-$(CONFIG_I2C_NOMADIK)	+= i2c-nomadik.o
+ obj-$(CONFIG_I2C_OCORES)	+= i2c-ocores.o
+-obj-$(CONFIG_I2C_OMAP)		+= i2c-omap.o
++#obj-$(CONFIG_I2C_OMAP)		+= i2c-omap.o
++obj-m						+= i2c-omap.o
++ubmc-ipmi-slave-objs := ubmc-ipmi.o ubmc-ssif.o ubmc-i2c-slave.o ubmc-ipmi-sel.o ubmc-ipmi-lan.o ubmc-ipmi-pxa.o ubmc-ipmi-omap.o
++obj-$(CONFIG_I2C_IPMI_UBMC)	+= ubmc-ipmi-slave.o ubmc-muxdump.o
++obj-$(CONFIG_I2C_OMAP)      += i2c-omap.o
+ obj-$(CONFIG_I2C_PASEMI)	+= i2c-pasemi.o
+ obj-$(CONFIG_I2C_PCA_PLATFORM)	+= i2c-pca-platform.o
+ obj-$(CONFIG_I2C_PMCMSP)	+= i2c-pmcmsp.o
+--- linux-custom-orig/drivers/i2c/busses/Kconfig	2019-10-21 23:25:44.000000000 +0800
++++ linux-custom-silicom/drivers/i2c/busses/Kconfig	2020-08-13 10:49:02.165811640 +0800
+@@ -1326,4 +1326,12 @@
+ 	  This driver can also be built as a module. If so, the module will be
+ 	  called i2c-zx2967.
+ 
++config I2C_IPMI_UBMC
++	tristate "SILICOM IPMI UBMC for SILC"
++	depends on  I2C_OMAP || I2C_PXA
++	default m
++	help 
++		OMAP ubmc ipmi client
++		
++	
+ endmenu

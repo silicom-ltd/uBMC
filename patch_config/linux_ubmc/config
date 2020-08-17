@@ -48,6 +48,9 @@ PATCH_FLIST[11]=files_linux_ubmc_hwmon_adt7475.txt
 PATCH_NAME[12]=linux-ti-012-ubmc_hwmon_silc_pac1014a.patch
 PATCH_FLIST[12]=files_linux_ubmc_hwmon_silc_pac1014a.txt
 
+PATCH_NAME[13]=linux-ti-013-ubmc_i2c_kconfig_makefile.patch
+PATCH_FLIST[13]=files_linux_ubmc_i2c_kconfig_makefile.txt
+
 #PATCH_GEN_REQ_CLEAN=1
 
 

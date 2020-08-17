@@ -1,3 +1,4 @@
+#set -x
 PATCH_PATH_MAIN=${PATCH_LOCATION}/${PATCH_NAME_MAIN}
 
 DIFF_BASE=${BASE_ROOT}/patch_gen
@@ -122,8 +123,9 @@ fi
 		fi
 		PATCH_PATH[$mmm]=${PATCH_LOCATION}/${PATCH_NAME[$mmm]}
 		echo "Generating patch $mmm ${PATCH_PATH[$mmm]}"
-		
-		rm -rf ${PATCH_PATH[$mmm]}
+		#Don't remove patch here,because of some patchs which are link file 
+		#rm -rf ${PATCH_PATH[$mmm]}
+		truncate -s 0 ${PATCH_PATH[$mmm]}
 		for patch_fname in $(cat ${PATCH_BASE}/${PATCH_FLIST[$mmm]}); do
 			echo -e "\tfile ${patch_fname}"
 			if [ -z "$(echo ${patch_fname}|grep /)" ]; then
