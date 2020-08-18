@@ -1990,6 +1990,7 @@ silc_bool silc_mgmtd_if_multi_cmd(silc_cstr val)
 silc_bool silc_mgmtd_if_file_exist(silc_cstr path)
 {
     struct stat path_stat;
+	memset(&path_stat, 0x0, sizeof(path_stat));
     stat(path, &path_stat);
     return (S_ISREG(path_stat.st_mode) == 1);
 }
@@ -1997,6 +1998,7 @@ silc_bool silc_mgmtd_if_file_exist(silc_cstr path)
 silc_bool silc_mgmtd_if_dir_exist(silc_cstr path)
 {
     struct stat path_stat;
+	memset(&path_stat, 0x0, sizeof(path_stat));
     stat(path, &path_stat);
     return (S_ISDIR(path_stat.st_mode) == 1);
 }
