@@ -353,7 +353,7 @@ int is_mgmtd_system_action(silc_mgmtd_if_req_type type, void* p_db_node, void* c
 	else if(strcmp(p_node->name, "reset-log") == 0)
 	{
 		SILC_LOG("System reset log");
-		system("rm -rf /var/log/messages* ; touch /var/log/messages; /etc/init.d/S01logging restart");
+		system("rm -rf /var/log/messages* ; touch /var/log/messages; /etc/init.d/S01logging restart &");
 		return 0;
 	}
 	else if(strcmp(p_node->name, "create-log-dump") == 0)
