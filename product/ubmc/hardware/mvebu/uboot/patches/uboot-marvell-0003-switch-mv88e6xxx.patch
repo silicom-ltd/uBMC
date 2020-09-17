@@ -1,5 +1,5 @@
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.c	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-07-14 17:13:24.268748484 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-09-17 09:51:00.776221826 +0800
 @@ -234,7 +234,8 @@
  		printf("No Switch Device Found\n");
  		return;
@@ -52,7 +52,7 @@
  		if (!(soho_dev.port_mask & BIT(port)))
  			continue;
  
-@@ -446,8 +452,24 @@
+@@ -446,8 +452,32 @@
  					     PHY_COPPER_CONTROL_SPEED_1G |
  					     PHY_COPPER_CONTROL_DUPLEX |
  					     PHY_COPPER_CONTROL_AUTO_NEG_EN);
@@ -63,9 +63,17 @@
 +	//	printf("port %d:PHY_COPPER_CONTROL set as 0x%x\n",port,read_reg);
 +	}
 +#endif
++	/*
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x54);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x51);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x45);
++	*/
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x7e);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(1),PORT_BASE_VLAN,0x7d);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x7b);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(3),PORT_BASE_VLAN,0x77);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x6f);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),PORT_BASE_VLAN,0x5f);
 +	/*Configure the vlan base port*/
 +	/*
 +	 * FOR new ubmc board.P0-P2-P4  P1-P3-P5
@@ -80,7 +88,7 @@
  
  	return 0;
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.h	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-07-03 10:06:20.573192915 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-09-16 11:30:10.450854487 +0800
 @@ -94,7 +94,8 @@
  #define PORT_SWITCH_ID_PROD_NUM_6290		0x290
  #define PORT_SWITCH_ID_PROD_NUM_6390		0x390
