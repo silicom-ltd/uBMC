@@ -1,5 +1,5 @@
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.c	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-09-17 09:51:00.776221826 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-09-18 13:44:33.360523031 +0800
 @@ -234,7 +234,8 @@
  		printf("No Switch Device Found\n");
  		return;
@@ -52,7 +52,7 @@
  		if (!(soho_dev.port_mask & BIT(port)))
  			continue;
  
-@@ -446,8 +452,32 @@
+@@ -446,8 +452,37 @@
  					     PHY_COPPER_CONTROL_SPEED_1G |
  					     PHY_COPPER_CONTROL_DUPLEX |
  					     PHY_COPPER_CONTROL_AUTO_NEG_EN);
@@ -68,6 +68,11 @@
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x51);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x45);
 +	*/
++	/*set the port5 c_mode to sgmii*/
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),0x1a,0xa100);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),0x1a,0xdea0);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),0x00,0x0009);
++	/*set the vlan base port*/
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x7e);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(1),PORT_BASE_VLAN,0x7d);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x7b);
@@ -88,7 +93,7 @@
  
  	return 0;
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.h	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-09-16 11:30:10.450854487 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-09-17 17:54:58.366046617 +0800
 @@ -94,7 +94,8 @@
  #define PORT_SWITCH_ID_PROD_NUM_6290		0x290
  #define PORT_SWITCH_ID_PROD_NUM_6390		0x390
