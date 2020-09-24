@@ -523,6 +523,7 @@ static int read_default_ubmc_sensor_states_from_shm(struct ubmc_board_info_s *bo
 #define UBMC_MIDDLE_MODEL "ATT-V450"
 #define UBMC_LARGE_MODEL "ATT-V850"
 #define UBMC_SKYD_MODEL "ATT-V950" //Just for test
+#define UBMC_SKYD_EVT_MODEL	"DU-SKYD-EVT"
 int get_machine_model(void)
 {
 	int ret;
@@ -558,7 +559,14 @@ int get_machine_model(void)
 	{
 		device_type = LARGE;
 	}
+	/*UBMC_SKYD_EVT_MODEL and UBMC_SKYD_MODEL have the same behave about ipmi.The only different between them is
+	 * UBMC_SKYD_EVT_MODEL need to enable the NCSI on eth1.So we implemented it on S35is_ipmi script
+	 * */
 	else if(strcmp(buf,UBMC_SKYD_MODEL) == 0)
+	{
+		device_type = SKYD;
+	}
+	else if(strcmp(buf,UBMC_SKYD_EVT_MODEL) == 0)
 	{
 		device_type = SKYD;
 	}

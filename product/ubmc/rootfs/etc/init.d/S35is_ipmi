@@ -94,7 +94,14 @@ get_machine_model()
 			MODEL="NONE"
 		fi
 	elif [ "${PRODUCT_SUB}" == "UBMC_M" ]; then
-		MODEL="SKYD"
+
+		if [ -f $MODEL_PATH ]; then
+			value=$(cat $MODEL_PATH)
+			MODEL=$value
+		else
+		#The model should be SKYD by default
+			MODEL="SKYD"
+		fi
 	fi
 }
 
@@ -124,6 +131,16 @@ case "$1" in
 			;;
 			"SKYD")
 			load_driver_for_skyd
+			;;
+			"DU-SKYD-EVT")
+			load_driver_for_skyd
+			#we reload the Marvell networking driver for enable NCSI on eth1
+			#ncsi_mask=0x00    Disable NCSI on eth0 and eth1
+			#ncsi_mask=0x01    Enable NCSI on eth0 only
+			#ncsi_mask=0x02    Enable NCSI on eth1 only
+			#ncsi_mask=0x03    Enable NCSI on both eth0 and eth1
+			rmmod mvneta
+			modprobe mvneta ncsi_mask=0x02
 			;;
 			*)
 			load_fan_driver
