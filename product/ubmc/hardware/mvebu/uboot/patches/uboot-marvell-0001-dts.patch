@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/dts/Makefile	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-09-16 11:30:10.441854496 +0800
++++ uboot-custom-silicom/arch/arm/dts/Makefile	2020-09-18 16:42:11.103821955 +0800
 @@ -87,7 +87,8 @@
  	tegra210-p2571.dtb
  
@@ -11,8 +11,8 @@
  	armada-3720-ddr3-db-v2-C.dtb		\
  	armada-3720-ddr3-db-v1-A.dtb		\
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dts	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-09-17 10:59:49.001514543 +0800
-@@ -0,0 +1,547 @@
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dts	2020-09-24 16:43:34.327388897 +0800
+@@ -0,0 +1,555 @@
 +/*
 + * Device Tree file for Globalscale Marvell ESPRESSOBin Board
 + * Copyright (C) 2016 Marvell
@@ -113,6 +113,7 @@
 +		#size-cells = <0>;
 +		status = "okay";
 +
++
 +		mvswitch: switch@000000{
 +			compatible = "marvell,mv88e6085","marvell,mv88e6xxx","marvell,mv88e6341";
 +			status = "okay";
@@ -167,7 +168,14 @@
 +		};
 +		};
 +	};
-+	
++dsa_mvmdio 
++	{
++		compatible = "marvell,dsa-mvmdio";
++		status = "okay";
++		mii-bus = <&mdio>; /* remove if using only xmii */
++		reg = <0x00>; /*single mode*/
++		sw-smi-addr = <0>;
++    };
 +	reg_usb3_vbus: usb3_vbus@0 {
 +		compatible = "regulator-fixed";
 +		regulator-name = "usb3-vbus";
@@ -561,7 +569,7 @@
 +};
 +#endif
 --- uboot-custom-orig/arch/arm/dts/ubmc_m.dtsi	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-09-16 11:30:10.441854496 +0800
++++ uboot-custom-silicom/arch/arm/dts/ubmc_m.dtsi	2020-09-18 16:42:11.103821955 +0800
 @@ -0,0 +1,584 @@
 +/*
 + * Device Tree Include file for Marvell Armada 37xx family of SoCs.
@@ -1148,7 +1156,7 @@
 +	};
 +};
 --- uboot-custom-orig/include/dt-bindings/phy/phy-utmi-mvebu.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-09-16 11:30:10.441854496 +0800
++++ uboot-custom-silicom/include/dt-bindings/phy/phy-utmi-mvebu.h	2020-09-18 16:42:11.103821955 +0800
 @@ -0,0 +1,19 @@
 +/*
 + * Copyright (C) 2018 Marvell
@@ -1170,7 +1178,7 @@
 +
 +#endif /* _DT_BINDINGS_PHY_UTMI_MVEBU */
 --- uboot-custom-orig/include/dt-bindings/comphy/comphy_data.h	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/include/dt-bindings/comphy/comphy_data.h	2020-09-16 11:30:10.441854496 +0800
++++ uboot-custom-silicom/include/dt-bindings/comphy/comphy_data.h	2020-09-18 16:42:11.103821955 +0800
 @@ -50,6 +50,142 @@
  #define UTMI_PHY_TO_USB3_HOST1		1
  #define UTMI_PHY_TO_USB3_DEVICE0	2

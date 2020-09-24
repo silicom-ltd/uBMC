@@ -39,6 +39,9 @@ PATCH_FLIST[7]=files_linux_ubmc_usb_device.txt
 PATCH_NAME[8]=linux-ti-013-ubmc_i2c_kconfig_makefile.patch
 PATCH_FLIST[8]=files_linux_ubmc_i2c_kconfig_makefile.txt
 
+PATCH_NAME[9]=linux-mvebu-014-ubmc_dsa_mvmdio.patch
+PATCH_FLIST[9]=files_mvebu_ubmc_dsa_mvmdio.txt
+
 #PATCH_GEN_REQ_CLEAN=1
 
 
