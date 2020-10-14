@@ -1,5 +1,5 @@
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.c	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-09-18 13:44:33.360523031 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-10-13 15:53:11.869429012 +0800
 @@ -234,7 +234,8 @@
  		printf("No Switch Device Found\n");
  		return;
@@ -82,18 +82,18 @@
 +	/*Configure the vlan base port*/
 +	/*
 +	 * FOR new ubmc board.P0-P2-P4  P1-P3-P5
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x14);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(1),PORT_BASE_VLAN,0x28);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x11);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(3),PORT_BASE_VLAN,0x22);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x05);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),PORT_BASE_VLAN,0x0a);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x54);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(1),PORT_BASE_VLAN,0x68);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x51);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(3),PORT_BASE_VLAN,0x62);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x45);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),PORT_BASE_VLAN,0x4a);
 +	 */
  	soho_dev_handle = &soho_dev;
  
  	return 0;
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.h	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-09-17 17:54:58.366046617 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-09-24 17:01:26.238264257 +0800
 @@ -94,7 +94,8 @@
  #define PORT_SWITCH_ID_PROD_NUM_6290		0x290
  #define PORT_SWITCH_ID_PROD_NUM_6390		0x390
