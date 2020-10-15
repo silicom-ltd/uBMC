@@ -1,10 +1,10 @@
 --- linux-custom-orig/drivers/net/ethernet/marvell/mvneta.c	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/marvell/mvneta.c	2020-07-21 11:27:53.116353707 +0800
++++ linux-custom-silicom/drivers/net/ethernet/marvell/mvneta.c	2020-10-07 22:07:33.060795496 +0800
 @@ -38,6 +38,10 @@
  #include <net/ipv6.h>
  #include <net/tso.h>
  
-+#define NO_SILC_MOD
++//#define NO_SILC_MOD
 +#ifndef NO_SILC_MOD
 +#include <net/ncsi.h>
 +#endif
@@ -42,6 +42,15 @@
  };
  
  /* The mvneta_tx_desc and mvneta_rx_desc structures describe the
+@@ -641,7 +660,7 @@
+  */
+ static int rxq_number = 8;
+ static int txq_number = 8;
+-
++static int ncsi_mask = 0;
+ static int rxq_def;
+ 
+ static int rx_copybreak __read_mostly = 256;
 @@ -658,6 +677,25 @@
  
  #define MVNETA_MUSDK_QUEUE_MASK		1
@@ -162,7 +171,7 @@
  }
  
  
-@@ -4582,6 +4673,35 @@
+@@ -4582,6 +4673,37 @@
  	return 0;
  }
  
@@ -185,20 +194,31 @@
 +#ifndef NO_SILC_MOD
 +static void mv_slave_ncsi_deinit(struct mvneta_port *pp)
 +{
-+
++	printk("Do mv_slave_ncsi_deinit \n");
 +	if(pp->ncsi_dev && pp->ncsi_dev_started)
 +		ncsi_stop_dev(pp->ncsi_dev);
++	printk("Do mv_slave_ncsi_deinit 1 \n");
 +	pp->ncsi_dev_started = false;
++	printk("Do mv_slave_ncsi_deinit 2 n");
 +	if(pp->ncsi_dev)
 +		ncsi_unregister_dev(pp->ncsi_dev);
-+
++	printk("Done mv_slave_ncsi_deinit \n");
 +}
 +#endif
 +
  /* Device initialization routine */
  static int mvneta_probe(struct platform_device *pdev)
  {
-@@ -4641,6 +4761,7 @@
+@@ -4601,7 +4723,7 @@
+ 	int cpu;
+ 	const char *musdk_status;
+ 	int statlen;
+-
++	char ncsi_if;
+ 	dev = alloc_etherdev_mqs(sizeof(struct mvneta_port), txq_number, rxq_number);
+ 	if (!dev)
+ 		return -ENOMEM;
+@@ -4641,6 +4763,7 @@
  
  	dev->ethtool_ops = &mvneta_eth_tool_ops;
  
@@ -206,12 +226,29 @@
  	pp = netdev_priv(dev);
  	spin_lock_init(&pp->lock);
  	pp->phylink = phylink;
-@@ -4827,6 +4948,21 @@
+@@ -4827,6 +4950,38 @@
  	/* Port may be configured by Uboot to transmit IDLE, so a remote side
  	 * feels the link as UP. Stop TX in same way as in mvneta_start/stop.
  	 */
 +#ifndef NO_SILC_MOD
-+		pp->slave_ncsi = 1;
++
++		if(strcmp(dev->name,"eth0") == 0)
++		{
++			ncsi_if = 0;
++		}
++		else if(strcmp(dev->name,"eth1") == 0)
++		{
++			ncsi_if = 1;
++		}
++		if( (ncsi_mask & BIT(ncsi_if)) != 0)
++		{
++			pp->slave_ncsi = 1;
++			printk("enable the NCSI on %s \n",dev->name);
++		}
++		else
++		{
++			pp->slave_ncsi = 0;
++		}
 +		if(pp->slave_ncsi == 1)
 +		{
 +			printk("Do ncsi_register_dev  \n");
@@ -228,7 +265,7 @@
  	if (pp->phylink) {
  		if (rtnl_is_locked()) {
  			if (!mvneta_mdio_probe(pp))
-@@ -4837,6 +4973,7 @@
+@@ -4837,6 +4992,7 @@
  				mvneta_mdio_remove(pp);
  			rtnl_unlock();
  		}
@@ -236,19 +273,35 @@
  	}
  
  	if (pp->musdk_port)
-@@ -4874,7 +5011,9 @@
+@@ -4874,7 +5030,12 @@
  {
  	struct net_device  *dev = platform_get_drvdata(pdev);
  	struct mvneta_port *pp = netdev_priv(dev);
 -
 +#ifndef NO_SILC_MOD
-+	mv_slave_ncsi_deinit(pp);
++	if(pp->slave_ncsi == 1)
++	{
++		mv_slave_ncsi_deinit(pp);
++	}
 +#endif
  	unregister_netdev(dev);
  	clk_disable_unprepare(pp->clk_bus);
  	clk_disable_unprepare(pp->clk);
+@@ -5039,6 +5200,7 @@
+ 		goto err_dead;
+ 
+ 	ret = platform_driver_register(&mvneta_driver);
++	printk("mvneta_driver_init netdev:ncsi_mask is %x \n",ncsi_mask);
+ 	if (ret)
+ 		goto err;
+ 	return 0;
+@@ -5069,3 +5231,4 @@
+ 
+ module_param(rxq_def, int, 0444);
+ module_param(rx_copybreak, int, 0644);
++module_param(ncsi_mask, int, 0444);
 --- linux-custom-orig/drivers/net/ethernet/marvell/Kconfig	2019-10-21 23:25:44.000000000 +0800
-+++ linux-custom-silicom/drivers/net/ethernet/marvell/Kconfig	2020-07-21 11:11:54.820704140 +0800
++++ linux-custom-silicom/drivers/net/ethernet/marvell/Kconfig	2020-10-07 22:07:33.060795496 +0800
 @@ -57,7 +57,7 @@
  
  config MVNETA
@@ -259,7 +312,7 @@
  	select PHYLINK
  	---help---
 --- linux-custom-orig/net/ncsi/ncsi-cmd.c	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-cmd.c	2020-07-21 11:11:54.820704140 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-cmd.c	2020-10-07 22:16:15.728556219 +0800
 @@ -17,7 +17,7 @@
  #include <net/ncsi.h>
  #include <net/net_namespace.h>
@@ -368,7 +421,7 @@
  	/* Allocate skb */
  	skb = alloc_skb(len, GFP_ATOMIC);
  	if (!skb) {
-@@ -290,6 +333,378 @@
+@@ -290,14 +333,670 @@
  
  	return nr;
  }
@@ -431,7 +484,7 @@
 +#define NCSI_DUMP_FIELD_STR(parent_type, field)	\
 +	do{ struct parent_type* __p_parent_struct = p_ncsi_head; \
 +		buf_off += sprintf(buf + buf_off, "%s[%s]", #field, __p_parent_struct->field ); } while(0)
-+
+ 
 +#define NCSI_DUMP_FIELD_U8(parent_type, field)	\
 +	do{ struct parent_type* __p_parent_struct = p_ncsi_head; \
 +		buf_off += sprintf(buf + buf_off, "%s[%02x]", #field, __p_parent_struct->field ); } while(0)
@@ -744,10 +797,295 @@
 +EXPORT_SYMBOL_GPL(ncsi_cmd_dump);
 +#endif	//NCSI_CMD_DUMP
 +#endif	//NO_SILC_MOD
- 
++
++void ncsi_dump(struct net_device* n,void* pkt)
++{
++	void* p_ncsi_head =  pkt;
++	struct ncsi_pkt_hdr* h  = p_ncsi_head;
++	struct ncsi_rsp_pkt_hdr* rsp = p_ncsi_head;
++	struct ncsi_aen_pkt_hdr* aen_hdr = p_ncsi_head;
++	uint8_t cmd_type = h->type & 0x7fU;
++	uint8_t is_resp = h->type &0x80U;
++	uint8_t is_aen = h->type == 0xFFU;
++	char* buf = ncsi_xmit_cmd_dump_buf;
++	uint32_t buf_off = 0;
++	NCSI_DUMP_PRN("id[%02x] typ[%s] chn[%02x] len[%3u]",
++			h->id,
++			ncsi_cmd_type_name_get(cmd_type),
++			h->channel,
++			htons(h->length) & 0xFFF);
++	if(is_resp)
++		NCSI_DUMP_PRN("Rsp[%04x] Reason[%04x]", ntohs(rsp->code), ntohs(rsp->reason));
++	if(is_aen)
++	{
++		char* aen_name;
++		struct ncsi_aen_lsc_pkt *lsc;
++		switch(aen_hdr->type)
++		{
++		case NCSI_PKT_AEN_LSC:
++			lsc = p_ncsi_head;
++			aen_name = "LinkChg   ";
++			NCSI_DUMP_PRN("AType[%s] Link[%x] OemLink[%x]", aen_name, ntohl(lsc->status), ntohl(lsc->oem_status));
++			break;
++		case NCSI_PKT_AEN_CR:
++			aen_name = "CfgChg    ";
++			NCSI_DUMP_PRN("AType[%s]", aen_name);
++			break;
++		case NCSI_PKT_AEN_HNCDSC:
++			aen_name = "HostDrvChg";
++			NCSI_DUMP_PRN("AType[%s]", aen_name);
++			break;
++		}
++		return;
++	}
++
++	switch(h->type)
++	{
++		case NCSI_PKT_CMD_CIS:
++			break;
++		case NCSI_PKT_CMD_SP:
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_sp_pkt, hw_arbitration);
++			break;
++		case NCSI_PKT_CMD_DP	 :
++			break;
++		case NCSI_PKT_CMD_EC	 :
++			break;
++		case NCSI_PKT_CMD_DC	 :
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_dc_pkt, ald);
++			break;
++		case NCSI_PKT_CMD_RC	 :
++			break;
++		case NCSI_PKT_CMD_ECNT	 :
++			break;
++		case NCSI_PKT_CMD_DCNT	 :
++			break;
++		case NCSI_PKT_CMD_AE	 :
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_ae_pkt, mc_id);
++			NCSI_DUMP_FIELD_U32(ncsi_cmd_ae_pkt, mode);
++			break;
++		case NCSI_PKT_CMD_SL	 :
++			NCSI_DUMP_FIELD_U32(ncsi_cmd_sl_pkt, mode);
++			NCSI_DUMP_FIELD_U32(ncsi_cmd_sl_pkt, oem_mode);
++			break;
++		case NCSI_PKT_CMD_GLS	 :
++			return;//don't dump gls
++			break;
++		case NCSI_PKT_CMD_SVF	 :
++			NCSI_DUMP_FIELD_U16(ncsi_cmd_svf_pkt, vlan);
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_svf_pkt, index);
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_svf_pkt, enable);
++			break;
++		case NCSI_PKT_CMD_EV	 :
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_ev_pkt, mode);
++			break;
++		case NCSI_PKT_CMD_DV	 :
++			break;
++		case NCSI_PKT_CMD_SMA	 :
++			NCSI_DUMP_FIELD_MAC(ncsi_cmd_sma_pkt, mac);
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_sma_pkt, index);
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_sma_pkt, at_e);
++			break;
++		case NCSI_PKT_CMD_EBF	 :
++			NCSI_DUMP_FIELD_U32(ncsi_cmd_ebf_pkt, mode);
++			break;
++		case NCSI_PKT_CMD_DBF	 :
++			break;
++		case NCSI_PKT_CMD_EGMF	 :
++			NCSI_DUMP_FIELD_U32(ncsi_cmd_ebf_pkt, mode);
++			break;
++		case NCSI_PKT_CMD_DGMF	 :
++			break;
++		case NCSI_PKT_CMD_SNFC	 :
++			NCSI_DUMP_FIELD_U8(ncsi_cmd_snfc_pkt, mode);
++			break;
++		case NCSI_PKT_CMD_GVI	 :
++			break;
++		case NCSI_PKT_CMD_GC	 :
++			break;
++		case NCSI_PKT_CMD_GP	 :
++			break;
++		case NCSI_PKT_CMD_GCPS	 :
++			break;
++		case NCSI_PKT_CMD_GNS	 :
++			break;
++		case NCSI_PKT_CMD_GNPTS	 :
++			break;
++		case NCSI_PKT_CMD_GPS	 :
++			break;
++		case NCSI_PKT_CMD_OEM	 :
++			NCSI_DUMP_FIELD_U32(ncsi_oem_i210_cmd_mgmt_pkt, oem_id );
++			NCSI_DUMP_FIELD_U8(ncsi_oem_i210_cmd_mgmt_pkt, intel_cmd );
++			NCSI_DUMP_FIELD_U8(ncsi_oem_i210_cmd_mgmt_pkt, value1);
++			NCSI_DUMP_FIELD_U8(ncsi_oem_i210_cmd_mgmt_pkt, mgmt_ctl);
++			break;
++		case NCSI_PKT_CMD_PLDM	 :
++			break;
++		case NCSI_PKT_CMD_GPUUID :
++			break;
++
++		case NCSI_PKT_RSP_CIS	 :
++			break;
++		case NCSI_PKT_RSP_SP	 :
++			break;
++		case NCSI_PKT_RSP_DP	 :
++		case NCSI_PKT_RSP_EC	 :
++		case NCSI_PKT_RSP_DC	 :
++		case NCSI_PKT_RSP_RC	 :
++		case NCSI_PKT_RSP_ECNT	 :
++		case NCSI_PKT_RSP_DCNT	 :
++		case NCSI_PKT_RSP_AE	 :
++		case NCSI_PKT_RSP_SL	 :
++			break;
++		case NCSI_PKT_RSP_GLS	 :
++			return; //don't dump gls
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gls_pkt, status);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gls_pkt, other);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gls_pkt, oem_status);
++			break;
++		case NCSI_PKT_RSP_SVF	 :
++		case NCSI_PKT_RSP_EV	 :
++		case NCSI_PKT_RSP_DV	 :
++		case NCSI_PKT_RSP_SMA	 :
++		case NCSI_PKT_RSP_EBF	 :
++		case NCSI_PKT_RSP_DBF	 :
++		case NCSI_PKT_RSP_EGMF	 :
++		case NCSI_PKT_RSP_DGMF	 :
++		case NCSI_PKT_RSP_SNFC	 :
++			break;
++		case NCSI_PKT_RSP_GVI	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gvi_pkt, ncsi_version);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gvi_pkt, alpha2);
++			NCSI_DUMP_FIELD_STR(ncsi_rsp_gvi_pkt, fw_name);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gvi_pkt, fw_version);
++			NCSI_DUMP_FIELD_U16(ncsi_rsp_gvi_pkt, pci_ids[0]);
++			NCSI_DUMP_FIELD_U16(ncsi_rsp_gvi_pkt, pci_ids[1]);
++			NCSI_DUMP_FIELD_U16(ncsi_rsp_gvi_pkt, pci_ids[2]);
++			NCSI_DUMP_FIELD_U16(ncsi_rsp_gvi_pkt, pci_ids[3]);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gvi_pkt, mf_id);
++			break;
++		case NCSI_PKT_RSP_GC	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gc_pkt, cap);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gc_pkt, bc_cap);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gc_pkt, mc_cap);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gc_pkt, buf_cap);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gc_pkt, aen_cap);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gc_pkt, vlan_cnt);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gc_pkt, mixed_cnt);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gc_pkt, mc_cnt);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gc_pkt, uc_cnt);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gc_pkt, vlan_mode);
++			break;
++		case NCSI_PKT_RSP_GP	 :
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gp_pkt, mac_cnt);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gp_pkt, mac_enable);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gp_pkt, vlan_cnt);
++			NCSI_DUMP_FIELD_U16(ncsi_rsp_gp_pkt, vlan_enable);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gp_pkt, link_mode);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gp_pkt, bc_mode);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gp_pkt, valid_modes);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gp_pkt, vlan_mode);
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_gp_pkt, fc_mode);
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gp_pkt, aen_mode);
++			NCSI_DUMP_FIELD_MAC(ncsi_rsp_gp_pkt, mac);
++			NCSI_DUMP_FIELD_U16(ncsi_rsp_gp_pkt, vlan);
++			break;
++		case NCSI_PKT_RSP_GCPS	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, cnt_hi         );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, cnt_lo         );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_bytes       );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_bytes       );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_uc_pkts     );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_mc_pkts     );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_bc_pkts     );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_uc_pkts     );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_mc_pkts     );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_bc_pkts     );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, fcs_err        );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, align_err      );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, false_carrier  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, runt_pkts      );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, jabber_pkts    );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_pause_xon   );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_pause_xoff  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_pause_xon   );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_pause_xoff  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_s_collision );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_m_collision );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, l_collision    );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, e_collision    );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_ctl_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_64_frames   );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_127_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_255_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_511_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_1023_frames );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_1522_frames );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_9022_frames );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_64_frames   );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_127_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_255_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_511_frames  );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_1023_frames );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_1522_frames );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, tx_9022_frames );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_valid_bytes );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_runt_pkts   );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gcps_pkt, rx_jabber_pkts );
++			break;
++		case NCSI_PKT_RSP_GNS	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, rx_cmds );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, dropped_cmds );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, cmd_type_errs );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, cmd_csum_errs );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, rx_pkts );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, tx_pkts );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gns_pkt, tx_aen_pkts );
++			break;
++		case NCSI_PKT_RSP_GNPTS	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, tx_pkts );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, tx_dropped );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, tx_channel_err );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, tx_us_err );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, rx_pkts );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, rx_dropped );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, rx_channel_err );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, rx_us_err );
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gnpts_pkt, rx_os_err );
++			break;
++		case NCSI_PKT_RSP_GPS	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_gps_pkt, status );
++			break;
++		case NCSI_PKT_RSP_OEM	 :
++			NCSI_DUMP_FIELD_U32(ncsi_rsp_oem_i210_cmd_mgmt_pkt, oem_id );
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_oem_i210_cmd_mgmt_pkt, intel_cmd );
++			NCSI_DUMP_FIELD_U8(ncsi_rsp_oem_i210_cmd_mgmt_pkt, value1);
++			break;
++		case NCSI_PKT_RSP_PLDM	 :
++		case NCSI_PKT_RSP_GPUUID :
++			break;
++		case NCSI_PKT_AEN:
++			switch(aen_hdr->type) {
++			case NCSI_PKT_AEN_LSC	: /*Link status change       */
++				NCSI_DUMP_PRN("[AEN_LSC]");
++				NCSI_DUMP_FIELD_U32(ncsi_aen_lsc_pkt, status );
++				NCSI_DUMP_FIELD_U32(ncsi_aen_lsc_pkt, oem_status );
++				break;
++			case NCSI_PKT_AEN_CR	: /* Configuration required   */
++				NCSI_DUMP_PRN("[AEN_CR]");
++				break;
++			case NCSI_PKT_AEN_HNCDSC: /* HNC driver status change */
++				NCSI_DUMP_PRN("[AEN_HNCDSC]");
++				NCSI_DUMP_FIELD_U32(ncsi_aen_hncdsc_pkt, status);
++				break;
++			}
++			break;
++	}
++	netdev_warn(n, "%s\n", ncsi_xmit_cmd_dump_buf);
++
++}
  int ncsi_xmit_cmd(struct ncsi_cmd_arg *nca)
  {
-@@ -297,7 +712,6 @@
+ 	struct ncsi_request *nr;
  	struct ethhdr *eh;
  	struct ncsi_cmd_handler *nch = NULL;
  	int i, ret;
@@ -755,23 +1093,24 @@
  	/* Search for the handler */
  	for (i = 0; i < ARRAY_SIZE(ncsi_cmd_handlers); i++) {
  		if (ncsi_cmd_handlers[i].type == nca->type) {
-@@ -344,6 +758,9 @@
+@@ -344,6 +1043,10 @@
  	mod_timer(&nr->timer, jiffies + 1 * HZ);
  
  	/* Send NCSI packet */
 +#ifndef NO_SILC_MOD
-+	ncsi_cmd_dump(nca->ndp->ndev.dev, eh+1);
++//ncsi_cmd_dump(nca->ndp->ndev.dev, eh+1);
++	ncsi_dump(nca->ndp->ndev.dev, eh+1);
 +#endif
  	skb_get(nr->cmd);
  	ret = dev_queue_xmit(nr->cmd);
  	if (ret < 0) {
-@@ -353,3 +770,4 @@
+@@ -353,3 +1056,4 @@
  
  	return 0;
  }
 +
 --- linux-custom-orig/net/ncsi/ncsi-rsp.c	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-rsp.c	2020-07-21 11:11:55.547697733 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-rsp.c	2020-10-15 10:55:20.557546607 +0800
 @@ -24,9 +24,13 @@
  				 unsigned short payload)
  {
@@ -1050,26 +1389,28 @@
  	{ NCSI_PKT_RSP_PLDM,    0, NULL                     },
  	{ NCSI_PKT_RSP_GPUUID, 20, ncsi_rsp_handler_gpuuid  }
  };
-@@ -981,7 +1097,6 @@
+@@ -981,8 +1097,8 @@
  	struct ncsi_pkt_hdr *hdr;
  	unsigned long flags;
  	int payload, i, ret;
 -
  	/* Find the NCSI device */
++	printk("Do ncsi_rcv_rsp \n");
  	nd = ncsi_find_dev(dev);
  	ndp = nd ? TO_NCSI_DEV_PRIV(nd) : NULL;
-@@ -990,6 +1105,9 @@
+ 	if (!ndp)
+@@ -990,6 +1106,9 @@
  
  	/* Check if it is AEN packet */
  	hdr = (struct ncsi_pkt_hdr *)skb_network_header(skb);
-+#ifndef NO_SILC_MOD
-+	ncsi_cmd_dump(ndp->ndev.dev, hdr);
-+#endif
++//#ifndef NO_SILC_MOD
++	ncsi_dump(ndp->ndev.dev, hdr);
++//#endif
  	if (hdr->type == NCSI_PKT_AEN)
  		return ncsi_aen_handler(ndp, skb);
  
 --- linux-custom-orig/net/ncsi/ncsi-manage.c	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-manage.c	2020-07-21 11:11:55.565697574 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-manage.c	2020-10-07 22:07:33.061795487 +0800
 @@ -38,7 +38,7 @@
  	return sizes[table];
  }
@@ -1743,7 +2084,7 @@
  
  			WARN_ON_ONCE(chained ||
 --- linux-custom-orig/net/ncsi/ncsi-pkt.h	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/ncsi-pkt.h	2020-07-21 11:11:55.583697416 +0800
++++ linux-custom-silicom/net/ncsi/ncsi-pkt.h	2020-10-07 22:07:33.062795479 +0800
 @@ -326,6 +326,32 @@
  	unsigned char           pad[18];
  };
@@ -1791,7 +2132,7 @@
  
  #endif /* __NCSI_PKT_H__ */
 --- linux-custom-orig/net/ncsi/internal.h	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/internal.h	2020-07-21 11:11:55.601697257 +0800
++++ linux-custom-silicom/net/ncsi/internal.h	2020-10-15 10:54:47.089806817 +0800
 @@ -97,12 +97,16 @@
  	u32 size;	/* Valid entries in ncm_data[] */
  	u32 data[8];	/* Data entries                */
@@ -1821,10 +2162,11 @@
  	ncsi_dev_state_config_ae,
  	ncsi_dev_state_config_gls,
  	ncsi_dev_state_config_done,
-@@ -349,4 +356,34 @@
+@@ -348,5 +355,35 @@
+ int ncsi_rcv_rsp(struct sk_buff *skb, struct net_device *dev,
  		 struct packet_type *pt, struct net_device *orig_dev);
  int ncsi_aen_handler(struct ncsi_dev_priv *ndp, struct sk_buff *skb);
- 
++void ncsi_dump(struct net_device* n,void* pkt);
 +#ifndef NO_SILC_MOD
 +#define ncsi_debug(fmt, ...)	printk(KERN_NOTICE "[%s:%u] "fmt "\n", __func__, __LINE__, ## __VA_ARGS__)
 +#define ncsi_warn(fmt, ...)	printk(KERN_WARNING "[%s:%u] "fmt "\n", __func__, __LINE__, ## __VA_ARGS__)
@@ -1854,10 +2196,10 @@
 +//#define SILC_EXTRA_DBG
 +
 +#endif
-+
+ 
  #endif /* __NCSI_INTERNAL_H__ */
 --- linux-custom-orig/net/ncsi/Kconfig	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/Kconfig	2020-07-21 11:11:55.618697107 +0800
++++ linux-custom-silicom/net/ncsi/Kconfig	2020-10-07 22:07:33.062795479 +0800
 @@ -3,7 +3,7 @@
  #
  
@@ -1868,7 +2210,7 @@
  	---help---
  	  This module provides NCSI (Network Controller Sideband Interface)
 --- linux-custom-orig/net/ncsi/Makefile	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/net/ncsi/Makefile	2020-07-21 11:11:55.635696957 +0800
++++ linux-custom-silicom/net/ncsi/Makefile	2020-10-07 22:07:33.062795479 +0800
 @@ -1,4 +1,6 @@
  #
  # Makefile for NCSI API
@@ -1879,7 +2221,7 @@
 +obj-$(CONFIG_NET_NCSI)	+= ncsi.o
 \ No newline at end of file
 --- linux-custom-orig/include/net/ncsi.h	2019-10-21 23:25:46.000000000 +0800
-+++ linux-custom-silicom/include/net/ncsi.h	2020-07-21 11:11:55.636696948 +0800
++++ linux-custom-silicom/include/net/ncsi.h	2020-10-07 22:07:33.062795479 +0800
 @@ -28,7 +28,8 @@
  	void		  (*handler)(struct ncsi_dev *ndev);
  };

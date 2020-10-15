@@ -1,0 +1,122 @@
+--- linux-custom-orig/drivers/net/dsa/dsa_mvmdio.c	2019-10-21 23:25:44.000000000 +0800
++++ linux-custom-silicom/drivers/net/dsa/dsa_mvmdio.c	2020-09-24 18:05:44.316983772 +0800
+@@ -322,51 +322,39 @@
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+ 			"echo [t] [p] [x] [r] [v] > write - write register\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			"echo [t] [p] [x]
+-			 > dump  - dump 32 registers\n");
++			"echo [t] [p] [x] > dump  - dump 32 registers\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+ 			"parameters (in hexadecimal):\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			"    [t] type.
+-			0-switch, 1-internal phy, 2-external phy regs\n");
++			"    [t] type.0-switch, 1-internal phy, 2-external phy regs\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+ 			"              3-regular phy, 4-extended phy\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+ 			"    [p] port addr or phy-id.\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			"    [x] device address.
+-			valid only for extended phy.\n");
++			"    [x] device address.valid only for extended phy.\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+ 			"    [r] register address.\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off, "    [v] value.\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off, "Examples:\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  1. echo 0  1 0  3   > read  -
+-			read switch register\n");
++			 "  1. echo 0  1 0  3   > read  - read switch register\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  2. echo 0 1b 0 1c   > read  -
+-			read switch global1 register\n");
++			 "  2. echo 0 1b 0 1c   > read  - read switch global1 register\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  3. echo 1  3 0  2   > read  -
+-			read internal phy register\n");
++			 "  3. echo 1  3 0  2   > read  - read internal phy register\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  4. echo 2  0 0  2   > read  -
+-			read external phy register\n");
++			 "  4. echo 2  0 0  2   > read  - read external phy register\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  5. echo 3  1 0  2   > read  -
+-			read regular phy register, phyid=1\n");
++			 "  5. echo 3  1 0  2   > read  - read regular phy register, phyid=1\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  6. echo 4  0 7 3c   > read  -
+-			read xmdio phy, EEE advertisement register\n");
++			 "  6. echo 4  0 7 3c   > read  - read xmdio phy, EEE advertisement register\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  7. echo 0  2 0  7 5 > write -
+-			write switch register, set vlan id\n");
++			 "  7. echo 0  2 0  7 5 > write - write switch register, set vlan id\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  8. echo 1  3 0      > dump  -
+-			dump internal switch phy registers\n");
++			 "  8. echo 1  3 0      > dump  - dump internal switch phy registers\n");
+ 	off += scnprintf(buf + off, PAGE_SIZE - off,
+-			 "  9. echo 4  0 7      > dump  -
+-			dump xmdio phy registers for dev-addr=7");
++			 "  9. echo 4  0 7      > dump  - dump xmdio phy registers for dev-addr=7");
+ 	return off;
+ }
+ 
+@@ -406,8 +394,7 @@
+ 		     &type, &port, &dev_addr, &reg, &val);
+ 
+ 	if (mv_phy_addr == MV_INVALID_PHY_ADDR && type < MV_REG_TYPE_MDIO) {
+-		pr_err("\"sw-smi-addr\" property not defined in dts file.
+-			Assuming switch not connected\n");
++		pr_err("\"sw-smi-addr\" property not defined in dts file.Assuming switch not connected\n");
+ 		return len;
+ 	}
+ 
+@@ -420,8 +407,7 @@
+ 		if (err)
+ 			pr_err("Register read failed, err - %d\n", err);
+ 		else
+-			pr_err("read:: type:%d, port=0x%X, dev=0x%X,
+-				reg=0x%X, val=0x%04X\n",
++			pr_err("read:: type:%d, port=0x%X, dev=0x%X,reg=0x%X, val=0x%04X\n",
+ 				type, port, dev_addr, reg, data);
+ 	} else if (!strcmp(name, "write")) {
+ 		err = dsa_mvmdio_write((unsigned char)port,
+@@ -432,8 +418,7 @@
+ 		if (err)
+ 			pr_err("Register write failed, err - %d\n", err);
+ 		else
+-			pr_err("write:: type:%d, port=0x%X, dev=0x%X,
+-				reg=0x%X, val=0x%X\n",
++			pr_err("write:: type:%d, port=0x%X, dev=0x%X,reg=0x%X, val=0x%X\n",
+ 				type, port, dev_addr, reg, val);
+ 	} else if (!strcmp(name, "dump")) {
+ 		err = dsa_mvmdio_dump((unsigned char)port,
+@@ -475,7 +460,6 @@
+ 	struct device_node *mdio;
+ 	struct device_node *xmdio;
+ 	int ret;
+-
+ 	np = pdev->dev.of_node;
+ 	mdio = of_parse_phandle(np, "mii-bus", 0);
+ 	if (!mdio) {
+@@ -494,7 +478,7 @@
+ 		pr_err("%s : switch smi addr not defined\n", __func__);
+ 		mv_phy_addr = MV_INVALID_PHY_ADDR;
+ 	}
+-
++/*
+ 	xmdio = of_parse_phandle(np, "xmii-bus", 0);
+ 	if (!xmdio) {
+ 		pr_err("%s : parse handle failed\n", __func__);
+@@ -506,7 +490,7 @@
+ 		pr_err("%s : xmdio find bus failed\n", __func__);
+ 		return -EINVAL;
+ 	}
+-
++	*/
+ 	return 0;
+ }
+ 

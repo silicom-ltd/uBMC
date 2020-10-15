@@ -277,6 +277,16 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 				sprintf(p_req_info->path, IS_CLI_PATH_QUERY_SYSTEM_CONFIG"/misc/datetime");
 				p_req_info->rsp_cb = is_cli_show_ntp_configured_cb;
 			}
+			else if(p_l1_token && strcmp(p_l1_token->name, "state") == 0)
+			{
+				system("ntpstat");
+				return 0;
+			}
+			else if(p_l1_token && strcmp(p_l1_token->name, "associations") == 0)
+			{
+				system("ntpq -p");
+				return 0;
+			}
 		}
 		else if(strcmp(p_token->name, "log") == 0)
 		{
