@@ -339,6 +339,7 @@ int is_mgmtd_unix_check_req(silc_mgmtd_if_req_type type, silc_mgmtd_node* p_node
 		if (ret)
 			return ret;
 	}
+
 	return 0;
 }
 

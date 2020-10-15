@@ -7,6 +7,21 @@
 
 int is_mgmtd_system_check_hostname(char* hostname);
 
+int is_mgmtd_radius_update_server_secret(silc_mgmtd_node* server_node)
+{
+	silc_mgmtd_node *p_secret_tmp = silc_mgmtd_memdb_find_sub_node(server_node, "secret-tmp");
+	if(strlen(p_secret_tmp->value.val.string_val) > 0)
+	{
+		//secret is changed, set it to secret node and clear secret-tmp node
+		silc_mgmtd_node* p_secret = silc_mgmtd_memdb_find_sub_node(server_node, "secret");
+		silc_cstr new_secret = p_secret_tmp->value.val.string_val;
+		silc_mgmtd_var_set_by_str(&p_secret->value, new_secret);
+		silc_mgmtd_var_set_by_str(&p_secret_tmp->value, "");	//clear secret-tmp so it can't be seen when query
+	}
+
+	return 0;
+}
+
 int is_mgmtd_radius_write_server(FILE* fp, silc_mgmtd_node* server_node)
 {
 	silc_mgmtd_node* p_node;
@@ -84,6 +99,7 @@ int is_mgmtd_radius_server_apply(silc_mgmtd_node* new_node, char* path_del)
 int is_mgmtd_radius_server_add_config(silc_mgmtd_node* p_node, void* conn_entry)
 {
 	USER_OP_LOG(conn_entry, "Radius server %u is added", p_node->value.val.uint32_val);
+	is_mgmtd_radius_update_server_secret(p_node);
 	is_mgmtd_radius_server_apply(p_node, NULL);
 	return 0;
 }
@@ -91,6 +107,7 @@ int is_mgmtd_radius_server_add_config(silc_mgmtd_node* p_node, void* conn_entry)
 int is_mgmtd_radius_server_modify_config(silc_mgmtd_node* p_node, void* conn_entry)
 {
 	USER_OP_LOG(conn_entry, "Radius server %u is modified", p_node->value.val.uint32_val);
+	is_mgmtd_radius_update_server_secret(p_node);
 	is_mgmtd_radius_server_apply(NULL, NULL);
 	return 0;
 }
@@ -176,6 +193,10 @@ int is_mgmtd_radius_server_config(silc_mgmtd_if_req_type type, void* p_db_node, 
 	silc_mgmtd_node* p_node = (silc_mgmtd_node*)p_db_node;
 	int ret = 0;
 
+	if (silc_list_empty(&p_node->sub_node_list))
+	{
+		p_node = p_node->p_parent;
+	}
 	switch (type)
 	{
 		case SILC_MGMTD_IF_REQ_CHECK_ADD:

@@ -82,9 +82,9 @@ if product.verifyFeature('SNMP_AGENT', 'USERS') then
 		fc = usersConfig:option(TfFlag, "full-access", translate("Full Access"))
 		fc:depends({state="true"})
 
-		pw = usersConfig:option(Value, "password", translate("Password"))
+		pw = usersConfig:option(Value, "password-tmp", translate("Password"))
 		pw.password = true
-		pw.datatype = "minlength(8)"
+--		pw.datatype = "minlength(8)"
 		pw:depends({state="true"})
 end
 
@@ -124,7 +124,7 @@ auth:value('sha', 'sha')
 auth:value('md5', 'md5')
 --auth:depends({state="true"})
 
-pw = hostsConfig:option(Value, "password", translate("Password"))
+pw = hostsConfig:option(Value, "password-tmp", translate("Password"))
 pw.password = true
 --pw:depends({state="true"})
 

@@ -82,6 +82,6 @@ port = t:option(Value, "server-port", translate("Port"))
 port.datatype = "port"
 port.default = 49
 
-t:option(Value, "secret", translate("Secret")).password = true
+t:option(Value, "secret-tmp", translate("Secret")).password = true
 
 return f
