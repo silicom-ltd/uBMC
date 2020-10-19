@@ -524,6 +524,9 @@ silc_bool silc_mgmtd_if_multi_cmd(silc_cstr val);
 silc_bool silc_mgmtd_if_file_exist(silc_cstr path);
 silc_bool silc_mgmtd_if_dir_exist(silc_cstr path);
 
+int silc_mgmtd_if_encrypt(silc_cstr raw, silc_cstr buf, int buf_len);
+int silc_mgmtd_if_decrypt(silc_cstr raw, silc_cstr buf, int buf_len);
+
 #ifdef __cplusplus
 }
 #endif

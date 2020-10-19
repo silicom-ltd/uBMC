@@ -97,7 +97,7 @@ int is_mgmtd_unix_check_pass(silc_cstr pass)
 
 int is_mgmtd_unix_check_privil(char* user, uint32_t privil)
 {
-	if (privil > SILC_MGMTD_IF_LEVEL_ADMIN)
+	if (privil < SILC_MGMTD_IF_LEVEL_READONLY || privil > SILC_MGMTD_IF_LEVEL_ADMIN)
 	{
 		SILC_ERR("%s's privil %u is invalid", user, privil);
 		return IS_MGMTD_ERR_AAA_PRIVIL_INVALID;

@@ -10,6 +10,7 @@
 void is_mgmtd_get_mdf_node_val(const silc_cstr node_path, silc_cstr buff, int buff_len, silc_bool* modified);
 
 int is_mgmtd_unix_check_mapped_user(char* user);
+int is_mgmtd_unix_check_privil(char* user, uint32_t privil);
 
 int is_mgmtd_radius_static_enable_apply(char* template_user, uint32_t retry, silc_bool fallback)
 {
@@ -107,7 +108,6 @@ int is_mgmtd_radius_static_modify(void* conn_entry)
 int is_mgmtd_radius_check_req(silc_mgmtd_if_req_type type, void* p_db_node, void* conn_entry)
 {
 	silc_mgmtd_node* p_node = NULL;
-	char* val = NULL;
 	int ret = 0;
 
 	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_RADIUS_STATIC_PATH"/enabled");
@@ -121,6 +121,15 @@ int is_mgmtd_radius_check_req(silc_mgmtd_if_req_type type, void* p_db_node, void
 		}
 	}
 
+	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_RADIUS_STATIC_PATH"/privilege");
+	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
+	{
+		ret = is_mgmtd_unix_check_privil("", p_node->tmp_value.val.uint32_val);
+		if (ret)
+			return ret;
+	}
+#if 0
+	char* val = NULL;
 	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_RADIUS_STATIC_PATH"/mapped-user");
 	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
 		val = p_node->tmp_value.val.string_val;
@@ -129,7 +138,7 @@ int is_mgmtd_radius_check_req(silc_mgmtd_if_req_type type, void* p_db_node, void
 	ret = is_mgmtd_unix_check_mapped_user(val);
 	if (ret)
 		return ret;
-
+#endif
 	return 0;
 }
 

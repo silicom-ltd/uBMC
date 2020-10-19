@@ -126,7 +126,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 						   {"/config/snmp/agent/users/*/state", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"snmp user ? ?", {{"/config/snmp/agent/users/*/full-access", NULL, {4}},
 						   {"/config/snmp/agent/users/*/full-access", "false,read-only,true,full-access"}}},
-		{"", {{"/config/snmp/agent/trap-hosts/*", NULL, {4}},
+		{"snmp_trap_host_cmd", {{"/config/snmp/agent/trap-hosts/*", NULL, {4}},
 			  {"/config/snmp/agent/trap-hosts/*/version"},
 			  {"/config/snmp/agent/trap-hosts/*/community"},
 			  {"/config/snmp/agent/trap-hosts/*/password"},
@@ -163,7 +163,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 		{"radius ?", {{"/config/radius/static/enabled", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"radius ?", {{"/config/radius/static/fallback", "false,local-login"TAG_CMD_TRANS_FALSE2NO",true,local-login"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"radius privilege ?", {{"/config/radius/static/privilege", "1,readonly,2,normal,3,admin"}}},
-		{"radius mapped-user ?", {{"/config/radius/static/mapped-user"}}},
+//		{"radius mapped-user ?", {{"/config/radius/static/mapped-user"}}},
 		{"radius retry ?", {{"/config/radius/static/retry"}}},
 		{"radius server ? ip ? port ? secret ? timeout ?", {{"/config/radius/server/*", NULL, {3}},
 															{"/config/radius/server/*/server-ip"},
@@ -172,7 +172,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 															{"/config/radius/server/*/timeout"}}},
 		{"tacacs ?", {{"/config/tacacs/static/enabled", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"tacacs ?", {{"/config/tacacs/static/fallback", "false,local-login"TAG_CMD_TRANS_FALSE2NO",true,local-login"}}, FLAG_CMD_TRANS_FALSE2NO},
-		{"tacacs mapped-user ?", {{"/config/tacacs/static/mapped-user"}}},
+//		{"tacacs mapped-user ?", {{"/config/tacacs/static/mapped-user"}}},
 		{"tacacs timeout ?", {{"/config/tacacs/static/timeout"}}},
 		{"tacacs service ?", {{"/config/tacacs/static/service"}}},
 //		{"tacacs login-type ?", {{"/config/tacacs/static/login"}}},
@@ -373,41 +373,57 @@ static int s_is_mgmtd_config_2_cmds_cnt = 0;
 int is_mgmtd_config_cmd_init()
 {
 	static int init_done = 0;
-    silc_mgmtd_product_info* product_info = NULL;
-    silc_mgmtd_config_cmd_map* config_list = NULL;
-    int common_config_cnt = sizeof(s_is_mgmtd_common_config_2_cmds)/sizeof(silc_mgmtd_config_cmd_map);
-	int config_cnt = 0, loop;
+	silc_mgmtd_product_info* product_info = NULL;
+	silc_mgmtd_config_cmd_map* config_list = NULL;
+	int common_config_cnt = sizeof(s_is_mgmtd_common_config_2_cmds)/sizeof(silc_mgmtd_config_cmd_map);
+	int config_cnt = 0, i, j, pos, found;
 
-    if(init_done)
-    	return 0;
-    init_done = 1;
+	if(init_done)
+		return 0;
+	init_done = 1;
 
-    product_info = silc_mgmtd_memdb_get_product_info();
-    if(product_info)
-    {
-    	config_list = product_info->config_list;
-    	config_cnt = product_info->config_cnt;
-    }
+	product_info = silc_mgmtd_memdb_get_product_info();
+	if(product_info)
+	{
+		config_list = product_info->config_list;
+		config_cnt = product_info->config_cnt;
+	}
 
-    s_is_mgmtd_config_2_cmds_cnt = common_config_cnt + config_cnt;
-    s_is_mgmtd_config_2_cmds = malloc(sizeof(silc_mgmtd_config_cmd_map*) * s_is_mgmtd_config_2_cmds_cnt);
-    if(!s_is_mgmtd_config_2_cmds)
-    {
+	s_is_mgmtd_config_2_cmds_cnt = common_config_cnt + config_cnt;
+	s_is_mgmtd_config_2_cmds = malloc(sizeof(silc_mgmtd_config_cmd_map*) * s_is_mgmtd_config_2_cmds_cnt);
+	if(!s_is_mgmtd_config_2_cmds)
+	{
 		SILC_ERR("[%s] malloc error!", __func__);
 		init_done = 0;
 		return -1;
-    }
+	}
 
-    for(loop=0; loop<common_config_cnt; loop++)
-    {
-    	s_is_mgmtd_config_2_cmds[loop] = &s_is_mgmtd_common_config_2_cmds[loop];
-    }
-    for(loop=0; loop<config_cnt; loop++)
-    {
-    	s_is_mgmtd_config_2_cmds[common_config_cnt+loop] = &config_list[loop];
-    }
+	for(i=0; i<common_config_cnt; i++)
+	{
+		s_is_mgmtd_config_2_cmds[i] = &s_is_mgmtd_common_config_2_cmds[i];
+	}
+	pos = common_config_cnt;
+	for(j=0; j<config_cnt; j++)
+	{
+		found = 0;
+		for(i=0; i<common_config_cnt; i++)
+		{
+			if(strcmp(s_is_mgmtd_config_2_cmds[i]->command_str, config_list[j].command_str) == 0)
+			{
+				s_is_mgmtd_config_2_cmds[i] = &config_list[j];
+				found = 1;
+				break;
+			}
+		}
+		if(!found)
+		{
+			s_is_mgmtd_config_2_cmds[pos] = &config_list[j];
+			pos++;
+		}
+	}
+	s_is_mgmtd_config_2_cmds_cnt = pos;
 
-    return 0;
+	return 0;
 }
 
 static silc_bool is_mgmtd_config_path_compare(silc_cstr def_path, silc_cstr cur_path)

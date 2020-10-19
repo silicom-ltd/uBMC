@@ -205,9 +205,14 @@ int is_cli_cmd_aaa_decrypt_shadow(silc_cstr enc_shadow)
 	int len = strlen(enc_shadow);
 	char cmd[320];
 
+	if(strlen(enc_shadow) > 256)
+	{
+		silc_cli_err_cmd_set_err_info("Encrypted password is too long");
+		return -1;
+	}
 	if(!is_cli_cmd_validate_base64(enc_shadow))
 	{
-		silc_cli_err_cmd_set_err_info("Invalid encrypted password '%s'", enc_shadow);
+		silc_cli_err_cmd_set_err_info("Invalid encrypted password");
 		return -1;
 	}
 
