@@ -79,7 +79,7 @@ port = t:option(Value, "server-port", translate("Port"))
 port.datatype = "port"
 port.default = 1812
 
-t:option(Value, "secret", translate("Secret")).password = true
+t:option(Value, "secret-tmp", translate("Secret")).password = true
 
 tm = t:option(Value, "timeout", translate("Timeout(sec)"))
 tm.datatype = "uinteger"

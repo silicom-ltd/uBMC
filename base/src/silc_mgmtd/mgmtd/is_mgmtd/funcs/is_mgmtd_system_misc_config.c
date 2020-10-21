@@ -425,6 +425,10 @@ int is_mgmtd_system_misc_check_modify(void* p_db_node, void* conn_entry)
 	}
 
 	p_node = (silc_mgmtd_node*)p_db_node;
+	if (silc_list_empty(&p_node->sub_node_list))
+	{
+		p_node = p_node->p_parent;
+	}
 	if (strcmp(p_node->p_parent->name, "remote-server-v2") == 0)
 	{
 		uint32_t port = silc_mgmtd_memdb_find_sub_node(p_node, "port")->tmp_value.val.uint32_val;
@@ -452,6 +456,10 @@ int is_mgmtd_system_misc_config(silc_mgmtd_if_req_type type, void* p_db_node, vo
 		case SILC_MGMTD_IF_REQ_DELETE:
 		case SILC_MGMTD_IF_REQ_MODIFY:
 			is_mgmtd_system_misc_update_ts(conn_entry);
+			if (silc_list_empty(&p_node->sub_node_list))
+			{
+				p_node = p_node->p_parent;
+			}
 			if (strcmp(p_node->p_parent->name, "remote-server-v2") == 0)
 			{
 				return is_mgmtd_system_misc_config_log(type, p_node, conn_entry);

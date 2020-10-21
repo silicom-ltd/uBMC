@@ -24,14 +24,14 @@ static inline void is_cli_show_radius_configured_static(silc_mgmtd_if_node* p_no
 
 static inline void is_cli_show_radius_configured_servers(silc_mgmtd_if_node* p_node)
 {
-	silc_cstr formats[] = { "%-4s", "%-16s", "%-8s", "%-8s", "%-s" };
+	silc_cstr formats[] = { "%-4s", "%-16s", "%-8s", "%-8s" };
 	silc_cstr names[] = { "ID", "IP", "Port", "Timeout", "Secret" };
-	silc_cstr nodes[] = { NULL, "server-ip", "server-port", "timeout", "secret" };
-	silc_cstr* trans[] = { NULL, NULL, NULL, NULL, NULL };
-	int trans_num[] = { 0, 0, 0, 0, 0 };
+	silc_cstr nodes[] = { NULL, "server-ip", "server-port", "timeout" };
+	silc_cstr* trans[] = { NULL, NULL, NULL, NULL };
+	int trans_num[] = { 0, 0, 0, 0 };
 
 	silc_cli_l2tree_display(p_node,
-			"RADIUS Server Configuration:", nodes, names, formats, trans, trans_num, 5);
+			"RADIUS Server Configuration:", nodes, names, formats, trans, trans_num, 4);
 }
 
 static inline void is_cli_show_tacacs_configured_static(silc_mgmtd_if_node* p_node)
@@ -51,14 +51,14 @@ static inline void is_cli_show_tacacs_configured_static(silc_mgmtd_if_node* p_no
 
 static inline void is_cli_show_tacacs_configured_servers(silc_mgmtd_if_node* p_node)
 {
-	silc_cstr formats[] = { "%-4s", "%-16s", "%-8s", "%-s" };
-	silc_cstr names[] = { "ID", "IP", "Port", "Secret" };
-	silc_cstr nodes[] = { NULL, "server-ip", "server-port", "secret" };
-	silc_cstr* trans[] = { NULL, NULL, NULL, NULL };
-	int trans_num[] = { 0, 0, 0, 0 };
+	silc_cstr formats[] = { "%-4s", "%-16s", "%-8s" };
+	silc_cstr names[] = { "ID", "IP", "Port" };
+	silc_cstr nodes[] = { NULL, "server-ip", "server-port" };
+	silc_cstr* trans[] = { NULL, NULL, NULL };
+	int trans_num[] = { 0, 0, 0 };
 
 	silc_cli_l2tree_display(p_node,
-			"TACACS+ Server Configuration:", nodes, names, formats, trans, trans_num, 4);
+			"TACACS+ Server Configuration:", nodes, names, formats, trans, trans_num, 3);
 }
 
 static inline void is_cli_show_unix_configured_users(silc_mgmtd_if_node* p_node)

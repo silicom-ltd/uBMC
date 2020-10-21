@@ -230,6 +230,9 @@ function validate_word(word) {
 }
 
 function validate_pwd(word) {
+	if (word.length == 0) {
+		return true;
+	}
 	if (word.length >= 8) {
 		return validate_word(word);
 	}

@@ -367,6 +367,11 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 		}
 		else if(strcmp(p_token->name, "running-config") == 0)
 		{
+			if(silc_cli_cmd_do_simple_action("/action/system/check-is-admin", "true", NULL, 0) != 0)
+			{
+				silc_cli_err_cmd_set_err_info("no privilege to show running-config");
+				return -1;
+			}
 			silc_cstr buff = malloc(1024*256);
 			if(!buff)
 			{

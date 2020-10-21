@@ -273,7 +273,7 @@ int is_mgmtd_tacacs_check_req(silc_mgmtd_if_req_type type, void* p_db_node, void
 	ret = is_mgmtd_tacacs_check_service(val);
 	if (ret)
 		return ret;
-
+#if 0
 	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_TACACS_STATIC_PATH"/mapped-user");
 	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)
 		val = p_node->tmp_value.val.string_val;
@@ -282,6 +282,7 @@ int is_mgmtd_tacacs_check_req(silc_mgmtd_if_req_type type, void* p_db_node, void
 	ret = is_mgmtd_unix_check_mapped_user(val);
 	if (ret)
 		return ret;
+#endif
 #ifdef IS_TACACS_LOGIN_CONFIG
 	p_node = silc_mgmtd_memdb_find_node(IS_MGMTD_TACACS_STATIC_PATH"/login");
 	if (p_node->tmp_value.type != SILC_MGMTD_VAR_NULL)

@@ -2002,3 +2002,46 @@ silc_bool silc_mgmtd_if_dir_exist(silc_cstr path)
     stat(path, &path_stat);
     return (S_ISDIR(path_stat.st_mode) == 1);
 }
+
+static silc_cstr silc_enc_pass = "{$1L1(0M}.I$";
+int silc_mgmtd_if_encrypt(silc_cstr raw, silc_cstr buf, int buf_len)
+{
+	int output_len = buf_len;
+	char cmd[512];
+
+	if(strlen(raw) > 256)
+	{
+		SILC_ERR("Raw string %s is too long", raw);
+		return -1;
+	}
+	sprintf(cmd, "echo '%s'|openssl enc -aes-256-cbc -A -base64 -salt -k '%s'", raw, silc_enc_pass);
+	if(silc_mgmtd_if_exec_system_cmd(cmd, buf, &output_len, 1000, silc_false) != 0)
+	{
+		return -1;
+	}
+	if(buf[output_len-1] == '\n')
+		buf[output_len-1] = 0;
+
+	return 0;
+}
+
+int silc_mgmtd_if_decrypt(silc_cstr raw, silc_cstr buf, int buf_len)
+{
+	int output_len = buf_len;
+	char cmd[512];
+
+	if(strlen(raw) > 256)
+	{
+		SILC_ERR("Raw string %s is too long", raw);
+		return -1;
+	}
+	sprintf(cmd, "echo '%s'|openssl enc -aes-256-cbc -A -base64 -salt -k '%s' -d", raw, silc_enc_pass);
+	if(silc_mgmtd_if_exec_system_cmd(cmd, buf, &output_len, 1000, silc_false) != 0)
+	{
+		return -1;
+	}
+	if(buf[output_len-1] == '\n')
+		buf[output_len-1] = 0;
+
+	return 0;
+}

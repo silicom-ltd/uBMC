@@ -48,6 +48,21 @@ int is_cli_cmd_snmp_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info* p
 			p_req_info->type = SILC_MGMTD_IF_REQ_MODIFY;
 			return 0;
 		}
+		if(strcmp(p_token->name, "encrypt-password") == 0)
+		{
+			silc_cstr enc_pass = p_token->val_str;
+			int len = strlen(enc_pass);
+			if(len > 256)
+			{
+				silc_cli_err_cmd_set_err_info("Encrypted password is too long");
+				return -1;
+			}
+			if(silc_mgmtd_if_decrypt(enc_pass, enc_pass, len) != 0)
+			{
+				silc_cli_err_cmd_set_err_info("Invalid encrypted password");
+				return -1;
+			}
+		}
 
 		token_idx++;
 		if(p_token->map_name)

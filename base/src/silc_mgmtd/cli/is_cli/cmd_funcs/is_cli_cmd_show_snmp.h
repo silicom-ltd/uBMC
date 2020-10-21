@@ -33,31 +33,31 @@ static inline void is_cli_show_snmp_configured_communities(silc_mgmtd_if_node* p
 
 static inline void is_cli_show_snmp_configured_users(silc_mgmtd_if_node* p_node)
 {
-	silc_cstr formats[] = { "%-12s", "%-12s", "%-12s", "%-12s", "%-8s" };
-	silc_cstr names[] = { "User", "Access", "Password", "Auth/Priv", "State" };
-	silc_cstr nodes[] = { NULL, "full-access", "password", "auth", "state" };
+	silc_cstr formats[] = { "%-12s", "%-12s", "%-12s", "%-8s" };
+	silc_cstr names[] = { "User", "Access", "Auth/Priv", "State" };
+	silc_cstr nodes[] = { NULL, "full-access", "auth", "state" };
 	silc_cstr trans_access[] = { "false", "readonly", "true", "readwrite" };
 	silc_cstr trans_state[] = { "false", "disable", "true", "enable"};
 	silc_cstr trans_auth[] = { "sha", "sha/aes", "md5", "md5/des"};
-	silc_cstr* trans[] = { NULL, trans_access, NULL, trans_auth, trans_state };
-	int trans_num[] = { 0, 2, 0, 2, 2 };
+	silc_cstr* trans[] = { NULL, trans_access, trans_auth, trans_state };
+	int trans_num[] = { 0, 2, 2, 2 };
 
 	silc_cli_l2tree_display(p_node,
-			"SNMP v3 User Configuration:", nodes, names, formats, trans, trans_num, 5);
+			"SNMP v3 User Configuration:", nodes, names, formats, trans, trans_num, 4);
 }
 
 static inline void is_cli_show_snmp_configured_trap_hosts(silc_mgmtd_if_node* p_node)
 {
-	silc_cstr formats[] = { "%-16s", "%-4s", "%-12s", "%-8s", "%-12s", "%-12s" };
-	silc_cstr names[] = { "HostIP", "Ver", "Community", "State", "Password", "Auth/Priv" };
-	silc_cstr nodes[] = { NULL, "version", "community", "state", "password", "auth" };
+	silc_cstr formats[] = { "%-16s", "%-4s", "%-12s", "%-8s", "%-12s" };
+	silc_cstr names[] = { "HostIP", "Ver", "Community", "State", "Auth/Priv" };
+	silc_cstr nodes[] = { NULL, "version", "community", "state", "auth" };
 	silc_cstr trans_state[] = { "false", "disable", "true", "enable"};
 	silc_cstr trans_auth[] = { "sha", "sha/aes", "md5", "md5/des"};
-	silc_cstr* trans[] = { NULL, NULL, NULL, trans_state, NULL, trans_auth};
-	int trans_num[] = { 0, 0, 0, 2, 0, 2 };
+	silc_cstr* trans[] = { NULL, NULL, NULL, trans_state, trans_auth};
+	int trans_num[] = { 0, 0, 0, 2, 2 };
 
 	silc_cli_l2tree_display(p_node,
-			"SNMP Trap Host Configuration:", nodes, names, formats, trans, trans_num, 6);
+			"SNMP Trap Host Configuration:", nodes, names, formats, trans, trans_num, 5);
 }
 
 static inline void is_cli_show_snmp_configured_trap_ctl(silc_mgmtd_if_node* p_node)
@@ -182,15 +182,15 @@ static inline void is_cli_show_snmp_status_users(silc_mgmtd_if_node* p_node)
 
 static inline void is_cli_show_snmp_status_trap_hosts(silc_mgmtd_if_node* p_node)
 {
-	silc_cstr formats[] = { "%-16s", "%-6s", "%-16s", "%-12s", "%-20s" };
-	silc_cstr names[] = { "HostIP", "Ver", "Community", "Auth/Priv", "Password" };
-	silc_cstr nodes[] = { NULL, "version", "community", "auth", "passwd" };
+	silc_cstr formats[] = { "%-16s", "%-6s", "%-16s", "%-12s" };
+	silc_cstr names[] = { "HostIP", "Ver", "Community", "Auth/Priv" };
+	silc_cstr nodes[] = { NULL, "version", "community", "auth" };
 	silc_cstr trans_auth[] = { "SHA", "sha/aes", "MD5", "md5/des"};
-	silc_cstr* trans[] = { NULL, NULL, NULL, trans_auth, NULL};
-	int trans_num[] = { 0, 0, 0, 2, 0 };
+	silc_cstr* trans[] = { NULL, NULL, NULL, trans_auth };
+	int trans_num[] = { 0, 0, 0, 2 };
 
 	silc_cli_l2tree_display(p_node,
-			"SNMP Trap Hosts:", nodes, names, formats, trans, trans_num, 5);
+			"SNMP Trap Hosts:", nodes, names, formats, trans, trans_num, 4);
 }
 
 static inline void is_cli_show_snmp_status_cb(silc_mgmtd_if_rsp* p_rsp)
