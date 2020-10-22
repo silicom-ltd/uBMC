@@ -1,6 +1,78 @@
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.c	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-10-13 15:53:11.869429012 +0800
-@@ -234,7 +234,8 @@
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.c	2020-10-22 16:20:39.599831156 +0800
+@@ -184,6 +184,71 @@
+ 	return mv88e6xxx_reg_wait_ready_indirect(dev);
+ }
+ 
++static int mv88e6xxx_read_indirect45(struct mv88e6xxx_dev *dev, int port, int dev_id,int reg)
++{
++	int ret;
++
++	ret = mv88e6xxx_write_register(dev, REG_GLOBAL2, GLOBAL2_SMI_DATA, reg);
++
++	ret = mv88e6xxx_write_register(
++		dev, REG_GLOBAL2, GLOBAL2_SMI_OP,
++		GLOBAL2_SMI_OP_45_WRITE_ADDR |
++		((port & SMI_CMD_DEV_ADDR_MASK) << SMI_CMD_DEV_ADDR_SIZE) |
++		(dev_id & SMI_CMD_REG_ADDR_MASK));
++	if (ret < 0)
++		return ret;
++
++	ret = mv88e6xxx_reg_wait_ready_indirect(dev);
++	if (ret < 0)
++		return ret;
++
++	ret = mv88e6xxx_write_register(
++		dev, REG_GLOBAL2, GLOBAL2_SMI_OP,
++		GLOBAL2_SMI_OP_45_READ_DATA |
++		((port & SMI_CMD_DEV_ADDR_MASK) << SMI_CMD_DEV_ADDR_SIZE) |
++		(dev_id & SMI_CMD_REG_ADDR_MASK));
++
++	ret = mv88e6xxx_reg_wait_ready_indirect(dev);
++	if (ret < 0)
++		return ret;
++	ret = mv88e6xxx_read_register(dev, REG_GLOBAL2, GLOBAL2_SMI_DATA);
++
++	return ret;
++}
++
++static int mv88e6xxx_write_indirect45(struct mv88e6xxx_dev *dev, int port,
++				    int dev_id,int reg, unsigned short val)
++{
++	int ret;
++/*Write Addr first*/
++	ret = mv88e6xxx_write_register(dev, REG_GLOBAL2, GLOBAL2_SMI_DATA, reg);
++	if (ret < 0)
++		return ret;
++
++	ret = mv88e6xxx_write_register(
++		dev, REG_GLOBAL2, GLOBAL2_SMI_OP,
++		GLOBAL2_SMI_OP_45_WRITE_ADDR |
++		((port & SMI_CMD_DEV_ADDR_MASK) << SMI_CMD_DEV_ADDR_SIZE) |
++		(dev_id & SMI_CMD_REG_ADDR_MASK));
++	/*Write Addr first*/
++	if(mv88e6xxx_reg_wait_ready_indirect(dev) == 0)
++	{
++		/*Write value*/
++		ret = mv88e6xxx_write_register(dev, REG_GLOBAL2, GLOBAL2_SMI_DATA, val);
++			if (ret < 0)
++				return ret;
++		ret = mv88e6xxx_write_register(
++				dev, REG_GLOBAL2, GLOBAL2_SMI_OP,
++				GLOBAL2_SMI_OP_45_WRITE_DATA |
++				((port & SMI_CMD_DEV_ADDR_MASK) << SMI_CMD_DEV_ADDR_SIZE) |
++				(dev_id & SMI_CMD_REG_ADDR_MASK));
++		if (ret < 0)
++				return ret;
++	}
++	 return ret;
++
++}
++
+ int mv88e6xxx_read_phy_register(struct mv88e6xxx_dev *dev, int port, int page,
+ 				int reg)
+ {
+@@ -234,7 +299,8 @@
  		printf("No Switch Device Found\n");
  		return;
  	}
@@ -10,7 +82,7 @@
  	product_num = ((unsigned int)dev->id) >> 4;
  	if (product_num == PORT_SWITCH_ID_PROD_NUM_6390 ||
  	    product_num == PORT_SWITCH_ID_PROD_NUM_6390X ||
-@@ -343,7 +344,7 @@
+@@ -343,7 +409,7 @@
  	int node = 0;
  	int ret;
  	int port;
@@ -19,7 +91,7 @@
  	soho_dev_handle = NULL;
  
  	/* Read Device Tree */
-@@ -368,6 +369,7 @@
+@@ -368,6 +434,7 @@
  	soho_dev.id = mv88e6xxx_get_switch_id(&soho_dev);
  
  	soho_dev.cpu_port = fdtdec_get_int(blob, node, "cpu-port", -1);
@@ -27,7 +99,7 @@
  	if (soho_dev.cpu_port != -1) {
  		u16 reg;
  
-@@ -398,8 +400,10 @@
+@@ -398,8 +465,10 @@
  			       PORT_PCS_CTRL_1000;
  
  			if ((soho_dev.id >> 4) ==
@@ -39,7 +111,7 @@
  				reg |= PORT_PCS_CTRL_FORCE_SPEED |
  				       PORT_PCS_CTRL_RGMII_DELAY_TXCLK |
  				       PORT_PCS_CTRL_RGMII_DELAY_RXCLK;
-@@ -413,9 +417,11 @@
+@@ -413,9 +482,11 @@
  		if (ret)
  			return ret;
  	}
@@ -52,26 +124,21 @@
  		if (!(soho_dev.port_mask & BIT(port)))
  			continue;
  
-@@ -446,8 +452,37 @@
+@@ -446,8 +517,47 @@
  					     PHY_COPPER_CONTROL_SPEED_1G |
  					     PHY_COPPER_CONTROL_DUPLEX |
  					     PHY_COPPER_CONTROL_AUTO_NEG_EN);
--	}
--
 +							     
 +		read_reg = mv88e6xxx_read_phy_register(&soho_dev, REG_PORT(port), 0,PHY_COPPER_CONTROL);
 +	//	printf("port %d:PHY_COPPER_CONTROL set as 0x%x\n",port,read_reg);
-+	}
+ 	}
 +#endif
 +	/*
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x54);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(2),PORT_BASE_VLAN,0x51);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x45);
 +	*/
-+	/*set the port5 c_mode to sgmii*/
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),0x1a,0xa100);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),0x1a,0xdea0);
-+	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),0x00,0x0009);
++
 +	/*set the vlan base port*/
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(0),PORT_BASE_VLAN,0x7e);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(1),PORT_BASE_VLAN,0x7d);
@@ -89,11 +156,81 @@
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),PORT_BASE_VLAN,0x45);
 +	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),PORT_BASE_VLAN,0x4a);
 +	 */
+ 
++	/*set the port5 c_mode to sgmii*/
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),0x1a,0xa100);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(4),0x1a,0xdea0);
++	mv88e6xxx_write_register(&soho_dev,REG_PORT(5),0x00,0x0009);
++
++	/*Set the serdes power up*/
++	/*Fix the issue when the board reset the eth1 link down*/
++	ret = mv88e6xxx_write_indirect45(&soho_dev,0x15,0x4,0x2000,0x140);
++	if(ret < 0)
++	{
++		printf("Do mv88e6xxx_write_indirect45 fail %d \n",ret);
++	}
  	soho_dev_handle = &soho_dev;
  
  	return 0;
+@@ -467,6 +577,10 @@
+ 		return SW_PHY_WRITE;
+ 	else if (strcmp(str, "link") == 0)
+ 		return SW_LINK;
++	else if (strcmp(str, "c45_write") == 0)
++		return SW_C45_WRITE;
++	else if (strcmp(str, "c45_read") == 0)
++		return SW_C45_READ;
+ 	else
+ 		return SW_NA;
+ }
+@@ -474,7 +588,7 @@
+ static int do_sw(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+ {
+ 	struct mv88e6xxx_dev *dev;
+-	int port, reg, page, val = 0, ret = 0;
++	int port, reg, page, val = 0, ret = 0,dev_id = 0;
+ 
+ 	dev = soho_dev_handle;
+ 
+@@ -580,7 +694,27 @@
+ 		port = (int)simple_strtoul(argv[2], NULL, 16);
+ 		ret = mv88e6xxx_get_link_status(dev, port);
+ 		break;
+-
++	case SW_C45_WRITE:
++		port = (int)simple_strtoul(argv[2], NULL, 16);
++		dev_id = (int)simple_strtoul(argv[3], NULL, 16);
++		reg  = (int)simple_strtoul(argv[4], NULL, 16);
++		val  = (int)simple_strtoul(argv[5], NULL, 16);
++		ret = mv88e6xxx_write_indirect45(dev, port,dev_id,reg,val);
++		if(ret == 0)
++			printf("Write port:0x%X dev_id 0x%X reg 0x%X val 0x%X Done! \n",port,dev_id,reg,val);
++		else
++			printf("Error! \n");
++		break;
++	case SW_C45_READ:
++		port = (int)simple_strtoul(argv[2], NULL, 16);
++		dev_id  = (int)simple_strtoul(argv[3], NULL, 16);
++		reg  = (int)simple_strtoul(argv[4], NULL, 16);
++		val = mv88e6xxx_read_indirect45(dev,port,dev_id,reg);
++		if(val < 0)
++			printf("Error! \n");
++		else
++			printf("Read port:0x%X dev_id 0x%X reg 0x%X val 0x%X Done! \n",port,dev_id,reg,val);
++		break;
+ 	case SW_NA:
+ 		printf("\"switch %s\" - Wrong command. Try \"help switch\"\n",
+ 		       argv[1]);
+@@ -601,4 +735,7 @@
+ 	"switch phy_read <port> <page> <reg> - read internal switch phy register <reg> at <page> of a switch <port>\n"
+ 	"switch phy_write <port> <page> <reg> <val>- write <val> to internal phy register at <page> of a <port>\n"
+ 	"switch link <port> - Display link state and speed of a <port>\n"
++	"switch c45_read <port> <dev_id> <reg>- read internal switch phy register over Clause 45\n"
++	"switch c45_read 0x15 0x04 0x2000 :read serdes register from device 4 0x2000\n"
++	"switch c45_write <port> <dev_id> <reg> <val> - write internal switch phy register over Clause 45\n"
+ );
 --- uboot-custom-orig/drivers/net/phy/mv88e6xxx.h	2019-06-03 05:21:35.000000000 +0800
-+++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-09-24 17:01:26.238264257 +0800
++++ uboot-custom-silicom/drivers/net/phy/mv88e6xxx.h	2020-10-22 15:41:55.033348260 +0800
 @@ -94,7 +94,8 @@
  #define PORT_SWITCH_ID_PROD_NUM_6290		0x290
  #define PORT_SWITCH_ID_PROD_NUM_6390		0x390
@@ -104,3 +241,12 @@
  #define PORT_SWITCH_ID_PROD_NUM_6341		0x341
  
  #define PORT_CONTROL				0x04
+@@ -387,6 +388,8 @@
+ 	SW_PHY_READ,
+ 	SW_PHY_WRITE,
+ 	SW_LINK,
++	SW_C45_WRITE,
++	SW_C45_READ,
+ 	SW_NA
+ };
+ 
