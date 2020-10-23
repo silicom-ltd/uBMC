@@ -12,27 +12,13 @@ static silc_cstr is_mgmtd_config_get_snmp_host_cmd(void *p_cmd)
 	silc_cstr ver_str = silc_cstr_array_get_quick(p_cur->cmd_params[1], 1);
 
 	if(strcmp(ver_str, "v3") == 0)
-		strcpy(cmd_str, "snmp host ? ? user ? password ? ?");
+		strcpy(cmd_str, "snmp host ? ? user ? encrypt-password ? ?");
 	else
 		strcpy(cmd_str, "snmp host ? ? community ?");
 	return cmd_str;
 }
-#if 0
-static silc_cstr is_mgmtd_config_get_tz_val_param(silc_cstr val_str, int param_idx)
-{
-	static char param[2][100];
-	silc_cstr_array *p_arr = silc_cstr_split(val_str, "/");
-	if(!p_arr || p_arr->length <= param_idx)
-	{
-		SILC_ERR("[%s] invalid string %s\n", __func__, val_str);
-		return "error";
-	}
-	strcpy(param[param_idx], silc_cstr_array_get_quick(p_arr, param_idx));
-	silc_cstr_array_destroy(p_arr);
-	return param[param_idx];
-}
-#endif
-static silc_cstr is_mgmtd_config_password_encrypt(silc_cstr val_str, int param_idx)
+
+static silc_cstr is_mgmtd_config_shadow_encrypt(silc_cstr val_str, int param_idx)
 {
 	static char output[256];
 	int output_len = 256;
@@ -49,7 +35,7 @@ static silc_cstr is_mgmtd_config_password_encrypt(silc_cstr val_str, int param_i
 	return output;
 }
 
-static silc_cstr is_mgmtd_config_password_decrypt(silc_cstr val_str)
+static silc_cstr is_mgmtd_config_shadow_decrypt(silc_cstr val_str)
 {
 	static char output[256];
 	int output_len = 256;
@@ -67,50 +53,40 @@ static silc_cstr is_mgmtd_config_password_decrypt(silc_cstr val_str)
 	return output;
 }
 
-#if 0
-static inline silc_cstr is_mgmtd_config_trans_line_multi2one(silc_cstr val_str, int param_idx)
+static silc_cstr fake_enc = "*";
+static silc_cstr is_mgmtd_config_password_encrypt(silc_cstr val_str, int param_idx)
 {
-	static char output[65536];
+	static char output[256];
+	int output_len = 256;
 
-	if (!val_str || strlen(val_str) == 0)
+	if(!val_str || strlen(val_str) == 0)
 		return "''";
-	is_trans_line_multi2one(val_str, output);
+	if(silc_mgmtd_if_encrypt(val_str, output, output_len) != 0)
+	{
+		SILC_ERR("silc_mgmtd_if_encrypt error");
+		return fake_enc;
+	}
+
 	return output;
 }
 
-static inline silc_cstr is_mgmtd_config_trans_line_one2multi(silc_cstr val_str)
+static silc_cstr fake_pass = "F@ke_p@55!";
+static silc_cstr is_mgmtd_config_password_decrypt(silc_cstr val_str)
 {
-	static char output[65536];
+	static char output[256];
+	int output_len = 256;
 
-	if (!val_str || strlen(val_str) == 0)
-		return "''";
-	is_trans_line_one2multi(val_str, output);
+	if(!val_str || strlen(val_str) == 0)
+		return fake_pass;
+	if(silc_mgmtd_if_decrypt(val_str, output, output_len) != 0)
+	{
+		SILC_ERR("silc_mgmtd_if_decrypt error");
+		return fake_pass;
+	}
+
 	return output;
 }
 
-static inline silc_cstr is_mgmtd_config_get_node_encrypt(silc_cstr path)
-{
-	static char param[65536];
-	silc_mgmtd_node* p_node = silc_mgmtd_memdb_find_node(path);
-	if (!p_node || !p_node->value.val.string_val || strlen(p_node->value.val.string_val) == 0)
-		return "''";
-
-	snprintf(param, 65535, "'%s'", p_node->value.val.string_val);
-	is_merge_base64_lines(param);
-
-	return param;
-}
-
-static inline silc_cstr is_mgmtd_config_get_cert_encrypt(silc_cstr val_str, int param_idx)
-{
-	return is_mgmtd_config_get_node_encrypt("/config/system/service/https/certificate");
-}
-
-static inline silc_cstr is_mgmtd_config_get_key_encrypt(silc_cstr val_str, int param_idx)
-{
-	return is_mgmtd_config_get_node_encrypt("/config/system/service/https/private-key");
-}
-#endif
 static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 		/* SNMP */
 		{"snmp ?", {{"/config/snmp/agent/state", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
@@ -119,6 +95,9 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 							    {"/config/snmp/agent/communities/*/state", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"snmp community ? ?", {{"/config/snmp/agent/communities/*/full-access", NULL, {4}},
 							    {"/config/snmp/agent/communities/*/full-access", "false,read-only,true,full-access"}}},
+		{"snmp user ? encrypt-password ? ?", {{"/config/snmp/agent/users/*", NULL, {4}},
+									  {"/config/snmp/agent/users/*/password", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt},
+									  {"/config/snmp/agent/users/*/auth"}}},
 		{"snmp user ? password ? ?", {{"/config/snmp/agent/users/*", NULL, {4}},
 									  {"/config/snmp/agent/users/*/password"},
 									  {"/config/snmp/agent/users/*/auth"}}},
@@ -129,11 +108,16 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 		{"snmp_trap_host_cmd", {{"/config/snmp/agent/trap-hosts/*", NULL, {4}},
 			  {"/config/snmp/agent/trap-hosts/*/version"},
 			  {"/config/snmp/agent/trap-hosts/*/community"},
-			  {"/config/snmp/agent/trap-hosts/*/password"},
+			  {"/config/snmp/agent/trap-hosts/*/password", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt},
 			  {"/config/snmp/agent/trap-hosts/*/auth"}}, 0, is_mgmtd_config_get_snmp_host_cmd},
 		{"snmp host ? ? community ?", {{"/config/snmp/agent/trap-hosts/*", NULL, {4}},
 			  {"/config/snmp/agent/trap-hosts/*/version"},
 			  {"/config/snmp/agent/trap-hosts/*/community"}}},
+		{"snmp host ? ? user ? encrypt-password ? ?", {{"/config/snmp/agent/trap-hosts/*", NULL, {4}},
+			  {"/config/snmp/agent/trap-hosts/*/version"},
+			  {"/config/snmp/agent/trap-hosts/*/community"},
+			  {"/config/snmp/agent/trap-hosts/*/password", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt},
+			  {"/config/snmp/agent/trap-hosts/*/auth"}}},
 		{"snmp host ? ? user ? password ? ?", {{"/config/snmp/agent/trap-hosts/*", NULL, {4}},
 			  {"/config/snmp/agent/trap-hosts/*/version"},
 			  {"/config/snmp/agent/trap-hosts/*/community"},
@@ -183,7 +167,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 
 		{"user name ? full-name ? encrypt-password ? privilege ?", {{"/config/unix/user/*", NULL, {3}},
 													   {"/config/unix/user/*/full-name"},
-													   {"/config/unix/user/*/shadow", NULL, {0}, is_mgmtd_config_password_encrypt, is_mgmtd_config_password_decrypt},
+													   {"/config/unix/user/*/shadow", NULL, {0}, is_mgmtd_config_shadow_encrypt, is_mgmtd_config_shadow_decrypt},
 													   {"/config/unix/user/*/privilege", "1,readonly,2,normal,3,admin"}}},
 		/* SYSTEM */
 		{"session expired-time ?", {{"/config/system/mgmt/session-exp-time"}}},
@@ -352,12 +336,7 @@ static silc_mgmtd_config_cmd_map s_is_mgmtd_common_config_2_cmds[] = {
 
 		{"name ?", {{"/config/system/misc/hostname"}}},
 		{"login-banner ?", {{"/config/system/misc/login-banner"}}},
-#if 0
-		{"clock timezone ? area ?", {{"/config/system/misc/datetime/timezone", NULL, {0}, is_mgmtd_config_get_tz_val_param},
-									 {"/config/system/misc/datetime/timezone", NULL, {0}, is_mgmtd_config_get_tz_val_param}}},
-#else
 		{"clock timezone ?", {{"/config/system/misc/datetime/timezone"}}},
-#endif
 		{"ntp ?", {{"/config/system/misc/datetime/ntp-enabled", "false,enable"TAG_CMD_TRANS_FALSE2NO",true,enable"}}, FLAG_CMD_TRANS_FALSE2NO},
 		{"ntp server ?", {{"/config/system/misc/datetime/ntp-server-v2/*", NULL, {5}}}},
 		{"log level ?", {{"/config/system/misc/log/level", "0,emerg,1,alert,2,crit,3,err,4,warn,5,notice,6,info,7,debug"}}},
