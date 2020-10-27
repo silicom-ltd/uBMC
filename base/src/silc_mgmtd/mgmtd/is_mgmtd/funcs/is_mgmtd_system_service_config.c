@@ -605,6 +605,7 @@ int is_mgmtd_start_nginx(silc_bool http_en, int http_port, silc_bool https_en, i
 				"        ssl_ciphers  HIGH:!aNULL:!MD5;\n"
 				"        ssl_prefer_server_ciphers  on;\n"
 				"        ssl_protocols TLSv1.2 TLSv1.1;\n"
+				"        add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;"
 				"        add_header X-Frame-Options \"SAMEORIGIN\";\n"
 				"        location / {\n"
 				"            proxy_set_header Host $host;\n"
