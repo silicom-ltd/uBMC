@@ -228,6 +228,8 @@ static silc_mgmtd_node_info s_silc_mgmtd_node_list[] = {
 {"/status/system/running-config", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_system_status, 5},
 {"/status/system/config-file-list", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_system_status, 5},
 {"/status/system/config-saved", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_BOOL, "None", is_mgmtd_system_status, 5},
+{"/status/system/ntp-state", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_system_status, 5},
+{"/status/system/ntp-associations", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_system_status, 5},
 {"/status/system/upgrade-percent", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_UINT32, "None", is_mgmtd_system_status, 5},
 {"/status/system/event", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_STRING, "None", is_mgmtd_system_status, 5},
 {"/action", MEMDB_NODE_TYPE_STATIC, SILC_MGMTD_IF_LEVEL_NORMAL, SILC_MGMTD_VAR_NULL, "None", NULL, 0},

@@ -279,13 +279,13 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 			}
 			else if(p_l1_token && strcmp(p_l1_token->name, "state") == 0)
 			{
-				system("ntpstat");
-				return 0;
+				sprintf(p_req_info->path, IS_CLI_PATH_QUERY_SYSTEM_STATUS"/ntp-state");
+				p_req_info->rsp_cb = is_cli_show_ntp_state_cb;
 			}
 			else if(p_l1_token && strcmp(p_l1_token->name, "associations") == 0)
 			{
-				system("ntpq -p");
-				return 0;
+				sprintf(p_req_info->path, IS_CLI_PATH_QUERY_SYSTEM_STATUS"/ntp-associations");
+				p_req_info->rsp_cb = is_cli_show_ntp_associations_cb;
 			}
 		}
 		else if(strcmp(p_token->name, "log") == 0)
@@ -466,7 +466,8 @@ int is_cli_cmd_show_do_get_req_info(silc_list* p_token_list, is_cli_cmd_req_info
 		}
 		else if(strcmp(p_token->name, "show") != 0
 				&& strcmp(p_token->name, "configured") != 0
-				&& strcmp(p_token->name, "state") != 0)
+				&& strcmp(p_token->name, "state") != 0
+				&& strcmp(p_token->name, "associations") != 0)
 		{
 			silc_cli_err_cmd_set_invalid_param(p_token->name);
 			return -1;
