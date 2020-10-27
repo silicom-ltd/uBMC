@@ -1,6 +1,6 @@
-diff -uNr a3700-utils-marvell-old/script/gettimver.sh a3700-utils-marvell-new/script/gettimver.sh
---- a3700-utils-marvell-old/script/gettimver.sh	2020-06-15 10:58:47.550975616 +0800
-+++ a3700-utils-marvell-new/script/gettimver.sh	2020-06-15 10:50:42.880762898 +0800
+diff -ruN A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/script/gettimver.sh new/script/gettimver.sh
+--- A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/script/gettimver.sh	2018-11-25 18:36:58.000000000 +0800
++++ new/script/gettimver.sh	2020-10-27 16:14:11.575949476 +0800
 @@ -33,7 +33,8 @@
  # Get version string and its length
  VERSTR=$(cat $VERFILE)
@@ -11,9 +11,9 @@ diff -uNr a3700-utils-marvell-old/script/gettimver.sh a3700-utils-marvell-new/sc
  echo "WRITE: 0xC0012004 0x54              ; Print 'T'" >> $OUTFILE
  echo "WAIT_FOR_BIT_SET: 0xC001200C 0x20 1 ; Wait for TX ready" >> $OUTFILE
  echo "WRITE: 0xC0012004 0x49              ; Print 'I'" >> $OUTFILE
-diff -uNr a3700-utils-marvell-old/tim/ddr/DDR_TOPOLOGY_CUST.txt a3700-utils-marvell-new/tim/ddr/DDR_TOPOLOGY_CUST.txt
---- a3700-utils-marvell-old/tim/ddr/DDR_TOPOLOGY_CUST.txt	2020-06-15 10:58:47.551975608 +0800
-+++ a3700-utils-marvell-new/tim/ddr/DDR_TOPOLOGY_CUST.txt	2020-06-15 10:49:37.775271642 +0800
+diff -ruN A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/tim/ddr/DDR_TOPOLOGY_CUST.txt new/tim/ddr/DDR_TOPOLOGY_CUST.txt
+--- A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/tim/ddr/DDR_TOPOLOGY_CUST.txt	2018-11-25 18:36:58.000000000 +0800
++++ new/tim/ddr/DDR_TOPOLOGY_CUST.txt	2020-10-27 16:14:11.620948942 +0800
 @@ -2,25 +2,21 @@
  # This file is the input for A3700 DDR porting tool,
  # each item is one parameter for DDR topology, which will be parsed by
@@ -49,9 +49,9 @@ diff -uNr a3700-utils-marvell-old/tim/ddr/DDR_TOPOLOGY_CUST.txt a3700-utils-marv
 -ddr_cas_latency=11
 -ddr_cas_write_latency=8
 \ No newline at end of file
-diff -uNr a3700-utils-marvell-old/wtmi/sys_init/avs.c a3700-utils-marvell-new/wtmi/sys_init/avs.c
---- a3700-utils-marvell-old/wtmi/sys_init/avs.c	2020-06-15 10:58:47.554975585 +0800
-+++ a3700-utils-marvell-new/wtmi/sys_init/avs.c	2020-06-15 10:49:37.788271540 +0800
+diff -ruN A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/wtmi/sys_init/avs.c new/wtmi/sys_init/avs.c
+--- A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/wtmi/sys_init/avs.c	2018-11-25 18:36:58.000000000 +0800
++++ new/wtmi/sys_init/avs.c	2020-10-27 16:14:11.621948930 +0800
 @@ -19,7 +19,7 @@
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -79,9 +79,9 @@ diff -uNr a3700-utils-marvell-old/wtmi/sys_init/avs.c a3700-utils-marvell-new/wt
  	}
  
  	/* Set high&low VDD limit */
-diff -uNr a3700-utils-marvell-old/wtmi/sys_init/main.c a3700-utils-marvell-new/wtmi/sys_init/main.c
---- a3700-utils-marvell-old/wtmi/sys_init/main.c	2020-06-15 10:58:47.554975585 +0800
-+++ a3700-utils-marvell-new/wtmi/sys_init/main.c	2020-06-15 10:49:37.795271485 +0800
+diff -ruN A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/wtmi/sys_init/main.c new/wtmi/sys_init/main.c
+--- A3700-utils-marvell-a0a1cb88327afa91415c59822fa9c5894d9ec3d7/wtmi/sys_init/main.c	2018-11-25 18:36:58.000000000 +0800
++++ new/wtmi/sys_init/main.c	2020-10-27 16:15:48.687797256 +0800
 @@ -41,8 +41,10 @@
  
  #if DEBUG
@@ -102,12 +102,63 @@ diff -uNr a3700-utils-marvell-old/wtmi/sys_init/main.c a3700-utils-marvell-new/w
  
  	result_in_dram = (struct ddr_init_result *)(DDR_TUNE_RESULT_MEM_BASE);
  
-@@ -331,7 +333,7 @@
+@@ -313,6 +315,48 @@
+ 	return;
+ }
+ 
++/*The wtm(CM3) remap 0XD0013800 to 0Xc0013800*/
++/*See the data sheet page 429 for details*/
++#define BANK0_BASE 0Xc0013800
++#define OUTPUT_EN	0x0
++#define INPUT_VAL	0x10
++#define OUTPUT_VAL	0x18
++#define OUTPUT_CTL	0x20
++#define SELECTION	0x30
++
++void silicom_led_init()
++{
++	/*Turn off the RED led*/
++	u32 reg,val;
++
++	val = readl(BANK0_BASE + OUTPUT_EN);
++	writel(val | BIT5, BANK0_BASE + OUTPUT_EN);
++
++	val = readl(BANK0_BASE + OUTPUT_VAL);
++	writel(val | BIT5, BANK0_BASE + OUTPUT_VAL);
++	/*Turn off the GRN led*/
++
++	val = readl(BANK0_BASE + SELECTION);
++	writel(val | BIT8, BANK0_BASE + SELECTION);
++
++	val = readl(BANK0_BASE + OUTPUT_EN);
++	writel(val | BIT6, BANK0_BASE + OUTPUT_EN);
++
++	val = readl(BANK0_BASE + OUTPUT_VAL);
++	writel(val | BIT6, BANK0_BASE + OUTPUT_VAL);
++
++	/*Turn off the BLUE led*/
++	val = readl(BANK0_BASE + SELECTION);
++	writel(val | BIT7, BANK0_BASE + SELECTION);
++
++	val = readl(BANK0_BASE + OUTPUT_EN);
++	writel(val | BIT7, BANK0_BASE + OUTPUT_EN);
++
++	val = readl(BANK0_BASE + OUTPUT_VAL);
++	writel(val | BIT7, BANK0_BASE + OUTPUT_VAL);
++
++	//debug("Done silicom_led_init \n");
++}
+ int main(int exception, char **dummy)
+ {
+ 	u32     status;
+@@ -331,8 +375,8 @@
  	if (status)
  		return status;
  	init_printf(NULL, uart_putc);
 -	printf("WTMI%s\n", VERSION);
+-
 +	debug("WTMI%s\n", VERSION);
- 
++	silicom_led_init();
  	/* Call ddrgen library */
  	sys_init_main();
+ 

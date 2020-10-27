@@ -1,5 +1,5 @@
 --- uboot-custom-orig/arch/arm/Kconfig	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/Kconfig	2020-06-12 14:52:33.768297002 +0800
++++ uboot-custom-silicom/arch/arm/Kconfig	2020-10-21 17:46:12.889584278 +0800
 @@ -1342,6 +1342,7 @@
  source "board/spear/spear600/Kconfig"
  source "board/spear/x600/Kconfig"
@@ -9,7 +9,7 @@
  source "board/birdland/bav335x/Kconfig"
  source "board/timll/devkit3250/Kconfig"
 --- uboot-custom-orig/include/configs/ubmc_m.h	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/include/configs/ubmc_m.h	2020-06-12 17:06:29.341408633 +0800
++++ uboot-custom-silicom/include/configs/ubmc_m.h	2020-10-21 17:46:12.889584278 +0800
 @@ -0,0 +1,621 @@
 +/*
 + *
@@ -633,7 +633,7 @@
 +#endif	/* ! __CONFIG_UBMC_ESP_H */
 +
 --- uboot-custom-orig/board/silicom/ubmc_m/board.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-06-12 17:14:39.017424510 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/board.c	2020-10-27 16:29:53.806766544 +0800
 @@ -0,0 +1,627 @@
 +/*
 + * Copyright (C) 2016 Stefan Roese <sr@denx.de>
@@ -1203,10 +1203,10 @@
 +	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(8), BIT(8));	//Set GPIO1_6 GPIO_EN
 +	clrsetbits_le32(BANK0_BASE + OUTPUT_EN, BIT(6), BIT(6));	//Set GPIO1_6 output
 +	clrsetbits_le32(BANK0_BASE + OUTPUT_VAL, BIT(6), BIT(6));	//Set GPIO1_6 output high
-+	/*GPIO1_7 LED_BMC_BOT_BLU_N OUTPUT LOW*/
++	/*GPIO1_7 LED_BMC_BOT_BLU_N OUTPUT HIGH*/
 +	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(7), BIT(7));	//Set GPIO1_7 GPIO_EN
 +	clrsetbits_le32(BANK0_BASE + OUTPUT_EN, BIT(7), BIT(7));	//Set GPIO1_7 output
-+
++	clrsetbits_le32(BANK0_BASE + OUTPUT_VAL, BIT(7), BIT(7));
 +	/*GPIO1_11 HOST_PLTRST_N_V2P5 INPUT*/
 +	clrsetbits_le32(BANK0_BASE + SELECTION, BIT(3), BIT(3));	//Set GPIO1_11 GPIO_EN
 +	/*GPIO1_12 HOST_S45_N_V2P5 INPUT*/
@@ -1263,7 +1263,7 @@
 +}
 +//#endif
 --- uboot-custom-orig/board/silicom/silicom_autoboot.c	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/silicom_autoboot.c	2020-06-12 16:37:39.332687539 +0800
++++ uboot-custom-silicom/board/silicom/silicom_autoboot.c	2020-10-21 17:46:12.890584279 +0800
 @@ -0,0 +1,125 @@
 +/*
 + * silicom_autoboot.c
@@ -1391,7 +1391,7 @@
 +}
 +
 --- uboot-custom-orig/board/silicom/ubmc_m/Makefile	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_m/Makefile	2020-06-12 14:52:33.768297002 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/Makefile	2020-10-21 17:46:12.890584279 +0800
 @@ -0,0 +1,10 @@
 +#
 +# Makefile
@@ -1404,7 +1404,7 @@
 +
 +obj-y	+= board.o
 --- uboot-custom-orig/board/silicom/ubmc_m/README	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_m/README	2020-06-12 14:52:33.768297002 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/README	2020-10-21 17:46:12.890584279 +0800
 @@ -0,0 +1,15 @@
 +Summary
 +=======
@@ -1422,7 +1422,7 @@
 +=============
 +
 --- uboot-custom-orig/arch/arm/mach-mvebu/Kconfig	2019-06-03 05:21:34.000000000 +0800
-+++ uboot-custom-silicom/arch/arm/mach-mvebu/Kconfig	2020-06-12 14:52:33.769296993 +0800
++++ uboot-custom-silicom/arch/arm/mach-mvebu/Kconfig	2020-10-21 17:46:12.890584279 +0800
 @@ -76,6 +76,11 @@
  	bool "Support Armada 37xx platforms"
  	select ARMADA_3700
@@ -1460,7 +1460,7 @@
  	default "Synology" if TARGET_DS414
  	default "CZ.NIC" if TARGET_TURRIS_OMNIA
 --- uboot-custom-orig/board/silicom/ubmc_m/Kconfig	1970-01-01 08:00:00.000000000 +0800
-+++ uboot-custom-silicom/board/silicom/ubmc_m/Kconfig	2020-06-12 14:52:33.769296993 +0800
++++ uboot-custom-silicom/board/silicom/ubmc_m/Kconfig	2020-10-21 17:46:12.890584279 +0800
 @@ -0,0 +1,31 @@
 +if TARGET_UBMC_ESP
 +
