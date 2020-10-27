@@ -7,8 +7,42 @@
 #include "silc_mgmtd_config.h"
 
 silc_cstr_array* is_mgmtd_system_get_interface();
-
 static silc_list s_is_mgmtd_system_session_info_list;
+
+#define CMD_OUTPUT_BUF_LEN	4096
+#define NTP_FILE "/var/log/tmp/ntp_info.txt"
+#define IS_SYS_EVT_FILE	"/var/log/message-sys-event"
+
+int is_mgmtd_system_status_get_ntp_state(silc_cstr buf, int buf_len)
+{
+	int ret;
+
+	//ret = silc_mgmtd_if_system("ntpstat > "NTP_FILE" 2>&1");
+	ret = silc_mgmtd_if_exec_system_cmd("ntpstat 2>&1", buf, &buf_len, 1000, silc_false);
+	if (0 == strlen(buf))
+		sprintf(buf, "unsynchronised");
+	else
+		buf[strlen(buf)-1] = 0;
+
+	ret = 0;
+	return ret;
+}
+
+int is_mgmtd_system_status_get_ntp_associations(silc_cstr buf, int buf_len)
+{
+	int ret;
+
+	//ret = silc_mgmtd_if_system("ntpq -n -p > "NTP_FILE" 2>&1");
+	//ret = silc_mgmtd_if_exec_system_cmd("cat "NTP_FILE, buf, &buf_len, 1000, silc_false);
+	ret = silc_mgmtd_if_exec_system_cmd("ntpq -n -p 2>&1", buf, &buf_len, 1000, silc_false);
+	if (0 == strlen(buf))
+		sprintf(buf, "No association ID's returned");
+	else
+		buf[strlen(buf)-1] = 0;
+
+	ret = 0;
+	return ret;
+}
 
 int is_mgmtd_system_status_get_current_clock(silc_cstr buf, int buf_len)
 {
@@ -212,8 +246,6 @@ int is_mgmtd_system_status_get_storage_info(char* name, char* p_total, char* p_u
 	return ret;
 }
 
-#define IS_SYS_EVT_FILE	"/var/log/message-sys-event"
-
 silc_cstr is_mgmtd_system_status_get_event()
 {
 	silc_cstr evt_str = NULL;
@@ -249,7 +281,6 @@ int is_mgmtd_system_status_get_interface_info(char* name, char* info, int len)
 	return 0;
 }
 
-#define CMD_OUTPUT_BUF_LEN	4096
 int is_mgmtd_system_status_level_get_level_5(silc_mgmtd_if_node* p_parent_node, uint32_t level, silc_cstr_array* p_level_arr, const silc_cstr p_match_node, silc_bool add_node)
 {
 	static char add_node_tmp_str[CMD_OUTPUT_BUF_LEN];
@@ -473,9 +504,11 @@ ERR_RET:
 
 int is_mgmtd_system_status_level_get_level_2(silc_mgmtd_if_node* p_parent_node, uint32_t level, silc_cstr_array* p_level_arr, const silc_cstr p_match_node, silc_bool add_node)
 {
-	char add_node_tmp_str[128];
+	static char add_node_tmp_str[CMD_OUTPUT_BUF_LEN];
 	char clock_str[100];
 	char uptime_str[100];
+	char ntpstate_str[256];
+	static char ntpassociations_str[CMD_OUTPUT_BUF_LEN];
 	int running_config_len = 1024*256;
 	silc_cstr running_config = NULL;
 	silc_cstr evt_str = NULL;
@@ -525,6 +558,20 @@ int is_mgmtd_system_status_level_get_level_2(silc_mgmtd_if_node* p_parent_node, 
 		}
 		silc_mgmtd_vnode_set_node_value(__p_ret_node, p_parent_node, "config-file-list", running_config);
 		__p_ret_node->has_child = silc_false;
+	}
+
+	if(p_match_node == NULL || strcmp(p_match_node, "ntp-state") == 0)
+	{
+		if(is_mgmtd_system_status_get_ntp_state(ntpstate_str, 256) != 0)
+			return IS_MGMTD_ERR_BASE_GET_INFO_FAILED;
+		silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "ntp-state", ntpstate_str, str, silc_false);
+	}
+
+	if(p_match_node == NULL || strcmp(p_match_node, "ntp-associations") == 0)
+	{
+		if(is_mgmtd_system_status_get_ntp_associations(ntpassociations_str, CMD_OUTPUT_BUF_LEN) != 0)
+			return IS_MGMTD_ERR_BASE_GET_INFO_FAILED;
+		silc_mgmtd_vnode_add_maybe(p_parent_node, p_match_node, "ntp-associations", ntpassociations_str, str, silc_false);
 	}
 
 	if(p_match_node == NULL || strcmp(p_match_node, "event") == 0)

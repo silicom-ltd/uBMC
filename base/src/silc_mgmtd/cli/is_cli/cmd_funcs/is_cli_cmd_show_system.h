@@ -612,4 +612,17 @@ static inline void is_cli_show_uptime_status_cb(silc_mgmtd_if_rsp* p_rsp)
 	silc_cli_simple_node_display(p_rsp->p_node_root, "System Uptime:", NULL, 0);
 }
 
+static inline void is_cli_show_ntp_state_cb(silc_mgmtd_if_rsp* p_rsp)
+{
+	silc_cstr val_str = p_rsp->p_node_root->val_str;
+
+	silc_cli_print("%s\n", val_str);
+}
+
+static inline void is_cli_show_ntp_associations_cb(silc_mgmtd_if_rsp* p_rsp)
+{
+	silc_cstr val_str = p_rsp->p_node_root->val_str;
+
+	silc_cli_print("%s\n", val_str);
+}
 #endif
