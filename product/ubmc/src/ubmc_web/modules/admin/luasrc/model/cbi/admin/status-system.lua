@@ -103,6 +103,28 @@ sysEvt.anonymous = true
 
 sysEvt:option(DummyValue, "event", translate("Event"))
 
+local ntp_state = {}
+local ntp_state_info = {}
+ret, ns_content = mgmtdclient.query_child("/status/system/ntp-state")
+ntp_state_info['state'] = ns_content
+ntp_state['ntp'] = ntp_state_info
+ntpState = mdForm:section(Table, ntp_state, translate("NTP State"))
+ntpState.template = "cbi/tblsection"
+ntpState.anonymous = true
+
+ntpState:option(TextValue, "state", translate("State")).height = "100px"
+
+local ntp_associations = {}
+local ntp_associations_info = {}
+ret, na_content = mgmtdclient.query_child("/status/system/ntp-associations")
+ntp_associations_info['associations'] = na_content
+ntp_associations['ntp'] = ntp_associations_info
+ntpAssociations = mdForm:section(Table, ntp_associations, translate("NTP Associations"))
+ntpAssociations.template = "cbi/tblsection"
+ntpAssociations.anonymous = true
+
+ntpAssociations:option(TextValue, "associations", translate("Associations")).height = "130px"
+
 	ret, mgmt_list = mgmtdclient.query_sub("/status/system/mgmt")
 
 	---ret, inf_list = mgmtdclient.query_sub("/status/system/mgmt/interface-list") 
