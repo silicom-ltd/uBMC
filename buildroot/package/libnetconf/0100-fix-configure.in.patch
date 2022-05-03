@@ -1,0 +1,24 @@
+--- a/configure.in	2022-05-03 17:19:34.172300161 +0300
++++ b/configure.in	2022-05-03 17:21:53.954408892 +0300
+@@ -121,8 +121,8 @@
+ 		if test "$XSLT_CONFIG" != "no"; then
+ 			AC_MSG_ERROR([Missing xslt-config to get XSLT flags for compilation.])
+ 		fi
+-		CFLAGS="`$withval/xslt-config --cflags` $CFLAGS"
+-		LIBS="`$withval/xslt-config --libs` $LIBS"
++        CFLAGS="`$PKG_CONFIG --cflags "libxslt" 2>/dev/null` $CFLAGS"
++        LIBS="`$PKG_CONFIG --libs "libxslt" 2>/dev/null` $LIBS"
+ 		WITH_LIBXSLT="$withval"
+ 		CONFIGURE_PARAMS="--with-libxslt=$withval $CONFIGURE_PARAMS"
+ 	]
+@@ -505,8 +505,8 @@
+ 	if test -z "$WITH_LIBXSLT" ; then
+ 		AC_CHECK_PROG([XSLT_CONFIG], [xslt-config], [yes], [no], [$WITH_LIBXSLT $PATH])
+ 		if test "$XSLT_CONFIG" != "no"; then
+-			CFLAGS="`xslt-config --cflags` $CFLAGS"
+-			LIBS="`xslt-config --libs` $LIBS"
++            CFLAGS="`$PKG_CONFIG --cflags "libxslt" 2>/dev/null` $CFLAGS"
++            LIBS="`$PKG_CONFIG --libs "libxslt" 2>/dev/null` $LIBS"
+ 		fi
+ 	fi
+ 	AC_CHECK_LIB([xslt], [xsltApplyStylesheet], [], AC_MSG_ERROR([Missing libxslt library]))

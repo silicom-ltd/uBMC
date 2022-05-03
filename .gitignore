@@ -1,4 +1,5 @@
 buildroot/.config
+buildroot/.config.old
 buildroot/..config.tmp
 buildroot/dl
 buildroot/output/

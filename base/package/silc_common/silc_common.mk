@@ -5,7 +5,7 @@
 #############################################################
 
 SILC_COMMON_VERSION = 1.0
-SILC_COMMON_SITE = git://github.com/silicom-ltd/silc_common.git
+SILC_COMMON_SITE = https://github.com/silicom-ltd/silc_common.git
 SILC_COMMON_SITE_METHOD = git
 SILC_COMMON_VERSION = b030f1579d57ab0e0263412f04c449d5f93711f4
 SILC_COMMON_INSTALL_STAGING = YES

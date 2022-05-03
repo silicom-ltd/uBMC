@@ -4,10 +4,8 @@
 #
 ################################################################################
 
-
-NTPSTAT_SOURCE = ntpstat.tar.gz
-NTPSTAT_SITE = https://github.com/darkhelmet
-
+NTPSTAT_VERSION = master
+NTPSTAT_SITE = $(call github,darkhelmet,ntpstat,$(LIBNETCONF_VERSION))
 
 define NTPSTAT_BUILD_CMDS
 	echo build
