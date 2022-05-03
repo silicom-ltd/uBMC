@@ -16,11 +16,6 @@ docker build -t silicom/ubmc-build docker
 docker run -v ${PWD}:/srv/ubmc --rm -it silicom/ubmc-build bash
 ```
 
-## Enter uBMC build container
-```
-docker run -v ${PWD}:/srv/ubmc --rm -it silicom/ubmc-build bash
-```
-
 ## In build container
 ```
 root@e52fb553c314:/srv/ubmc# . ./path_toolchain.sh
