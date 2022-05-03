@@ -9,6 +9,7 @@ UBMC_MGMTD_SITE = $(TOPDIR)/../product/ubmc/src/ubmc_mgmtd
 UBMC_MGMTD_SITE_METHOD = local
 UBMC_MGMTD_LICENSE = Silicom
 UBMC_MGMTD_INSTALL_STAGING = YES
+UBMC_MGMTD_AUTORECONF = YES
 UBMC_MGMTD_DEPENDENCIES = is_ubmc_ipmi silc_mgmtd silc_common
 
 SILC_PRODUCT = $(call qstrip, $(BR2_PACKAGE_SILC_PRODUCT_NAME))
